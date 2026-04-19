@@ -2,6 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
+// Paths that don't require authentication. Everything else is treated as
+// protected — opt-out is safer than opt-in (a new route is protected by
+// default until someone explicitly whitelists it here).
+const PUBLIC_PATHS: ReadonlyArray<string> = ["/", "/login", "/signup", "/callback"];
+const AUTH_PATHS: ReadonlyArray<string> = ["/login", "/signup"];
+
+function matches(pathname: string, allowlist: ReadonlyArray<string>): boolean {
+  return allowlist.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -26,21 +36,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup");
-  const isProtectedRoute =
-    request.nextUrl.pathname.startsWith("/chat") ||
-    request.nextUrl.pathname.startsWith("/today") ||
-    request.nextUrl.pathname.startsWith("/trends") ||
-    request.nextUrl.pathname.startsWith("/profile") ||
-    request.nextUrl.pathname.startsWith("/onboarding");
+  const { pathname } = request.nextUrl;
+  const isPublic = matches(pathname, PUBLIC_PATHS);
+  const isAuthPage = matches(pathname, AUTH_PATHS);
 
-  if (!user && isProtectedRoute) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/chat";
     return NextResponse.redirect(url);
