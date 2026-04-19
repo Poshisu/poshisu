@@ -2,6 +2,12 @@
 -- All user-scoped tables have RLS enabled.
 -- All tables have created_at/updated_at with triggers.
 
+-- =============================================================================
+-- Extensions (must be declared before any index/function depending on them)
+-- =============================================================================
+create extension if not exists pg_trgm;
+create extension if not exists pgcrypto;
+
 -- Helper: updated_at trigger
 create or replace function set_updated_at()
 returns trigger as $$
@@ -239,8 +245,3 @@ create index ifct_foods_aliases_idx on public.ifct_foods using gin (aliases);
 alter table public.ifct_foods enable row level security;
 create policy "ifct_foods_read" on public.ifct_foods for select using (auth.role() = 'authenticated');
 
--- =============================================================================
--- Extensions needed
--- =============================================================================
-create extension if not exists pg_trgm;
-create extension if not exists pgcrypto;
