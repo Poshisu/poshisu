@@ -272,10 +272,10 @@ grant execute on function select_users_for_consolidation() to service_role;
 -- 7. FIX ANALYTICS VIEWS — replace hardcoded timezone with user-joined timezone
 -- =============================================================================
 
--- Drop the old materialized views
-drop materialized view if exists public.daily_water;
-drop materialized view if exists public.weekly_totals;
-drop materialized view if exists public.daily_totals;
+-- Drop the old materialized views + any dependent RPCs (they are recreated below)
+drop materialized view if exists public.daily_water cascade;
+drop materialized view if exists public.weekly_totals cascade;
+drop materialized view if exists public.daily_totals cascade;
 
 -- Recreate with user timezone join
 create materialized view public.daily_totals as
