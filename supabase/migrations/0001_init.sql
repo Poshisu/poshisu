@@ -159,7 +159,6 @@ create trigger meals_updated_at before update on public.meals
   for each row execute function set_updated_at();
 
 create index meals_user_logged_idx on public.meals(user_id, logged_at desc);
-create index meals_user_date_idx on public.meals(user_id, (logged_at::date));
 
 alter table public.meals enable row level security;
 
