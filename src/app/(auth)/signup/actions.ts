@@ -37,8 +37,12 @@ export async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    console.warn("[signup] failed", { code: error.code, status: error.status });
-    redirectWithError("/signup", "Could not create account. Please try again.");
+    console.warn("[signup] failed", { code: error.code, status: error.status, message: error.message });
+    // TEMP DEBUG: surface error details until signup is verified working end-to-end.
+    redirectWithError(
+      "/signup",
+      `Signup failed [${error.status ?? "?"} ${error.code ?? "no-code"}]: ${error.message}`,
+    );
   }
 
   // Supabase returns data.user with empty identities[] when the email is already
