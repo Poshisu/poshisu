@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:light": "NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=\"--max-old-space-size=2048\" next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
