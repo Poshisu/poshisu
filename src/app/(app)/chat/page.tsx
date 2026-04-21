@@ -24,14 +24,18 @@ export default async function ChatPage() {
     (user.user_metadata?.name as string | undefined)?.split(" ")[0] ?? user.email?.split("@")[0] ?? "there";
 
   return (
-    <main id="main-content" className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-6">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-6 focus:outline-none"
+    >
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Hey, {firstName}.</h1>
           <p className="text-sm text-muted-foreground">Signed in as {user.email}</p>
         </div>
         <form action={logoutAction}>
-          <Button type="submit" variant="outline" size="sm" data-testid="logout-button">
+          <Button type="submit" variant="outline" data-testid="logout-button">
             Sign out
           </Button>
         </form>

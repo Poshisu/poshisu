@@ -92,7 +92,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       <CardFooter className="text-sm text-muted-foreground">
         <p>
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
             Sign in
           </Link>
         </p>
