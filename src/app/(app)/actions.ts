@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
 
-export async function logoutAction() {
+export const logoutAction = withServerActionLogging("logout", async () => {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
@@ -12,4 +13,4 @@ export async function logoutAction() {
     console.warn("[logout] signOut returned error", { code: error.code, status: error.status });
   }
   redirect("/");
-}
+});

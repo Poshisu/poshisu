@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { trustedAppOrigin } from "@/lib/auth/origin";
+import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
 
@@ -16,7 +17,7 @@ function redirectWithError(pathname: string, code: AuthErrorCode): never {
   redirect(`${pathname}?${params.toString()}`);
 }
 
-export async function loginAction(formData: FormData) {
+export const loginAction = withServerActionLogging("login", async (formData: FormData) => {
   const parsed = credentialsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -35,9 +36,9 @@ export async function loginAction(formData: FormData) {
   }
 
   redirect("/chat");
-}
+});
 
-export async function signInWithGoogleAction() {
+export const signInWithGoogleAction = withServerActionLogging("oauth_google_start", async () => {
   const supabase = await createClient();
   const origin = trustedAppOrigin();
 
@@ -54,4 +55,4 @@ export async function signInWithGoogleAction() {
   }
 
   redirect(data.url);
-}
+});

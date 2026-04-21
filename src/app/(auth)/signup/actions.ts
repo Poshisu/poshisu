@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { trustedAppOrigin } from "@/lib/auth/origin";
+import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
 
@@ -16,7 +17,7 @@ function redirectWithError(pathname: string, code: AuthErrorCode): never {
   redirect(`${pathname}?${params.toString()}`);
 }
 
-export async function signupAction(formData: FormData) {
+export const signupAction = withServerActionLogging("signup", async (formData: FormData) => {
   const parsed = signupSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -55,4 +56,4 @@ export async function signupAction(formData: FormData) {
   }
 
   redirect("/signup?check-email=1");
-}
+});
