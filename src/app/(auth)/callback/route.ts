@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { trustedAppOrigin } from "@/lib/auth/origin";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
 
@@ -7,17 +8,6 @@ const ALLOWED_NEXT = new Set(["/chat", "/onboarding", "/today", "/trends", "/pro
 function safeNext(raw: string | null): string {
   if (!raw) return "/chat";
   return ALLOWED_NEXT.has(raw) ? raw : "/chat";
-}
-
-/**
- * Returns the origin to use when building redirect URLs. We deliberately do
- * NOT use `new URL(request.url).origin` because that derives from the incoming
- * Host header, which an attacker behind a permissive proxy could spoof.
- */
-function trustedAppOrigin(): string {
-  const raw = process.env.NEXT_PUBLIC_APP_URL;
-  if (!raw) throw new Error("NEXT_PUBLIC_APP_URL is not set");
-  return raw.replace(/\/$/, "");
 }
 
 function loginRedirect(origin: string, code: AuthErrorCode): NextResponse {

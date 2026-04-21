@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { trustedAppOrigin } from "@/lib/auth/origin";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
 
@@ -13,18 +14,6 @@ const credentialsSchema = z.object({
 function redirectWithError(pathname: string, code: AuthErrorCode): never {
   const params = new URLSearchParams({ error: code });
   redirect(`${pathname}?${params.toString()}`);
-}
-
-/**
- * Returns the origin to use for auth redirects. We never trust the request
- * `Origin` header here because a malicious client can set it to an arbitrary
- * host, which would cause confirmation / OAuth emails to link to attacker
- * infrastructure.
- */
-function trustedAppOrigin(): string {
-  const raw = process.env.NEXT_PUBLIC_APP_URL;
-  if (!raw) throw new Error("NEXT_PUBLIC_APP_URL is not set");
-  return raw.replace(/\/$/, "");
 }
 
 export async function loginAction(formData: FormData) {
