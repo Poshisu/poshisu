@@ -5,7 +5,16 @@ import type { Database } from "@/types/database";
 // Paths that don't require authentication. Matched by EXACT equality — adding a
 // new public route is explicit, and a nested route like `/callback/anything`
 // stays protected by default.
-const PUBLIC_PATHS: ReadonlySet<string> = new Set(["/", "/login", "/signup", "/callback"]);
+const PUBLIC_PATHS: ReadonlySet<string> = new Set([
+  "/",
+  "/login",
+  "/signup",
+  "/callback",
+  // PWA assets must be fetched without a session — the browser requests these
+  // before the user has a chance to authenticate.
+  "/manifest.webmanifest",
+  "/sw.js",
+]);
 const AUTH_PATHS: ReadonlySet<string> = new Set(["/login", "/signup"]);
 
 export async function updateSession(request: NextRequest) {
