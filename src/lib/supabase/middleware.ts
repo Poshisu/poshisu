@@ -2,15 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database";
 
-// Paths that don't require authentication. Everything else is treated as
-// protected — opt-out is safer than opt-in (a new route is protected by
-// default until someone explicitly whitelists it here).
-const PUBLIC_PATHS: ReadonlyArray<string> = ["/", "/login", "/signup", "/callback"];
-const AUTH_PATHS: ReadonlyArray<string> = ["/login", "/signup"];
-
-function matches(pathname: string, allowlist: ReadonlyArray<string>): boolean {
-  return allowlist.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
+// Paths that don't require authentication. Matched by EXACT equality — adding a
+// new public route is explicit, and a nested route like `/callback/anything`
+// stays protected by default.
+const PUBLIC_PATHS: ReadonlySet<string> = new Set(["/", "/login", "/signup", "/callback"]);
+const AUTH_PATHS: ReadonlySet<string> = new Set(["/login", "/signup"]);
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -37,8 +33,8 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = matches(pathname, PUBLIC_PATHS);
-  const isAuthPage = matches(pathname, AUTH_PATHS);
+  const isPublic = PUBLIC_PATHS.has(pathname);
+  const isAuthPage = AUTH_PATHS.has(pathname);
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

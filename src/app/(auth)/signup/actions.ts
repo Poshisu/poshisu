@@ -1,18 +1,30 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import type { AuthErrorCode } from "../errors";
 
 const signupSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters").max(72, "Password too long"),
+  email: z.string().email(),
+  password: z.string().min(8).max(72),
 });
 
-function redirectWithError(pathname: string, message: string): never {
-  const params = new URLSearchParams({ error: message });
+function redirectWithError(pathname: string, code: AuthErrorCode): never {
+  const params = new URLSearchParams({ error: code });
   redirect(`${pathname}?${params.toString()}`);
+}
+
+/**
+ * Returns the origin to use for auth redirects. We never trust the request
+ * `Origin` header here because a malicious client can set it to an arbitrary
+ * host, which would cause confirmation / OAuth emails to link to attacker
+ * infrastructure.
+ */
+function trustedAppOrigin(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL;
+  if (!raw) throw new Error("NEXT_PUBLIC_APP_URL is not set");
+  return raw.replace(/\/$/, "");
 }
 
 export async function signupAction(formData: FormData) {
@@ -22,11 +34,11 @@ export async function signupAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirectWithError("/signup", parsed.error.issues[0]?.message ?? "Invalid input");
+    redirectWithError("/signup", "invalid_input");
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_APP_URL!;
+  const origin = trustedAppOrigin();
 
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -38,7 +50,7 @@ export async function signupAction(formData: FormData) {
 
   if (error) {
     console.warn("[signup] failed", { code: error.code, status: error.status });
-    redirectWithError("/signup", "Could not create account. Please try again.");
+    redirectWithError("/signup", "signup_failed");
   }
 
   // Supabase returns data.user with empty identities[] when the email is already
