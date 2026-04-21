@@ -22,7 +22,11 @@ export default async function OnboardingPage() {
     (user.user_metadata?.name as string | undefined)?.split(" ")[0] ?? user.email?.split("@")[0] ?? "there";
 
   return (
-    <main id="main-content" tabIndex={-1} className="flex min-h-svh items-center justify-center p-6 focus:outline-none">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-svh items-center justify-center p-6 focus-visible:outline-none"
+    >
       <div className="max-w-md space-y-4 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Welcome to Nourish, {firstName}.</h1>
         <p className="text-muted-foreground">

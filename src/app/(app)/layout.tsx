@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] focus:outline-none md:pb-0"
+          className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] focus-visible:outline-none md:pb-0"
         >
           {children}
         </main>

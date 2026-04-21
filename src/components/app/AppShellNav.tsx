@@ -71,13 +71,13 @@ export function TabBar() {
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
-            <li key={href}>
+            <li key={href} className="relative">
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-1 px-2 py-2 text-[11px] transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                  "relative flex min-h-16 flex-col items-center justify-center gap-1 px-2 py-2 text-xs transition-colors",
+                  "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                   active ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
                 )}
               >
