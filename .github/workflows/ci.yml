@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # pnpm picks this up automatically; pin once, reuse across jobs.
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9"
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: Build
+        # Build without real secrets — the code is designed to boot with
+        # env vars absent. This is the fastest way to catch regressions
+        # like a Server Action that references a missing env var at module
+        # scope, or a Sentry config that throws on missing DSN.
+        run: pnpm run build
+        env:
+          # Dummy values keep any typed "env.VAR!" non-null assertions
+          # from tripping runtime URL parsers during build-time collection.
+          # The real values live in Vercel per-environment.
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy-publishable-key-for-ci
