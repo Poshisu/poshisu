@@ -1,18 +1,21 @@
 import * as Sentry from "@sentry/nextjs";
+import { resolveSentryDsn } from "@/lib/env/sentryDsn";
 
 /**
  * Next.js instrumentation hook — runs once per server process at startup.
  * We use it to initialise Sentry for the Node.js and Edge runtimes.
  *
- * Sentry only initialises when `NEXT_PUBLIC_SENTRY_DSN` is set. Local dev and
- * PRs that lack the secret are untouched — no network calls, no crashes.
+ * Sentry only initialises when `NEXT_PUBLIC_SENTRY_DSN` holds a plausible
+ * DSN (https:// URL). Local dev and PRs that lack the secret — or have a
+ * placeholder like `TODO_SENTRY_DSN` — are untouched.
  */
 export async function register() {
-  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  const dsn = resolveSentryDsn();
+  if (!dsn) return;
 
   if (process.env.NEXT_RUNTIME === "nodejs") {
     Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      dsn,
       environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
       release: process.env.VERCEL_GIT_COMMIT_SHA,
       tracesSampleRate: process.env.VERCEL_ENV === "production" ? 0.1 : 1.0,
@@ -24,7 +27,7 @@ export async function register() {
 
   if (process.env.NEXT_RUNTIME === "edge") {
     Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      dsn,
       environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
       release: process.env.VERCEL_GIT_COMMIT_SHA,
       tracesSampleRate: process.env.VERCEL_ENV === "production" ? 0.1 : 1.0,

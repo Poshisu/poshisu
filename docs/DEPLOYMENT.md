@@ -154,6 +154,39 @@ Migrations are append-only so rollback never requires a DB revert.
 
 ---
 
+## Security headers
+
+Every response carries six static headers applied via `next.config.ts` →
+`headers()` (values defined in `src/lib/http/securityHeaders.ts`):
+
+| Header | Value | Purpose |
+|---|---|---|
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | Force HTTPS for 2 years incl. subdomains |
+| `X-Content-Type-Options` | `nosniff` | Disable MIME sniffing |
+| `X-Frame-Options` | `DENY` | Clickjacking protection (legacy path) |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Cross-origin referrer hardening |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Isolate browsing context |
+| `Permissions-Policy` | explicit allow-list | Camera + microphone from self; everything else denied |
+
+Verify live by curling any route: `curl -sI https://your-deploy.vercel.app/login`.
+
+### CSP follow-up (Phase 1+)
+
+A proper Content-Security-Policy is deliberately **not** in this set. Next.js
+App Router injects inline hydration scripts which require per-request nonces
+generated in middleware (`src/proxy.ts`). Adding that is a separate, ~1-day
+task best done once the chat surface is live — otherwise we'd be tuning CSP
+against a moving target.
+
+Tracked as a Phase 1 chore. Interim mitigations in place:
+- HSTS forces TLS, preventing MITM injection.
+- `X-Frame-Options: DENY` covers clickjacking.
+- `Referrer-Policy` covers URL leakage.
+- All Server Action inputs are Zod-validated.
+- Supabase RLS prevents data exfiltration even on XSS.
+
+---
+
 ## Local development
 
 ```bash

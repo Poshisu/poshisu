@@ -1,10 +1,21 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs";
+import { SECURITY_HEADERS } from "./src/lib/http/securityHeaders";
 
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
+  },
+  async headers() {
+    return [
+      {
+        // Apply to every route. Static assets are cheap — one extra header
+        // per response — and CDN caches get the headers too.
+        source: "/:path*",
+        headers: [...SECURITY_HEADERS],
+      },
+    ];
   },
 };
 
