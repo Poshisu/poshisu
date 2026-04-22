@@ -6,6 +6,7 @@ import { trustedAppOrigin } from "@/lib/auth/origin";
 import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
+import { mapSignupError } from "./errorMap";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -39,8 +40,15 @@ export const signupAction = withServerActionLogging("signup", async (formData: F
   });
 
   if (error) {
-    console.warn("[signup] failed", { code: error.code, status: error.status });
-    redirectWithError("/signup", "signup_failed");
+    // Log the full error server-side for triage (Vercel Runtime Logs + Sentry).
+    // The client only ever sees our mapped opaque code — we never surface raw
+    // Supabase messages because they can reveal account existence.
+    console.warn("[signup] failed", {
+      code: error.code,
+      status: error.status,
+      message: error.message,
+    });
+    redirectWithError("/signup", mapSignupError(error.code));
   }
 
   // Supabase returns data.user with empty identities[] when the email is already

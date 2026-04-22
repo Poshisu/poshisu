@@ -13,6 +13,14 @@ export const AUTH_ERROR_CODES = {
   invalid_input: "Please check the email and password fields.",
   invalid_credentials: "Invalid email or password.",
   signup_failed: "Could not create account. Please try again.",
+  signup_weak_password: "Password is too weak. Try something longer or mix in numbers and symbols.",
+  signup_invalid_email: "That email doesn't look right. Please check and try again.",
+  signup_rate_limited: "Too many attempts. Please wait a minute and try again.",
+  signup_disabled: "Sign-up is temporarily unavailable. Please try again shortly.",
+  signup_email_not_authorized:
+    "This email isn't allowed to sign up right now. If you're testing, add it to the Supabase allow-list.",
+  signup_redirect_not_allowed:
+    "The sign-up confirmation link points to a URL that isn't allowed. Add it in Supabase → Authentication → URL Configuration.",
   oauth_start_failed: "Could not start Google sign-in. Please try again.",
   oauth_callback_invalid: "Sign-in link is invalid or has expired.",
   oauth_callback_failed: "Sign-in failed. Please try again.",
