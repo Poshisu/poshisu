@@ -30,6 +30,11 @@ export function mapSignupError(code: string | undefined): AuthErrorCode {
     case "validation_failed_redirect_to":
     case "invalid_redirect_url":
       return "signup_redirect_not_allowed";
+    case "user_already_exists":
+    case "email_exists":
+      // The non-leaky phrasing: "if an account exists, sign in".
+      // This doesn't confirm existence to an attacker probing for accounts.
+      return "signup_email_in_use";
     default:
       return "signup_failed";
   }

@@ -31,9 +31,9 @@ describe("mapSignupError", () => {
     expect(mapSignupError("invalid_redirect_url")).toBe("signup_redirect_not_allowed");
   });
 
-  it("maps account-existence codes to generic signup_failed (no leak)", () => {
-    expect(mapSignupError("user_already_exists")).toBe("signup_failed");
-    expect(mapSignupError("email_exists")).toBe("signup_failed");
+  it("maps account-existence codes to signup_email_in_use (non-leaky phrasing)", () => {
+    expect(mapSignupError("user_already_exists")).toBe("signup_email_in_use");
+    expect(mapSignupError("email_exists")).toBe("signup_email_in_use");
   });
 
   it("maps unknown / undefined codes to signup_failed", () => {

@@ -13,6 +13,8 @@ export const AUTH_ERROR_CODES = {
   invalid_input: "Please check the email and password fields.",
   invalid_credentials: "Invalid email or password.",
   signup_failed: "Could not create account. Please try again.",
+  signup_email_in_use:
+    "If an account exists for this email, please sign in instead.",
   signup_weak_password: "Password is too weak. Try something longer or mix in numbers and symbols.",
   signup_invalid_email: "That email doesn't look right. Please check and try again.",
   signup_rate_limited: "Too many attempts. Please wait a minute and try again.",

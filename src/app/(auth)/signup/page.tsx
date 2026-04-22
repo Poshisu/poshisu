@@ -13,12 +13,20 @@ export const metadata: Metadata = {
   description: "Create your Nourish account to start getting personalised nutrition coaching.",
 };
 
-type SignupSearchParams = { error?: string; "check-email"?: string };
+type SignupSearchParams = { error?: string; debug?: string; "check-email"?: string };
+
+const MAX_DEBUG_LEN = 64;
+const SAFE_DEBUG = /^[a-z0-9_]+$/i;
 
 export default async function SignupPage({ searchParams }: { searchParams: Promise<SignupSearchParams> }) {
-  const { error, "check-email": checkEmail } = await searchParams;
+  const { error, debug, "check-email": checkEmail } = await searchParams;
   const errorMessage = authErrorMessage(error);
   const passwordDescribedBy = errorMessage ? "password-hint signup-error" : "password-hint";
+  // Only render the debug code if it matches our opaque code grammar — keeps
+  // an attacker from injecting arbitrary text into the page via the URL.
+  const safeDebug =
+    debug && debug.length <= MAX_DEBUG_LEN && SAFE_DEBUG.test(debug) ? debug : null;
+  const showSignInHint = error === "signup_email_in_use";
 
   return (
     <Card>
@@ -80,9 +88,21 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
             </p>
           </div>
           {errorMessage ? (
-            <p id="signup-error" role="alert" className="text-sm text-destructive">
-              {errorMessage}
-            </p>
+            <div id="signup-error" role="alert" className="space-y-1">
+              <p className="text-sm text-destructive">{errorMessage}</p>
+              {showSignInHint ? (
+                <p className="text-sm">
+                  <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+                    Sign in instead
+                  </Link>
+                </p>
+              ) : null}
+              {safeDebug ? (
+                <p className="text-xs text-muted-foreground">
+                  Debug (preview only): <code className="font-mono">{safeDebug}</code>
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <SubmitButton className="w-full" pendingLabel="Creating account…">
             Create account

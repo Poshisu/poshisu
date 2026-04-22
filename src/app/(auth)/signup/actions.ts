@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { trustedAppOrigin } from "@/lib/auth/origin";
+import { isDebugSurfaceAllowed } from "@/lib/env/debugSurface";
 import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
 import type { AuthErrorCode } from "../errors";
@@ -13,8 +14,14 @@ const signupSchema = z.object({
   password: z.string().min(8).max(72),
 });
 
-function redirectWithError(pathname: string, code: AuthErrorCode): never {
+function redirectWithError(pathname: string, code: AuthErrorCode, debug?: string): never {
   const params = new URLSearchParams({ error: code });
+  // Surface the raw provider code in non-prod environments so the developer
+  // can see exactly why a signup failed without opening Vercel logs. Never
+  // do this in production — it can leak internals to real users.
+  if (debug && isDebugSurfaceAllowed()) {
+    params.set("debug", debug);
+  }
   redirect(`${pathname}?${params.toString()}`);
 }
 
@@ -48,7 +55,7 @@ export const signupAction = withServerActionLogging("signup", async (formData: F
       status: error.status,
       message: error.message,
     });
-    redirectWithError("/signup", mapSignupError(error.code));
+    redirectWithError("/signup", mapSignupError(error.code), error.code ?? "unknown");
   }
 
   // Supabase returns data.user with empty identities[] when the email is already
