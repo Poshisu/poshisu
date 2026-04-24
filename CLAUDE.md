@@ -243,8 +243,59 @@ NEXT_PUBLIC_APP_URL=                # e.g. https://nourish.app
 
 ## How to work in this repo with Claude Code
 
+**These are standing instructions. Read and apply them every session. They are enforced — no exceptions without an explicit note in the commit body.**
+
+### 0. First steps of every session
 1. **Always read this file first.** It is the canonical context.
-2. **Use the appropriate sub-agent** for the task: `code-reviewer` before commits, `test-writer` after features, `prompt-evaluator` after prompt changes, `db-migration` for schema changes.
+2. **Read `docs/BUILD_PLAN.md`** to orient on the current phase.
+3. **If the session will touch a domain with a skill, consult the skill before writing code.**
+
+### 1. Per-change review gates (run in parallel before every commit)
+Every code change goes through this pipeline before `git commit`. Launch the applicable sub-agents in parallel from a single message:
+
+| If the change touches… | Run… |
+|---|---|
+| anything (always) | `code-reviewer` |
+| auth, API routes, agent code, DB access, secrets, PII | `security-reviewer` |
+| UI (any JSX/TSX or global CSS) | `accessibility-auditor` |
+| a new feature | `test-writer` (to add unit / e2e coverage) |
+| a Supabase migration | `db-migration` |
+| any file in `prompts/agents/` | `prompt-evaluator` **and** run `npm run eval:prompts`; include before/after numbers in the commit message |
+
+Fix every actionable finding before committing. If a finding is deliberately deferred, log it in the commit body with a one-line reason.
+
+### 2. Skills to consult (before writing code in that domain)
+Use the Skill tool to invoke these **before** starting code in the relevant domain:
+
+- **`nourish-conventions`** — file layout, naming, server vs client components, error handling. Before any new module.
+- **`prompt-engineering`** — before touching any file in `prompts/agents/`.
+- **`memory-schema`** — before touching `src/lib/memory/` or memory-related DB.
+- **`indian-food-estimation`** — before touching `src/lib/nutrition/` or any code that estimates calories / macros.
+
+### 3. Per-phase design brief
+Before starting a new phase or any user-facing feature, produce a short design brief and show it to the user. Cover:
+- User goal (one sentence)
+- Information architecture (what's on screen, in what hierarchy)
+- Actual copy for headers, CTAs, errors, empty, and loading states — real strings, not placeholders
+- Mobile-first layout (iPhone SE 375×667 is the floor)
+- Accessibility: focus order, ARIA, contrast, reduced-motion, screen-reader announcements
+- Edge cases deliberately punted on, and why
+
+### 4. Health-expert lens (required for every health-touching feature)
+Anything that touches food, body, condition, medication, behavior, tone, or nudging must either:
+- Cite a source (ICMR-NIN 2020 RDA, IDF, PCOS Society India, WHO, AHA, peer-reviewed literature), **or**
+- Be explicitly flagged with `// NEEDS RD REVIEW: <specific question>` in code and called out in the commit body.
+
+Safety rules from `prompts/agents/SAFETY_RULES.md` are non-negotiable. They are tested in `src/lib/safety/` and enforced in the orchestrator.
+
+### 5. Product-grade finish (even for placeholders)
+No "Coming in Phase X" copy or debug text on any screen a user can reach. Every screen reads like a shipped product:
+- Specific, warm copy (not "You're in.")
+- Realistic empty states with a clear next action
+- Loading skeletons for anything that takes >300ms
+- Error states that say what happened and how to recover
+
+### 6. Other standing rules
 3. **When in doubt, write a test.** It's cheaper than debugging in production.
 4. **When changing an agent prompt, run `npm run eval:prompts`** and include the before/after numbers in the commit message.
 5. **Never put secrets in code.** Use environment variables. The `.env.local.example` file documents what's needed; `.env.local` is gitignored.

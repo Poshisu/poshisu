@@ -4,11 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Chat",
-  description: "Chat with your Nourish coach.",
+  title: "Me",
+  description: "Your profile and what Nourish remembers about you.",
 };
 
-export default async function ChatPage() {
+export default async function ProfilePage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,21 +25,21 @@ export default async function ChatPage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Hey, {firstName}.</h1>
-        <p className="text-sm text-muted-foreground">Ready when you are.</p>
+        <p className="text-sm text-muted-foreground">Signed in as {user.email}</p>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle as="h2">Your coach is getting ready</CardTitle>
+          <CardTitle as="h2">What I&apos;ll remember about you</CardTitle>
           <CardDescription>
-            Soon you&apos;ll be able to log meals in plain English — &ldquo;2 rotis and a bowl of dal for lunch&rdquo; — snap
-            a photo of your plate, or ask what to eat next. We&apos;re putting the finishing touches on the chat now.
+            Your profile, your patterns, and the everyday terms you use — &ldquo;my usual chai&rdquo;, &ldquo;amma&apos;s
+            sambar&rdquo;. You&apos;ll see and edit all of it here, and you can ask me to forget any of it at any time.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           <p>
-            In the meantime, your account is set up and your profile is saved. Use the tabs to peek at Today, Trends,
-            and Me — they&apos;ll come alive as you start logging.
+            This page fills itself in as we chat. Start with your first meal and the details will show up — no forms,
+            no friction.
           </p>
         </CardContent>
       </Card>

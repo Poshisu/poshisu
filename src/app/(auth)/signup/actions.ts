@@ -1,32 +1,42 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { z } from "zod";
+import { trustedAppOrigin } from "@/lib/auth/origin";
+import { isDebugSurfaceAllowed } from "@/lib/env/debugSurface";
+import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
+import type { AuthErrorCode } from "../errors";
+import { mapSignupError } from "./errorMap";
 
 const signupSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters").max(72, "Password too long"),
+  email: z.string().email(),
+  password: z.string().min(8).max(72),
 });
 
-function redirectWithError(pathname: string, message: string): never {
-  const params = new URLSearchParams({ error: message });
+function redirectWithError(pathname: string, code: AuthErrorCode, debug?: string): never {
+  const params = new URLSearchParams({ error: code });
+  // Surface the raw provider code in non-prod environments so the developer
+  // can see exactly why a signup failed without opening Vercel logs. Never
+  // do this in production — it can leak internals to real users.
+  if (debug && isDebugSurfaceAllowed()) {
+    params.set("debug", debug);
+  }
   redirect(`${pathname}?${params.toString()}`);
 }
 
-export async function signupAction(formData: FormData) {
+export const signupAction = withServerActionLogging("signup", async (formData: FormData) => {
   const parsed = signupSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    redirectWithError("/signup", parsed.error.issues[0]?.message ?? "Invalid input");
+    redirectWithError("/signup", "invalid_input");
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_APP_URL!;
+  const origin = trustedAppOrigin();
 
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -37,12 +47,15 @@ export async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    console.warn("[signup] failed", { code: error.code, status: error.status, message: error.message });
-    // TEMP DEBUG: surface error details until signup is verified working end-to-end.
-    redirectWithError(
-      "/signup",
-      `Signup failed [${error.status ?? "?"} ${error.code ?? "no-code"}]: ${error.message}`,
-    );
+    // Log the full error server-side for triage (Vercel Runtime Logs + Sentry).
+    // The client only ever sees our mapped opaque code — we never surface raw
+    // Supabase messages because they can reveal account existence.
+    console.warn("[signup] failed", {
+      code: error.code,
+      status: error.status,
+      message: error.message,
+    });
+    redirectWithError("/signup", mapSignupError(error.code), error.code ?? "unknown");
   }
 
   // Supabase returns data.user with empty identities[] when the email is already
@@ -58,4 +71,4 @@ export async function signupAction(formData: FormData) {
   }
 
   redirect("/signup?check-email=1");
-}
+});

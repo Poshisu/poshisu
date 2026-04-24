@@ -1,28 +1,30 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { z } from "zod";
+import { trustedAppOrigin } from "@/lib/auth/origin";
+import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { createClient } from "@/lib/supabase/server";
+import type { AuthErrorCode } from "../errors";
 
 const credentialsSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(1, "Password is required").max(72, "Password too long"),
+  email: z.string().email(),
+  password: z.string().min(1).max(72),
 });
 
-function redirectWithError(pathname: string, message: string): never {
-  const params = new URLSearchParams({ error: message });
+function redirectWithError(pathname: string, code: AuthErrorCode): never {
+  const params = new URLSearchParams({ error: code });
   redirect(`${pathname}?${params.toString()}`);
 }
 
-export async function loginAction(formData: FormData) {
+export const loginAction = withServerActionLogging("login", async (formData: FormData) => {
   const parsed = credentialsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    redirectWithError("/login", parsed.error.issues[0]?.message ?? "Invalid input");
+    redirectWithError("/login", "invalid_input");
   }
 
   const supabase = await createClient();
@@ -30,15 +32,15 @@ export async function loginAction(formData: FormData) {
 
   if (error) {
     console.warn("[login] sign-in failed", { code: error.code, status: error.status });
-    redirectWithError("/login", "Invalid email or password");
+    redirectWithError("/login", "invalid_credentials");
   }
 
   redirect("/chat");
-}
+});
 
-export async function signInWithGoogleAction() {
+export const signInWithGoogleAction = withServerActionLogging("oauth_google_start", async () => {
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_APP_URL!;
+  const origin = trustedAppOrigin();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -49,8 +51,8 @@ export async function signInWithGoogleAction() {
 
   if (error || !data.url) {
     console.warn("[login] google oauth start failed", { code: error?.code, status: error?.status });
-    redirectWithError("/login", "Could not start Google sign-in");
+    redirectWithError("/login", "oauth_start_failed");
   }
 
   redirect(data.url);
-}
+});

@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-muted/20 px-6">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-svh flex-col items-center justify-center bg-muted/20 px-6 focus-visible:outline-none"
+    >
       <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Nourish</h1>
         <p className="text-lg text-muted-foreground">

@@ -1,20 +1,37 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { authErrorMessage } from "../errors";
 import { signInWithGoogleAction } from "../login/actions";
 import { signupAction } from "./actions";
 
-type SignupSearchParams = { error?: string; "check-email"?: string };
+export const metadata: Metadata = {
+  title: "Create account",
+  description: "Create your Nourish account to start getting personalised nutrition coaching.",
+};
+
+type SignupSearchParams = { error?: string; debug?: string; "check-email"?: string };
+
+const MAX_DEBUG_LEN = 64;
+const SAFE_DEBUG = /^[a-z0-9_]+$/i;
 
 export default async function SignupPage({ searchParams }: { searchParams: Promise<SignupSearchParams> }) {
-  const { error, "check-email": checkEmail } = await searchParams;
+  const { error, debug, "check-email": checkEmail } = await searchParams;
+  const errorMessage = authErrorMessage(error);
+  const passwordDescribedBy = errorMessage ? "password-hint signup-error" : "password-hint";
+  // Only render the debug code if it matches our opaque code grammar — keeps
+  // an attacker from injecting arbitrary text into the page via the URL.
+  const safeDebug =
+    debug && debug.length <= MAX_DEBUG_LEN && SAFE_DEBUG.test(debug) ? debug : null;
+  const showSignInHint = error === "signup_email_in_use";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle as="h1">Create your account</CardTitle>
         <CardDescription>Get personalised nutrition coaching in under 2 minutes.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -25,9 +42,9 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         ) : null}
 
         <form action={signInWithGoogleAction}>
-          <Button type="submit" variant="outline" className="w-full">
+          <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting to Google…">
             Continue with Google
-          </Button>
+          </SubmitButton>
         </form>
 
         <div className="relative">
@@ -35,14 +52,24 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span aria-hidden="true" className="bg-card px-2 text-muted-foreground">
+              or
+            </span>
           </div>
         </div>
 
         <form action={signupAction} className="space-y-3" noValidate>
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" autoComplete="email" required aria-describedby={error ? "signup-error" : undefined} />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              aria-invalid={errorMessage ? true : undefined}
+              aria-describedby={errorMessage ? "signup-error" : undefined}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
@@ -53,26 +80,39 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               autoComplete="new-password"
               minLength={8}
               required
-              aria-describedby="password-hint"
+              aria-invalid={errorMessage ? true : undefined}
+              aria-describedby={passwordDescribedBy}
             />
             <p id="password-hint" className="text-xs text-muted-foreground">
               At least 8 characters.
             </p>
           </div>
-          {error ? (
-            <p id="signup-error" role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
+          {errorMessage ? (
+            <div id="signup-error" role="alert" className="space-y-1">
+              <p className="text-sm text-destructive">{errorMessage}</p>
+              {showSignInHint ? (
+                <p className="text-sm">
+                  <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+                    Sign in instead
+                  </Link>
+                </p>
+              ) : null}
+              {safeDebug ? (
+                <p className="text-xs text-muted-foreground">
+                  Debug (preview only): <code className="font-mono">{safeDebug}</code>
+                </p>
+              ) : null}
+            </div>
           ) : null}
-          <Button type="submit" className="w-full">
+          <SubmitButton className="w-full" pendingLabel="Creating account…">
             Create account
-          </Button>
+          </SubmitButton>
         </form>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">
         <p>
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
             Sign in
           </Link>
         </p>
