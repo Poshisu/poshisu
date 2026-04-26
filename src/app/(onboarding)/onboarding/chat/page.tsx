@@ -4,7 +4,7 @@ import { OnboardingChatFlow } from "@/components/onboarding/OnboardingChatFlow";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Setup",
+  title: "Getting started",
   description: "A six-step chat to get your Nourish coach calibrated.",
 };
 

@@ -37,11 +37,14 @@ export function MessageBubble({ message }: { message: Message }) {
             : "rounded-br-md bg-primary text-primary-foreground",
         )}
       >
-        {/* Author signal for screen readers — visual side / colour
-            alone fails WCAG 1.3.1 (information conveyed via non-visual
-            means). Sighted users see the bubble side; SR users hear the
-            prefix once per message. */}
-        <span className="sr-only">{isAgent ? "Coach: " : "You: "}</span>
+        {/* Author + optional context prefix for screen readers. Visual
+            side / colour alone fails WCAG 1.3.1, and progress info has
+            no visual representation at all (WCAG 4.1.3). Sighted users
+            never see this. */}
+        <span className="sr-only">
+          {message.srPrefix ? `${message.srPrefix}. ` : ""}
+          {isAgent ? "Coach: " : "You: "}
+        </span>
         {message.content}
       </div>
     </div>

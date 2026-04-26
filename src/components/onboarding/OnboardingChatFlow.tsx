@@ -10,6 +10,7 @@ import { onboardingAnswersSchema, parseAnswer } from "@/lib/onboarding/parser";
 import {
   type OnboardingQuestion,
   type OnboardingQuestionId,
+  QUESTIONS,
   nextQuestion,
 } from "@/lib/onboarding/questions";
 import type { OnboardingAnswers, OnboardingDraft } from "@/lib/onboarding/types";
@@ -32,13 +33,18 @@ export interface OnboardingChatFlowProps {
 }
 
 /**
- * The 16-question chat-based onboarding flow.
+ * The chat-based onboarding flow.
  *
  * Flow logic lives entirely in `handleSend` — no `useEffect` reacting to
  * state changes. Each Send press synchronously decides:
  *   - whether the answer parses (ok → advance, clarify → re-prompt),
- *   - whether the next question exists (no → validate + call onComplete),
- *   - what messages to append in a single setMessages batch.
+ *   - whether the next question exists (no → validate + call onComplete).
+ *
+ * Live-region split: the user bubble and the agent bubble are appended in
+ * TWO separate setMessages calls (the agent bubble via setTimeout). This
+ * gives the `role="log"` live region two distinct DOM mutation events,
+ * which all major SR + browser combos handle reliably. Inserting both in
+ * a single React commit can make NVDA + Chrome announce only one of them.
  *
  * Initial messages are seeded via the lazy useState initializer so they're
  * present on first render with no extra render trip.
@@ -48,13 +54,31 @@ export interface OnboardingChatFlowProps {
  *   - Streaming voice transcription (we wait for the full text).
  *   - Multi-language UI.
  */
+
+const AGENT_BUBBLE_DELAY_MS = 100;
+
+/**
+ * Count the questions that will fire given the current draft, accounting
+ * for `skipIf`. Used to give SR users an accurate "Question N of M".
+ */
+function totalQuestionsForDraft(draft: OnboardingDraft): number {
+  return QUESTIONS.filter((q) => !q.skipIf?.(draft)).length;
+}
+
 function buildOpeningMessages(firstName: string | undefined, firstQuestion: OnboardingQuestion): Message[] {
   const opening = firstName
     ? `Hey ${firstName} — six quick questions and we're done. About four minutes.`
     : "Hey — six quick questions and we're done. About four minutes.";
+  // The first question gets the "Question 1 of M" prefix for SR users.
+  const total = totalQuestionsForDraft({});
   return [
     { id: nextMsgId(), author: "agent", content: opening },
-    { id: nextMsgId(), author: "agent", content: firstQuestion.prompt },
+    {
+      id: nextMsgId(),
+      author: "agent",
+      content: firstQuestion.prompt,
+      srPrefix: `Question 1 of ${total}`,
+    },
   ];
 }
 
@@ -72,6 +96,38 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
 
   const currentQuestion: OnboardingQuestion | null = nextQuestion(draft, answeredIds);
 
+  /**
+   * Append a single message immediately (synchronous setState).
+   */
+  function appendMessage(msg: Message) {
+    setMessages((prev) => [...prev, msg]);
+  }
+
+  /**
+   * Append an agent message after a short delay so the live region sees a
+   * separate DOM mutation event from the preceding user message.
+   */
+  function appendAgentMessageDelayed(msg: Message) {
+    setTimeout(() => {
+      setMessages((prev) => [...prev, msg]);
+    }, AGENT_BUBBLE_DELAY_MS);
+  }
+
+  /**
+   * Schedule a focus restore after the browser has finished processing the
+   * current activation event. requestAnimationFrame is the right primitive
+   * here — `setTimeout(..., 0)` races the click handler on Safari iOS +
+   * VoiceOver and can re-assert focus to the just-clicked button.
+   */
+  function focusInputNextFrame() {
+    if (typeof window === "undefined") return;
+    if (typeof window.requestAnimationFrame !== "function") {
+      inputRef.current?.focus();
+      return;
+    }
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
   function handleSend() {
     if (!currentQuestion) return;
     const raw = inputValue.trim();
@@ -80,13 +136,18 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
     const userMsg: Message = { id: nextMsgId(), author: "user", content: raw };
     const result = parseAnswer(currentQuestion.id, raw, draft);
 
+    // 1. User bubble appears synchronously.
+    appendMessage(userMsg);
+
+    // 2. Agent bubble appears in a separate DOM mutation event so SR users
+    //    hear "You: <answer>" and the next agent message as distinct
+    //    announcements.
     if (!result.ok) {
-      // Same question stays active; append user bubble + clarification bubble.
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        { id: nextMsgId(), author: "agent", content: result.ask },
-      ]);
+      appendAgentMessageDelayed({
+        id: nextMsgId(),
+        author: "agent",
+        content: result.ask,
+      });
     } else {
       const newDraft: OnboardingDraft = { ...draft, ...result.fields };
       const newAnswered = new Set(answeredIds);
@@ -96,11 +157,13 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
       setAnsweredIds(newAnswered);
 
       if (next) {
-        setMessages((prev) => [
-          ...prev,
-          userMsg,
-          { id: nextMsgId(), author: "agent", content: next.prompt },
-        ]);
+        const totalAfterAdvance = totalQuestionsForDraft(newDraft);
+        appendAgentMessageDelayed({
+          id: nextMsgId(),
+          author: "agent",
+          content: next.prompt,
+          srPrefix: `Question ${newAnswered.size + 1} of ${totalAfterAdvance}`,
+        });
       } else {
         // Last question just answered — validate the draft and call
         // onComplete. The per-question parsers should have built a
@@ -113,7 +176,7 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
             ? "Got it — putting your profile together…"
             : "Hmm, something looks off in your answers. Mind starting over?",
         };
-        setMessages((prev) => [...prev, userMsg, finalising]);
+        appendAgentMessageDelayed(finalising);
         if (validated.success) {
           setIsFinalising(true);
           onComplete?.(validated.data);
@@ -123,14 +186,13 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
 
     setInputValue("");
     setVoiceError(null);
-    // Keep focus in the input for fast next-question entry on keyboard users.
-    setTimeout(() => inputRef.current?.focus(), 0);
+    focusInputNextFrame();
   }
 
   function handleChipSelect(chip: string) {
     setInputValue(chip);
     setVoiceError(null);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    focusInputNextFrame();
   }
 
   function handleTranscript(text: string) {
@@ -139,27 +201,29 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
     // before sending.
     setInputValue((prev) => (prev.trim().length > 0 ? `${prev.trim()} ${text}` : text));
     setVoiceError(null);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    focusInputNextFrame();
   }
 
   function handleVoiceError(message: string) {
     setVoiceError(message);
   }
 
-  // The 16th question's accessible name is the prompt text. We pass that
-  // straight into ChatInput as the `ariaLabel` to keep accessible name
-  // and visible context aligned (WCAG 2.5.3, label-in-name).
+  // The textarea's accessible name is the visible question prompt — keeps
+  // accessible name and visible context aligned (WCAG 2.5.3 label-in-name).
   const inputAriaLabel = currentQuestion?.prompt ?? "Onboarding answer";
   const inputPlaceholder = currentQuestion?.optional
     ? "Type, skip, or use voice"
     : "Type or use voice";
 
+  // Inner h-full (not h-svh) — the parent <main> already pins the page to
+  // h-svh. Stacking two h-svh containers is redundant and risks fragility
+  // with iOS safe-area + viewport-fit.
   return (
-    <div className="flex h-svh flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       <ChatThread messages={messages} isAgentTyping={isFinalising} />
 
       {currentQuestion ? (
-        <div className="border-t-0">
+        <div>
           <AnswerChips
             chips={currentQuestion.chips}
             onSelect={handleChipSelect}
@@ -168,7 +232,8 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
 
           {voiceError ? (
             <p
-              role="alert"
+              role="status"
+              aria-live="polite"
               className="mx-auto max-w-2xl px-4 pb-1 text-xs text-destructive"
             >
               {voiceError}

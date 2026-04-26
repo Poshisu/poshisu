@@ -224,4 +224,27 @@ describe("OnboardingChatFlow", () => {
     // Send button is disabled when input is empty — confirm that.
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
   });
+
+  it("includes a screen-reader-only 'Question N of M' prefix on each question prompt", async () => {
+    render(<OnboardingChatFlow firstName="Aarti" />);
+    await waitForBubble(/What should I call you/);
+
+    // M = 15 for a non-weight-loss goal flow (16 - 1 conditional skipped).
+    // For the very first question we don't yet know the goal, so M reflects
+    // "what would fire given an empty draft" — also 15 (skipIf returns true
+    // when primary_goal is undefined ≠ lose/gain).
+    expect(screen.getByText(/Question 1 of 15/)).toBeInTheDocument();
+  });
+
+  it("advances the SR progress prefix each time a question is answered", async () => {
+    render(<OnboardingChatFlow firstName="Aarti" />);
+    await waitForBubble(/What should I call you/);
+
+    answer("Aarti");
+    await waitForBubble(/How old are you/);
+
+    // After answering the first question, the second question's bubble
+    // should carry the "Question 2 of 15" prefix.
+    expect(screen.getByText(/Question 2 of 15/)).toBeInTheDocument();
+  });
 });

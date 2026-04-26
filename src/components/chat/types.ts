@@ -14,6 +14,12 @@ export interface Message {
   author: MessageAuthor;
   /** Plain text content. Preserves explicit newlines (`\n`). */
   content: string;
+  /**
+   * Optional context-only prefix announced before the author label to
+   * screen readers. Used by the onboarding flow to inject "Question 3 of 6"
+   * progress (WCAG 4.1.3 Status Messages). Sighted users never see this.
+   */
+  srPrefix?: string;
   /** Optional timestamp. Phase 1 doesn't render this; reserved for date dividers in Phase 2. */
   timestamp?: Date;
 }
