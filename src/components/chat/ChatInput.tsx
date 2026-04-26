@@ -16,7 +16,13 @@ interface ChatInputProps {
   placeholder?: string;
   /** When true, the input and send button are non-interactive. */
   disabled?: boolean;
-  /** Visible label tying the textarea to a `<label>` for screen readers. Required for a11y. */
+  /**
+   * Accessible name for the textarea. To stay compliant with WCAG 2.5.3
+   * (label-in-name), this should match the visible question prompt
+   * displayed in the most recent agent bubble — e.g. if the question is
+   * "How old are you?", pass `ariaLabel="How old are you?"`. Diverging
+   * the spoken name from the visible prompt confuses voice-control users.
+   */
   ariaLabel: string;
   /**
    * Imperative ref — lets the parent move focus into the input after a

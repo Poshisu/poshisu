@@ -25,7 +25,8 @@ describe("ChatThread", () => {
 
   it("renders all message contents in order", () => {
     render(<ChatThread messages={messages} />);
-    const text = screen.getByRole("list").textContent ?? "";
+    // role="log" on the <ol> overrides the implicit "list" role.
+    const text = screen.getByRole("log", { name: /conversation/i }).textContent ?? "";
     const callIdx = text.indexOf("What should I call you");
     const aartiIdx = text.indexOf("Aarti");
     const howOldIdx = text.indexOf("How old are you");

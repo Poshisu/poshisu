@@ -44,20 +44,26 @@ export function ChatThread({ messages, isAgentTyping = false }: ChatThreadProps)
 
     const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
     if (distanceFromBottom <= STICKY_BOTTOM_THRESHOLD_PX) {
-      end.scrollIntoView({ behavior: "smooth", block: "end" });
+      // CSS prefers-reduced-motion zeroes out CSS animations but does NOT
+      // override the JS scrollIntoView API in every browser. Read the media
+      // query directly and force `behavior: "auto"` for reduced-motion users.
+      const reducedMotion =
+        typeof window !== "undefined" && window.matchMedia
+          ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          : false;
+      end.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "end" });
     }
   }, [messages.length, isAgentTyping]);
 
   return (
-    <div
-      ref={containerRef}
-      role="log"
-      aria-live="polite"
-      aria-atomic="false"
-      aria-label="Conversation"
-      className="flex-1 overflow-y-auto px-4 py-6"
-    >
-      <ol className="mx-auto flex w-full max-w-2xl flex-col gap-3">
+    <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-6">
+      <ol
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="Conversation"
+        className="mx-auto flex w-full max-w-2xl flex-col gap-3"
+      >
         {messages.map((message) => (
           <li key={message.id}>
             <MessageBubble message={message} />

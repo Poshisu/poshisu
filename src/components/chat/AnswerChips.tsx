@@ -31,7 +31,7 @@ interface AnswerChipsProps {
  *     announce the cluster as "Suggested answers, 4 buttons".
  *   - Each chip is a real `<button type="button">` — keyboard accessible
  *     by default, no mouse-only handlers.
- *   - Tap target is at least 36px tall (`h-9`) — comfortable on mobile
+ *   - Tap target is 44px tall (`h-11`) — meets WCAG 2.5.5 AA on mobile
  *     even when chips are tightly packed.
  *   - `whitespace-nowrap` on each chip keeps the label on a single line so
  *     vertical alignment in the scroll row stays consistent.
@@ -39,12 +39,19 @@ interface AnswerChipsProps {
 export function AnswerChips({ chips, onSelect, defaultChip, ariaLabel = "Suggested answers", disabled = false }: AnswerChipsProps) {
   if (chips.length === 0) return null;
 
+  const disabledReasonId = "answer-chips-disabled-reason";
+
   return (
     <div
       role="group"
       aria-label={ariaLabel}
       className="overflow-x-auto px-4 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
+      {disabled ? (
+        <span id={disabledReasonId} className="sr-only">
+          Suggestions unavailable while the coach is responding.
+        </span>
+      ) : null}
       <div className="mx-auto flex w-fit max-w-2xl items-center gap-2">
         {chips.map((chip) => {
           const isDefault = chip === defaultChip;
@@ -54,8 +61,9 @@ export function AnswerChips({ chips, onSelect, defaultChip, ariaLabel = "Suggest
               type="button"
               onClick={() => onSelect(chip)}
               disabled={disabled}
+              aria-describedby={disabled ? disabledReasonId : undefined}
               className={cn(
-                "inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors",
+                "inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-sm transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 isDefault
