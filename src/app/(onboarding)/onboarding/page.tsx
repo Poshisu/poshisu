@@ -30,14 +30,14 @@ export default async function OnboardingPage() {
       <div className="max-w-md space-y-4 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Welcome to Nourish, {firstName}.</h1>
         <p className="text-muted-foreground">
-          Your coach learns about you from the way you eat and what you share. The more natural you are, the more useful
-          it gets. Start by telling it about your last meal, or ask what to eat next.
+          Six quick questions and your coach is calibrated. About four minutes — you can answer in
+          chat, tap a suggestion, or talk it out.
         </p>
         <Link
-          href="/chat"
+          href="/onboarding/chat"
           className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          Open chat
+          Get started
           <span aria-hidden="true" className="ml-2">
             &rarr;
           </span>
