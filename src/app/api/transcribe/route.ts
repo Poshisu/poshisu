@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse, type NextRequest } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
@@ -54,7 +55,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Body validation
+  // 3. Pre-check Content-Length BEFORE buffering the body via formData().
+  // Without this, formData() reads the entire multipart payload into memory
+  // before we get a chance to reject it — a hostile actor sending many 10 MB
+  // requests in parallel would cause memory pressure even when each one is
+  // ultimately rejected.
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > MAX_AUDIO_BYTES) {
+      return NextResponse.json({ error: "Audio file too large (10 MB max)" }, { status: 413 });
+    }
+  }
+
+  // 4. Body validation
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -72,7 +86,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Audio file too large (10 MB max)" }, { status: 413 });
   }
 
-  // 4. Transcribe
+  // 5. Transcribe
   try {
     const result = await transcribeAudio(audio);
     return NextResponse.json({
@@ -83,7 +97,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (err instanceof TranscriptionError) {
       return NextResponse.json({ error: err.userMessage }, { status: err.statusCode });
     }
-    console.error("[/api/transcribe] unexpected error", err);
+    // Log only the message string to runtime logs — full error objects can
+    // contain stack traces, ElevenLabs response bodies, or internal hostnames
+    // that don't belong in shared logs. Sentry gets the structured exception
+    // separately (and is the right surface for stack traces).
+    console.error(
+      "[/api/transcribe] unexpected error",
+      err instanceof Error ? err.message : String(err),
+    );
+    Sentry.captureException(err);
     return NextResponse.json(
       { error: "Couldn't transcribe — please try again, or type instead." },
       { status: 500 },

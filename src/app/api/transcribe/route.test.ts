@@ -32,8 +32,11 @@ import { POST } from "./route";
  * FormData directly. Avoids the Node fetch + multipart round-trip, which
  * isn't reliable in the jsdom / undici test environment for our purposes.
  */
-function makeRequest(fd: FormData): Request {
+function makeRequest(fd: FormData, contentLength?: number): Request {
+  const headers = new Headers();
+  if (contentLength !== undefined) headers.set("content-length", String(contentLength));
   return {
+    headers,
     formData: async () => fd,
   } as unknown as Request;
 }
@@ -46,6 +49,7 @@ function audioFormData(audio: Blob): FormData {
 
 function brokenRequest(): Request {
   return {
+    headers: new Headers(),
     formData: async () => {
       throw new Error("invalid body");
     },
@@ -127,6 +131,16 @@ describe("POST /api/transcribe", () => {
   it("returns 413 when audio exceeds 10MB", async () => {
     const big = new Blob([new Uint8Array(11 * 1024 * 1024)], { type: "audio/webm" });
     const res = await POST(makeRequest(audioFormData(big)) as never);
+
+    expect(res.status).toBe(413);
+    const body = await res.json();
+    expect(body.error).toMatch(/too large/i);
+  });
+
+  it("returns 413 immediately on Content-Length over the cap (without buffering body)", async () => {
+    // Empty FormData — the size check on the headers fires before formData()
+    // is read at all, so no audio payload is required to trigger this path.
+    const res = await POST(makeRequest(new FormData(), 11 * 1024 * 1024) as never);
 
     expect(res.status).toBe(413);
     const body = await res.json();

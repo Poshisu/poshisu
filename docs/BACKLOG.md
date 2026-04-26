@@ -153,6 +153,23 @@
   - Phase: 1 (after sub-task 1) or 2
   - Why: we now have a real `callAgent`. The guide should document the contract, the caching flag, the trace logging, and how to add a new agent.
 
+### Voice / transcription
+
+- **Chunked-encoding size enforcement on `/api/transcribe`**
+  - Phase: 2 (when chat surface lands and reuses the route)
+  - Why: the Content-Length pre-check (added in commit applying security review on sub-task 4) handles the well-behaved case. A hostile client using `Transfer-Encoding: chunked` with no Content-Length would still reach the post-buffer 10 MB check, which means the body buffers up to 10 MB before being rejected. App Router doesn't expose a body-size limit primitive yet (Pages Router's `api.bodyParser.sizeLimit` doesn't apply).
+  - Action: stream-read the request body with a running byte counter that aborts at 10 MB, instead of `await request.formData()`.
+
+- **ElevenLabs DPA / data-residency review**
+  - Phase: Pre-launch
+  - Why: voice payloads go to ElevenLabs servers. Under DPDP, we should confirm the DPA covers Indian health-related audio, that ElevenLabs doesn't retain transcripts, and that data-residency is acceptable for our user base.
+  - Action: lawyer review of ElevenLabs DPA + Privacy Policy; decide whether to switch to a regional STT provider (Sarvam.ai, AI4Bharat) for production.
+
+- **Keyterm / vocabulary biasing for Indian food terms**
+  - Phase: 2+
+  - Why: Scribe v1 mistranscribes Indian-specific terms (sambar, bhindi, paneer, chhole) more often than English-default phonetics. A keyterm prompt would bias the model.
+  - Action: when ElevenLabs publishes a stable keyword API for Scribe, wire it through `transcribeAudio` opts.
+
 ### Health / clinical
 
 - **RD review of `prompts/agents/SAFETY_RULES.md`**

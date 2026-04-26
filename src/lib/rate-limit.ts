@@ -20,27 +20,48 @@ export interface CheckRateLimitArgs {
 }
 
 /**
+ * Whether to fail OPEN (allow) when the rate-limit machinery is broken.
+ *
+ * For cost-sensitive endpoints (LLM, voice transcription) failing open is
+ * a cost-exhaustion risk: a hostile authenticated user could drain quota
+ * if the limiter is offline. We default to fail-CLOSED for safety; PR
+ * previews and local dev can opt in via `ALLOW_RATE_LIMIT_FAIL_OPEN=true`.
+ *
+ * Production should never set this flag.
+ */
+function shouldFailOpen(): boolean {
+  return process.env.ALLOW_RATE_LIMIT_FAIL_OPEN === "true";
+}
+
+function fallbackResult(args: CheckRateLimitArgs): RateLimitResult {
+  return {
+    allowed: shouldFailOpen(),
+    currentCount: 0,
+    resetAt: new Date(Date.now() + args.windowMinutes * 60_000),
+  };
+}
+
+/**
  * Check + increment the rate limit for a (user, bucket) pair.
  *
  * Atomic: defers to the `increment_rate_limit` Postgres RPC defined in
- * migration 0005, which inserts or increments under a unique
- * (user_id, bucket, window_start) constraint and returns the post-increment
- * count. No race conditions.
+ * migration 0005 (hardened with `SET search_path` in 0009), which inserts
+ * or increments under a unique (user_id, bucket, window_start) constraint
+ * and returns the post-increment count. No race conditions.
  *
- * Fails open: if the admin client is unavailable (e.g. preview without
- * the service-role key) or the RPC errors, we log a warning and allow
- * the request. Refusing every request because the rate limiter is broken
- * would be worse than the transient over-rate risk.
+ * Failure mode is configurable: by default we fail CLOSED (deny) when the
+ * admin client is unavailable or the RPC errors, to prevent cost
+ * exhaustion through a broken limiter. Preview/dev can opt in to
+ * fail-open via `ALLOW_RATE_LIMIT_FAIL_OPEN=true`.
  */
 export async function checkRateLimit(args: CheckRateLimitArgs): Promise<RateLimitResult> {
   const admin = getAdminClient();
   if (!admin) {
-    console.warn("[rate-limit] admin client unavailable — failing open", { bucket: args.bucket });
-    return {
-      allowed: true,
-      currentCount: 0,
-      resetAt: new Date(Date.now() + args.windowMinutes * 60_000),
-    };
+    console.warn("[rate-limit] admin client unavailable", {
+      bucket: args.bucket,
+      mode: shouldFailOpen() ? "fail-open" : "fail-closed",
+    });
+    return fallbackResult(args);
   }
 
   // The RPC return type isn't yet in the generated types/database.ts (the
@@ -54,26 +75,22 @@ export async function checkRateLimit(args: CheckRateLimitArgs): Promise<RateLimi
   } as never);
 
   if (error) {
-    console.warn("[rate-limit] RPC failed — failing open", {
+    console.warn("[rate-limit] RPC failed", {
       bucket: args.bucket,
       error: error.message,
+      mode: shouldFailOpen() ? "fail-open" : "fail-closed",
     });
-    return {
-      allowed: true,
-      currentCount: 0,
-      resetAt: new Date(Date.now() + args.windowMinutes * 60_000),
-    };
+    return fallbackResult(args);
   }
 
   const rows = data as Array<{ allowed: boolean; current_count: number; reset_at: string }> | null;
   const row = rows?.[0];
   if (!row) {
-    console.warn("[rate-limit] RPC returned no row — failing open", { bucket: args.bucket });
-    return {
-      allowed: true,
-      currentCount: 0,
-      resetAt: new Date(Date.now() + args.windowMinutes * 60_000),
-    };
+    console.warn("[rate-limit] RPC returned no row", {
+      bucket: args.bucket,
+      mode: shouldFailOpen() ? "fail-open" : "fail-closed",
+    });
+    return fallbackResult(args);
   }
 
   return {
