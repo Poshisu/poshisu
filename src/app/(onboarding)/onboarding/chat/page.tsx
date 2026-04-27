@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { OnboardingChatFlow } from "@/components/onboarding/OnboardingChatFlow";
 import { createClient } from "@/lib/supabase/server";
+import { submitOnboarding } from "../../actions";
 
 export const metadata: Metadata = {
   title: "Getting started",
@@ -29,7 +30,7 @@ export default async function OnboardingChatPage() {
       tabIndex={-1}
       className="flex h-svh flex-col focus-visible:outline-none"
     >
-      <OnboardingChatFlow firstName={firstName} />
+      <OnboardingChatFlow firstName={firstName} onComplete={submitOnboarding} />
     </main>
   );
 }

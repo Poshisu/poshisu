@@ -25,11 +25,29 @@ interface InputHandle {
   focus: () => void;
 }
 
+/**
+ * Result the parent's onComplete handler can return:
+ *   - undefined / { ok: true } — success. The handler has either already
+ *     redirected (server action) or is fire-and-forget. We never see the
+ *     { ok: true } branch in practice because the redirect throws first.
+ *   - { ok: false, error } — show the error in the chat and let the user
+ *     try again. The flow drops out of the "putting together" state and
+ *     appends an error bubble.
+ *   - throw — server action redirected (NEXT_REDIRECT control-flow error).
+ *     Propagates naturally; the user navigates away.
+ */
+export type OnboardingCompleteResult = void | { ok: true } | { ok: false; error: string };
+
 export interface OnboardingChatFlowProps {
   /** Personalises the opening message. Falls back to a generic greeting if absent. */
   firstName?: string;
-  /** Called once with the validated, complete answers when every question is answered. */
-  onComplete?: (answers: OnboardingAnswers) => void;
+  /**
+   * Called once with the validated, complete answers when every question
+   * is answered. May be a server action (redirects on success). Errors
+   * surfaced via `{ ok: false, error }` are rendered inline as an agent
+   * bubble so the user can read them in context.
+   */
+  onComplete?: (answers: OnboardingAnswers) => Promise<OnboardingCompleteResult> | OnboardingCompleteResult;
 }
 
 /**
@@ -179,7 +197,32 @@ export function OnboardingChatFlow({ firstName, onComplete }: OnboardingChatFlow
         appendAgentMessageDelayed(finalising);
         if (validated.success) {
           setIsFinalising(true);
-          onComplete?.(validated.data);
+          // Fire onComplete and surface any returned error inline. A
+          // server action that redirects on success will throw a
+          // NEXT_REDIRECT error here — the framework handles the navigation,
+          // so we don't need to catch it.
+          void Promise.resolve(onComplete?.(validated.data))
+            .then((result) => {
+              if (result && "ok" in result && result.ok === false) {
+                setIsFinalising(false);
+                appendAgentMessageDelayed({
+                  id: nextMsgId(),
+                  author: "agent",
+                  content: `${result.error} You can also tap Send again to retry.`,
+                });
+              }
+            })
+            .catch(() => {
+              // Re-thrown errors that aren't NEXT_REDIRECT (those are
+              // intercepted upstream) are unexpected. Reset the spinner
+              // and show a generic message.
+              setIsFinalising(false);
+              appendAgentMessageDelayed({
+                id: nextMsgId(),
+                author: "agent",
+                content: "Something went wrong saving your profile. Please tap Send again to retry.",
+              });
+            });
         }
       }
     }
