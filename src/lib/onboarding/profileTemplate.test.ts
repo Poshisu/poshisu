@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProfileMarkdown, isValidProfileMarkdown } from "./profileTemplate";
+import { buildProfileMarkdown, isValidProfileMarkdown, profilePreservesSafety } from "./profileTemplate";
 import type { OnboardingAnswers } from "./types";
 
 const baseAnswers: OnboardingAnswers = {
@@ -159,5 +159,53 @@ describe("isValidProfileMarkdown", () => {
   it("rejects markdown with no profile title", () => {
     const md = buildProfileMarkdown(baseAnswers).replace(/^# Profile for[^\n]+\n/, "");
     expect(isValidProfileMarkdown(md)).toBe(false);
+  });
+});
+
+describe("profilePreservesSafety", () => {
+  it("accepts the template output for a user with allergies and conditions", () => {
+    expect(profilePreservesSafety(buildProfileMarkdown(baseAnswers), baseAnswers)).toBe(true);
+  });
+
+  it("accepts a profile when the user has no allergies and no conditions", () => {
+    const noConcerns = { ...baseAnswers, allergies: [], conditions: [] } as OnboardingAnswers;
+    expect(profilePreservesSafety(buildProfileMarkdown(noConcerns), noConcerns)).toBe(true);
+  });
+
+  it("rejects a profile that strips the allergy enforcement line", () => {
+    const md = buildProfileMarkdown(baseAnswers).replace(
+      /\*\*Allergy enforcement:\*\* Hard\.[^\n]*/,
+      "**Allergy enforcement:** Soft. Treat as a preference.",
+    );
+    expect(profilePreservesSafety(md, baseAnswers)).toBe(false);
+  });
+
+  it("rejects a profile that drops a declared allergy from the notes", () => {
+    // Strip the allergy label from the notes section only.
+    const md = buildProfileMarkdown(baseAnswers).replace(/Peanuts/g, "Other_Allergen");
+    expect(profilePreservesSafety(md, baseAnswers)).toBe(false);
+  });
+
+  it("rejects a profile that drops a declared condition from the notes", () => {
+    const md = buildProfileMarkdown(baseAnswers).replace(/PCOS/g, "Other_Condition");
+    expect(profilePreservesSafety(md, baseAnswers)).toBe(false);
+  });
+
+  it("rejects markdown with no Notes section at all", () => {
+    const md = buildProfileMarkdown(baseAnswers).replace(/## Notes for the agents[\s\S]*$/m, "");
+    expect(profilePreservesSafety(md, baseAnswers)).toBe(false);
+  });
+
+  it("requires custom (other) allergies to appear in the notes", () => {
+    const withOther = {
+      ...baseAnswers,
+      allergies: ["peanuts", "other"] as const,
+      allergies_other: ["mustard"],
+    } as OnboardingAnswers;
+    const md = buildProfileMarkdown(withOther);
+    expect(profilePreservesSafety(md, withOther)).toBe(true);
+
+    const stripped = md.replace(/mustard/g, "");
+    expect(profilePreservesSafety(stripped, withOther)).toBe(false);
   });
 });

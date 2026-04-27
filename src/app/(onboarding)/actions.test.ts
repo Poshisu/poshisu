@@ -1,18 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getUserMock, generateProfileMock, adminFromMock, adminUpdateMock, adminEqMock, adminUpsertMock } =
-  vi.hoisted(() => ({
-    getUserMock: vi.fn(),
-    generateProfileMock: vi.fn(),
-    adminFromMock: vi.fn(),
-    adminUpdateMock: vi.fn(),
-    adminEqMock: vi.fn(),
-    adminUpsertMock: vi.fn(),
-  }));
+const {
+  getUserMock,
+  serverSelectMock,
+  serverEqMock,
+  serverSingleMock,
+  serverFromMock,
+  generateProfileMock,
+  rateLimitMock,
+  adminFromMock,
+  adminUpdateMock,
+  adminEqMock,
+  adminUpsertMock,
+} = vi.hoisted(() => ({
+  getUserMock: vi.fn(),
+  serverSelectMock: vi.fn(),
+  serverEqMock: vi.fn(),
+  serverSingleMock: vi.fn(),
+  serverFromMock: vi.fn(),
+  generateProfileMock: vi.fn(),
+  rateLimitMock: vi.fn(),
+  adminFromMock: vi.fn(),
+  adminUpdateMock: vi.fn(),
+  adminEqMock: vi.fn(),
+  adminUpsertMock: vi.fn(),
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: getUserMock },
+    from: serverFromMock,
   })),
 }));
 
@@ -22,10 +39,15 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: rateLimitMock,
+}));
+
 vi.mock("@/lib/agents/onboarding-parser", () => ({
   generateProfileViaAgent: generateProfileMock,
 }));
 
+import { AgentError } from "@/lib/claude/types";
 import { buildProfileMarkdown } from "@/lib/onboarding/profileTemplate";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -50,11 +72,26 @@ const baseAnswers: OnboardingAnswers = {
 
 const validMd = buildProfileMarkdown(baseAnswers);
 
-function setupAdminChain({ updateError = null, upsertError = null }: { updateError?: { message: string } | null; upsertError?: { message: string } | null } = {}) {
-  // users.update(...).eq(...) chain
+const ALLOWED_LIMIT = {
+  allowed: true,
+  currentCount: 1,
+  resetAt: new Date(Date.now() + 60 * 60_000),
+};
+
+function setupServerChain({ existingOnboardedAt = null }: { existingOnboardedAt?: string | null } = {}) {
+  // users.select("onboarded_at").eq("id", ...).single<...>() chain.
+  serverSingleMock.mockResolvedValue({ data: { onboarded_at: existingOnboardedAt }, error: null });
+  serverEqMock.mockReturnValue({ single: serverSingleMock });
+  serverSelectMock.mockReturnValue({ eq: serverEqMock });
+  serverFromMock.mockReturnValue({ select: serverSelectMock });
+}
+
+function setupAdminChain({
+  updateError = null,
+  upsertError = null,
+}: { updateError?: { message: string } | null; upsertError?: { message: string } | null } = {}) {
   adminEqMock.mockResolvedValue({ error: updateError });
   adminUpdateMock.mockReturnValue({ eq: adminEqMock });
-  // memories.upsert(...)
   adminUpsertMock.mockResolvedValue({ error: upsertError });
   adminFromMock.mockImplementation((table: string) => {
     if (table === "users") return { update: adminUpdateMock };
@@ -73,12 +110,20 @@ function isRedirectError(err: unknown): boolean {
 describe("submitOnboarding", () => {
   beforeEach(() => {
     getUserMock.mockReset();
+    serverSelectMock.mockReset();
+    serverEqMock.mockReset();
+    serverSingleMock.mockReset();
+    serverFromMock.mockReset();
     generateProfileMock.mockReset();
+    rateLimitMock.mockReset();
     adminFromMock.mockReset();
     adminUpdateMock.mockReset();
     adminEqMock.mockReset();
     adminUpsertMock.mockReset();
+
     getUserMock.mockResolvedValue({ data: { user: { id: "u-1" } }, error: null });
+    setupServerChain();
+    rateLimitMock.mockResolvedValue(ALLOWED_LIMIT);
     generateProfileMock.mockResolvedValue(validMd);
     setupAdminChain();
   });
@@ -95,7 +140,6 @@ describe("submitOnboarding", () => {
       caught = err;
     }
     expect(isRedirectError(caught)).toBe(true);
-    // The redirect digest encodes the destination path.
     expect((caught as { digest: string }).digest).toContain("/onboarding/review");
   });
 
@@ -114,14 +158,33 @@ describe("submitOnboarding", () => {
       await submitOnboarding(baseAnswers);
     } catch {}
 
+    // Logged code only, NOT the raw error message — finding #5.
     expect(consoleSpy).toHaveBeenCalledWith(
       "[submitOnboarding] parser agent failed, using template fallback",
-      expect.objectContaining({ error: "model overloaded" }),
+      expect.objectContaining({ code: "non_agent_error" }),
     );
-    // The upsert payload should contain template-shaped markdown.
+    expect(consoleSpy.mock.calls[0][1]).not.toHaveProperty("error");
+
     const upsertedRows = adminUpsertMock.mock.calls[0][0] as Array<{ layer: string; content: string }>;
     const profileRow = upsertedRows.find((r) => r.layer === "profile");
     expect(profileRow?.content).toMatch(/^# Profile for Aarti/);
+  });
+
+  it("logs only the AgentError code, not the message, when the agent fails with AgentError", async () => {
+    generateProfileMock.mockRejectedValueOnce(new AgentError("rate_limited", "claude said wait 30s"));
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    try {
+      await submitOnboarding(baseAnswers);
+    } catch {}
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[submitOnboarding] parser agent failed, using template fallback",
+      { userId: "u-1", code: "rate_limited" },
+    );
+    // The raw provider message must never reach runtime logs.
+    const loggedPayload = consoleSpy.mock.calls[0][1] as Record<string, unknown>;
+    expect(JSON.stringify(loggedPayload)).not.toContain("claude said wait 30s");
   });
 
   it("writes display_name, estimation_preference, onboarding_answers, onboarded_at to users", async () => {
@@ -142,7 +205,12 @@ describe("submitOnboarding", () => {
       await submitOnboarding(baseAnswers);
     } catch {}
 
-    const upsertedRows = adminUpsertMock.mock.calls[0][0] as Array<{ user_id: string; layer: string; key: string; content: string }>;
+    const upsertedRows = adminUpsertMock.mock.calls[0][0] as Array<{
+      user_id: string;
+      layer: string;
+      key: string;
+      content: string;
+    }>;
     expect(upsertedRows).toHaveLength(2);
     const profile = upsertedRows.find((r) => r.layer === "profile");
     const patterns = upsertedRows.find((r) => r.layer === "patterns");
@@ -152,12 +220,55 @@ describe("submitOnboarding", () => {
     expect(adminUpsertMock.mock.calls[0][1]).toEqual({ onConflict: "user_id,layer,key" });
   });
 
+  it("redirects without re-running the agent if the user already onboarded (idempotency)", async () => {
+    setupServerChain({ existingOnboardedAt: "2026-04-26T10:00:00Z" });
+
+    let caught: unknown;
+    try {
+      await submitOnboarding(baseAnswers);
+    } catch (err) {
+      caught = err;
+    }
+    expect(isRedirectError(caught)).toBe(true);
+    expect(generateProfileMock).not.toHaveBeenCalled();
+    expect(adminUpdateMock).not.toHaveBeenCalled();
+    expect(adminUpsertMock).not.toHaveBeenCalled();
+    expect(rateLimitMock).not.toHaveBeenCalled();
+  });
+
+  it("returns a rate-limit error when checkRateLimit denies the request", async () => {
+    rateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      currentCount: 6,
+      resetAt: new Date(Date.now() + 30 * 60_000),
+    });
+
+    const result = await submitOnboarding(baseAnswers);
+    expect(result).toEqual({ ok: false, error: expect.stringMatching(/too many attempts/i) });
+    expect(generateProfileMock).not.toHaveBeenCalled();
+    expect(adminUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("calls checkRateLimit with the onboarding bucket and 5/hr cap", async () => {
+    try {
+      await submitOnboarding(baseAnswers);
+    } catch {}
+
+    expect(rateLimitMock).toHaveBeenCalledWith({
+      userId: "u-1",
+      bucket: "onboarding:submit",
+      windowMinutes: 60,
+      limit: 5,
+    });
+  });
+
   it("returns a 'session expired' error when not authenticated", async () => {
     getUserMock.mockResolvedValueOnce({ data: { user: null }, error: null });
 
     const result = await submitOnboarding(baseAnswers);
     expect(result).toEqual({ ok: false, error: expect.stringMatching(/session expired/i) });
     expect(generateProfileMock).not.toHaveBeenCalled();
+    expect(rateLimitMock).not.toHaveBeenCalled();
   });
 
   it("returns a generic error when the answers fail Zod validation", async () => {

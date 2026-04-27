@@ -66,9 +66,14 @@ describe("generateProfileViaAgent", () => {
     expect(args.cacheSystem).toBe(true);
     expect(args.userId).toBe("u-42");
     expect(args.intent).toBe("update_profile");
-    // The user message must be the serialised answers — the agent reads
-    // structured JSON, not natural language.
-    expect(JSON.parse(args.messages[0].content)).toMatchObject({ name: "Aarti" });
+    // The user message wraps the JSON in <onboarding_answers> delimiters
+    // so the model sees it as data, not as instructions. The JSON itself
+    // must contain the answers verbatim.
+    const content = args.messages[0].content as string;
+    expect(content.startsWith("<onboarding_answers>")).toBe(true);
+    expect(content.endsWith("</onboarding_answers>")).toBe(true);
+    const inner = content.match(/<onboarding_answers>\n([\s\S]+)\n<\/onboarding_answers>/)![1];
+    expect(JSON.parse(inner)).toMatchObject({ name: "Aarti" });
   });
 
   it("throws when the model returns no tool_use block", async () => {
@@ -126,6 +131,30 @@ describe("generateProfileViaAgent", () => {
 
     await expect(generateProfileViaAgent(baseAnswers, { userId: "u-1" })).rejects.toThrow(
       "model overloaded",
+    );
+  });
+
+  it("throws when the markdown structurally passes but strips a declared allergy", async () => {
+    // Take a valid template, then remove the peanut label from the notes
+    // section. Structural validator passes (all section headers present),
+    // but profilePreservesSafety should catch this and throw.
+    const tampered = validMarkdown.replace(/Peanuts/g, "Other_Allergen");
+    callAgentMock.mockResolvedValueOnce(callAgentResultWithTool({ profile_markdown: tampered }));
+
+    await expect(generateProfileViaAgent(baseAnswers, { userId: "u-1" })).rejects.toThrow(
+      /does not preserve declared safety constraints/,
+    );
+  });
+
+  it("throws when the markdown weakens the allergy enforcement to 'Soft'", async () => {
+    const tampered = validMarkdown.replace(
+      /\*\*Allergy enforcement:\*\* Hard\.[^\n]*/,
+      "**Allergy enforcement:** Soft. Treat as a preference.",
+    );
+    callAgentMock.mockResolvedValueOnce(callAgentResultWithTool({ profile_markdown: tampered }));
+
+    await expect(generateProfileViaAgent(baseAnswers, { userId: "u-1" })).rejects.toThrow(
+      /does not preserve declared safety constraints/,
     );
   });
 });

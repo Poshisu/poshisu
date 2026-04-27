@@ -170,6 +170,11 @@
   - Why: Scribe v1 mistranscribes Indian-specific terms (sambar, bhindi, paneer, chhole) more often than English-default phonetics. A keyterm prompt would bias the model.
   - Action: when ElevenLabs publishes a stable keyword API for Scribe, wire it through `transcribeAudio` opts.
 
+- **Timing-discrimination oracle on submitOnboarding**
+  - Phase: Pre-launch
+  - Why: agent path vs template-fallback path have measurably different latencies. A hostile authenticated user could observe response times to infer when Claude is rate-limited (account budget signal). Severity is low because the rate limit (5/hr) already caps the observation rate.
+  - Action: add a constant-time minimum to the fallback path (`await Promise.all([buildTemplate, sleep(MIN_RESPONSE_MS)])`) when we have real-user analytics showing the oracle is exploitable.
+
 ### Health / clinical
 
 - **RD review of `prompts/agents/SAFETY_RULES.md`**

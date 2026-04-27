@@ -178,6 +178,12 @@ function parseConditionsList(raw: string): { conditions: Condition[]; conditions
   return { conditions: matched };
 }
 
+// Per-element + array length caps for unmatched allergies. Mirrors the
+// Zod schema; enforces the bound at parse time so the user gets a sane
+// error early instead of a Zod failure in the server action.
+const MAX_OTHER_ALLERGIES = 10;
+const MAX_OTHER_ALLERGY_LEN = 100;
+
 function parseAllergiesList(raw: string): { allergies: Allergy[]; allergies_other?: string[] } {
   const tokens = splitMulti(raw);
   const matched: Allergy[] = [];
@@ -187,8 +193,11 @@ function parseAllergiesList(raw: string): { allergies: Allergy[]; allergies_othe
     if (m) {
       if (!matched.includes(m)) matched.push(m);
     } else if (!isSkip(t)) {
-      unmatched.push(t.trim());
+      // Cap each token's length defensively before it ever reaches the
+      // schema or the agent. A 4 MB "allergy" name shouldn't be possible.
+      unmatched.push(t.trim().slice(0, MAX_OTHER_ALLERGY_LEN));
     }
+    if (unmatched.length >= MAX_OTHER_ALLERGIES) break;
   }
   if (unmatched.length > 0) {
     return { allergies: [...matched, "other"], allergies_other: unmatched };
@@ -489,7 +498,10 @@ export const onboardingAnswersSchema = z.object({
   allergies: z.array(
     z.enum(["peanuts", "tree-nuts", "dairy", "eggs", "wheat", "soy", "shellfish", "fish", "sesame", "other"]),
   ),
-  allergies_other: z.array(z.string()).optional(),
+  // Each unmatched allergy is capped (per-element + array length) so a
+  // hostile client can't blow up the JSON we send to Claude or store
+  // unbounded data in users.onboarding_answers / profile.md.
+  allergies_other: z.array(z.string().max(100)).max(10).optional(),
   dislikes: z.string().max(300).optional(),
   meal_times: z.object({
     breakfast: z.string().regex(/^\d{2}:\d{2}$/).optional(),

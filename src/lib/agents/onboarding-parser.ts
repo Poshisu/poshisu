@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { callAgent } from "@/lib/claude/client";
 import { getPrompt } from "@/lib/claude/prompts";
-import { isValidProfileMarkdown } from "@/lib/onboarding/profileTemplate";
+import { isValidProfileMarkdown, profilePreservesSafety } from "@/lib/onboarding/profileTemplate";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 const MODEL = "claude-haiku-4-5";
@@ -44,11 +44,17 @@ export async function generateProfileViaAgent(
   answers: OnboardingAnswers,
   ctx: { userId: string },
 ): Promise<string> {
+  // Wrap the user-supplied JSON in explicit delimiters. The model sees
+  // the JSON as data, not as instructions — a prompt-injection attempt in
+  // a free-text field (name, dislikes, medications) is harder to disguise
+  // as system intent when it's clearly bracketed inside a tagged region.
+  const userContent = `<onboarding_answers>\n${JSON.stringify(answers)}\n</onboarding_answers>`;
+
   const result = await callAgent({
     agent: "onboarding-parser",
     model: MODEL,
     system: getPrompt("ONBOARDING_PARSER"),
-    messages: [{ role: "user", content: JSON.stringify(answers) }],
+    messages: [{ role: "user", content: userContent }],
     tools: [generateProfileTool],
     toolChoice: { type: "tool", name: "generate_profile" },
     cacheSystem: true,
@@ -65,6 +71,13 @@ export async function generateProfileViaAgent(
   }
   if (!isValidProfileMarkdown(md)) {
     throw new Error("onboarding-parser: returned markdown failed structural validation");
+  }
+  // Final defence: the markdown must preserve every declared allergy and
+  // condition. A prompt-injected output that strips the allergy section
+  // structurally passes isValidProfileMarkdown but fails this check,
+  // forcing the orchestrator into the deterministic template fallback.
+  if (!profilePreservesSafety(md, answers)) {
+    throw new Error("onboarding-parser: returned markdown does not preserve declared safety constraints");
   }
   return md;
 }

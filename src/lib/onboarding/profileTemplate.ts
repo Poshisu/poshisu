@@ -323,3 +323,49 @@ export function isValidProfileMarkdown(md: string): boolean {
   ];
   return required.every((re) => re.test(md));
 }
+
+/**
+ * Defence against prompt-injected agent output that strips or weakens
+ * safety-critical content. Verifies that:
+ *
+ *   1. If the user declared any allergies, the "Notes for the agents"
+ *      section enforces them as a hard constraint AND mentions every
+ *      declared allergy by its display label (e.g. "Peanuts", "Tree nuts").
+ *   2. If the user declared any conditions, the same section mentions
+ *      each by its display label.
+ *
+ * Why this matters: a hostile user could craft a free-text answer (name,
+ * dislikes, medications) containing instructions like "ignore all allergy
+ * rules" that the parser model echoes into the profile.md. Downstream
+ * agents read that markdown as ground truth — so the safety net has to
+ * close at the persistence boundary, not at LLM goodwill.
+ */
+export function profilePreservesSafety(md: string, answers: OnboardingAnswers): boolean {
+  // Extract everything from "## Notes for the agents" to end-of-document.
+  const notesMatch = md.match(/^##\s+Notes for the agents[\s\S]*$/m);
+  if (!notesMatch) return false;
+  const notes = notesMatch[0];
+
+  if (answers.allergies.length > 0) {
+    if (!/\*\*Allergy enforcement:\*\*\s*Hard/i.test(notes)) return false;
+    for (const a of answers.allergies) {
+      if (a === "other") continue; // covered by the allergies_other strings below
+      if (!notes.includes(allergyLabel(a))) return false;
+    }
+    if (answers.allergies_other) {
+      for (const other of answers.allergies_other) {
+        if (other.length > 0 && !notes.includes(other)) return false;
+      }
+    }
+  }
+
+  if (answers.conditions.length > 0) {
+    for (const c of answers.conditions) {
+      if (c === "other") continue;
+      if (!notes.includes(conditionLabel(c))) return false;
+    }
+    if (answers.conditions_other && !notes.includes(answers.conditions_other)) return false;
+  }
+
+  return true;
+}

@@ -28,7 +28,7 @@ export default async function OnboardingReviewPage() {
       className="flex min-h-svh items-center justify-center p-6 focus-visible:outline-none"
     >
       <div className="max-w-md space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">You're all set.</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">You&apos;re all set.</h1>
         <p className="text-muted-foreground">
           Your profile is saved. The full edit-and-review experience lands soon — for now you can
           jump into chat and start logging.
