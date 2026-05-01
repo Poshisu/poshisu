@@ -1,5 +1,11 @@
 # Nourish — System Architecture
 
+## Status badge legend
+
+- 🟢 **Implemented** — shipped in code today
+- 🟡 **In progress** — partially implemented or actively being built
+- 🔵 **Planned** — not implemented yet
+
 ## High-level diagram
 
 ```
@@ -44,7 +50,7 @@
               └──────────────────┘
 ```
 
-## Route implementation status
+## 🔵 Planned — Route layer
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
@@ -98,7 +104,7 @@ PWA chat component
   │ - Updates Today view via realtime subscription
 ```
 
-## Memory architecture (two-tier)
+## 🟡 In progress — Memory layer (two-tier)
 
 The memory system has two tiers: **structured data** (always available, zero tokens) and **compact text** (variable, budget-capped). This avoids the prompt-bloat problem of loading ever-growing markdown into every agent call.
 
@@ -171,7 +177,7 @@ This returns a single composed markdown blob, ~2-4k tokens, that goes into the s
 
 For long-range questions ("how was last month?"), the Coach agent additionally loads the relevant `weekly/` and `monthly/` rows.
 
-## Agent topology
+## 🔵 Planned — Agent topology
 
 Hub-and-spoke with a Router orchestrator. See `prompts/agents/` for the full system prompts.
 
@@ -219,7 +225,7 @@ For each user with nudges_enabled:
   - On user response: insert chat message, mark nudge ack'd
 ```
 
-## Security model
+## 🟡 In progress — Security
 
 - **Auth:** Supabase Auth with cookie-based SSR sessions. Middleware (`src/lib/supabase/middleware.ts`) refreshes tokens on every request.
 - **RLS:** Every user-scoped table has policies like `auth.uid() = user_id`. Service role key is **never** exposed to the client.
@@ -229,7 +235,7 @@ For each user with nudges_enabled:
 - **CSP headers:** Set in `next.config.ts`. No inline scripts in production.
 - **Audit log:** `agent_traces` records every LLM call with user_id, intent, model, tokens used, latency, and a redacted request/response.
 
-## Observability
+## 🟡 In progress — Observability
 
 - **Sentry** for errors and performance traces. Source maps uploaded via `@sentry/nextjs` plugin during build.
 - **PostHog** for product analytics. Key events: `signup`, `onboarding_complete`, `meal_logged`, `nudge_received`, `nudge_responded`, `recommendation_requested`.
