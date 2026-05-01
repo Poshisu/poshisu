@@ -112,6 +112,17 @@ This is a **complete project artifact set** — everything you need to build the
 | 5 — Nudges | 1 week | Proactive check-ins with Web Push |
 | 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
 
+
+## Route implementation status
+
+| Planned Route | Implemented? | File Path | Notes |
+|---|---|---|---|
+| `/api/chat` | No (planned) | _Not implemented yet_ | Planned chat orchestration API route for meal and coaching interactions. |
+| `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
+| `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
+| `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
+| `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
+
 ## Tech stack
 
 Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
