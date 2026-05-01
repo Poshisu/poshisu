@@ -11,3 +11,6 @@ Audited documentation for stale Next.js 15 references and updated `docs/BUILD_PL
 
 ## Known blockers
 - None currently identified.
+
+## Session update (2026-05-01 UTC)
+- Added `docs/TASKS.md` with strict table sections for phase snapshot, active tasks, dependencies/blockers, and recent 7-day git-log summaries.
