@@ -141,6 +141,18 @@ The original phase-by-phase build plan remains the source of truth for what come
 Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
 
 
+## Route implementation status
+
+| Planned Route | Implemented? | File Path | Notes |
+|---|---|---|---|
+| `/api/chat` | No (planned) | _Not implemented yet_ | Planned chat orchestration API route for meal and coaching interactions. |
+| `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
+| `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
+| `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
+| `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
+
+## Tech stack
+
 Runtime version policy: use `package.json` as the canonical source of truth for framework/runtime versions in docs (including Next.js and React).
 
 App Router compatibility note (Next.js 16): new work should follow App Router conventions and avoid relying on legacy Pages Router patterns unless explicitly required.

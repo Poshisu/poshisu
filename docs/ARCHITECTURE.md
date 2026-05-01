@@ -12,10 +12,10 @@
                      ┌─────────────────────────────────────┐
                      │       Next.js 16.2.4 (Vercel Edge)       │
                      │  Server Components + Route Handlers  │
-                     │  - /api/chat       (orchestrator)    │
-                     │  - /api/meals      (CRUD)            │
-                     │  - /api/memory     (read/edit)       │
-                     │  - /api/push       (subscribe)       │
+                     │  - /api/chat       (planned orchestrator)    │
+                     │  - /api/meals      (planned CRUD)            │
+                     │  - /api/memory     (planned read/edit)       │
+                     │  - /api/push       (planned subscribe)       │
                      └──┬───────────────┬─────────────┬─────┘
                         │               │             │
                         ▼               ▼             ▼
@@ -44,6 +44,16 @@
               └──────────────────┘
 ```
 
+## Route implementation status
+
+| Planned Route | Implemented? | File Path | Notes |
+|---|---|---|---|
+| `/api/chat` | No (planned) | _Not implemented yet_ | Planned orchestrator route for chat and meal logging flows. |
+| `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD route. |
+| `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit route. |
+| `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription route. |
+| `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
+
 ## Request flow: user logs a meal
 
 ```
@@ -53,9 +63,9 @@ User: [photo of thali]
 PWA chat component
   │ - Optimistically shows "Got it, analyzing…"
   │ - Uploads photo to Supabase Storage
-  │ - POST /api/chat { type: "meal_photo", photo_url, user_msg }
+  │ - (Planned) POST /api/chat { type: "meal_photo", photo_url, user_msg }
   ▼
-/api/chat route (Next.js Server)
+/api/chat route (planned, Next.js Server)
   │ - Auth check (Supabase session cookie)
   │ - Load minimal user context (id, profile_summary)
   │ - Call orchestrator.handleMessage(msg)
@@ -215,7 +225,7 @@ For each user with nudges_enabled:
 - **RLS:** Every user-scoped table has policies like `auth.uid() = user_id`. Service role key is **never** exposed to the client.
 - **Server-only secrets:** Anthropic key, ElevenLabs key, VAPID private key, Supabase service role — all in server environment, never bundled.
 - **Input validation:** Zod schemas at every API boundary.
-- **Rate limiting:** Per-user limits on `/api/chat` (60/hour), `/api/meals` (120/hour). Implemented with Supabase + a `rate_limits` table.
+- **Rate limiting:** Plan is per-user limits on `/api/chat` (60/hour), `/api/meals` (120/hour), backed by Supabase and a `rate_limits` table when these routes are implemented.
 - **CSP headers:** Set in `next.config.ts`. No inline scripts in production.
 - **Audit log:** `agent_traces` records every LLM call with user_id, intent, model, tokens used, latency, and a redacted request/response.
 
