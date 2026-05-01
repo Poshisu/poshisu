@@ -62,135 +62,65 @@ We use three Claude tiers. Route aggressively to keep costs sane.
 
 ## Project structure
 
+### Current (implemented)
+
+The tree below reflects what currently exists in this repository.
+
 ```
-nourish/
-├── CLAUDE.md                         # This file
-├── README.md                         # Public-facing project overview
-├── package.json
+.
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── components.json
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── BUILD_PLAN.md
+│   ├── COSTS.md
+│   ├── INTEGRATIONS.md
+│   ├── ONBOARDING_FLOW.md
+│   ├── PRD.md
+│   └── PROMPTS_GUIDE.md
+├── eslint.config.mjs
 ├── next.config.ts
-├── tsconfig.json
-├── tailwind.config.ts
-├── postcss.config.mjs
+├── package.json
 ├── playwright.config.ts
-├── vitest.config.ts
-├── .env.local.example
-├── .gitignore
-│
-├── docs/                             # Human-readable docs
-│   ├── PRD.md                        # Product requirements
-│   ├── ARCHITECTURE.md               # System architecture & data flow
-│   ├── BUILD_PLAN.md                 # Step-by-step build phases
-│   ├── PROMPTS_GUIDE.md              # How to iterate on agent prompts
-│   ├── INTEGRATIONS.md               # Future: Swiggy, WhatsApp, wearables
-│   ├── COSTS.md                      # Cost model and optimization
-│   └── ONBOARDING_FLOW.md            # Onboarding question sequence
-│
-├── prompts/                          # Agent system prompts (versioned)
+├── postcss.config.mjs
+├── prompts/
 │   ├── agents/
-│   │   ├── ROUTER.md                 # Intent classification agent
-│   │   ├── NUTRITION_ESTIMATOR.md    # Meal logging agent
-│   │   ├── COACH.md                  # Insights and recommendations
-│   │   ├── MEMORY_CONSOLIDATOR.md    # Background memory updates
-│   │   ├── NUDGE_GENERATOR.md        # Proactive nudges
-│   │   ├── ONBOARDING_PARSER.md      # Convert questionnaire → profile.md
-│   │   └── SAFETY_RULES.md           # Medical/allergy safety constraints
 │   └── reference/
-│       ├── IFCT_INDIAN_FOODS.md      # Indian Food Composition Table extract
-│       ├── MEAL_TEMPLATES.md         # Common Indian meal patterns
-│       └── CONDITION_GUIDELINES.md   # Diet rules for diabetes, PCOS, etc.
-│
-├── .claude/                          # Claude Code configuration
-│   ├── agents/                       # Sub-agents (development helpers)
-│   │   ├── code-reviewer.md
-│   │   ├── test-writer.md
-│   │   ├── prompt-evaluator.md
-│   │   ├── db-migration.md
-│   │   ├── accessibility-auditor.md
-│   │   └── security-reviewer.md
-│   └── skills/                       # Custom development skills
-│       ├── nourish-conventions/SKILL.md
-│       ├── prompt-engineering/SKILL.md
-│       ├── memory-schema/SKILL.md
-│       └── indian-food-estimation/SKILL.md
-│
+├── public/
+├── src/
+│   ├── app/
+│   │   ├── (app)/
+│   │   ├── (auth)/
+│   │   ├── (onboarding)/
+│   │   └── api/
+│   ├── components/
+│   ├── lib/
+│   └── types/
 ├── supabase/
-│   ├── migrations/                   # SQL migration files
-│   │   ├── 0001_init.sql             # Core tables, RLS, indexes
-│   │   ├── 0002_memory_system.sql    # Memory tables and triggers
-│   │   ├── 0003_nudge_system.sql     # Nudge schedules and queue
-│   │   ├── 0004_analytics_views.sql  # Materialized views for trends
-│   │   ├── 0005_rate_limits.sql      # Per-user rate limiting
-│   │   ├── 0006_schedules.sql        # pg_cron schedules for background tasks
-│   │   ├── 0007_hybrid_pipeline_and_fixes.sql # Hybrid nutrition pipeline schema + data fixes
-│   │   └── 0008_security_definer_hardening.sql # SECURITY DEFINER hardening and privilege fixes
-│   ├── functions/                    # Edge functions
-│   │   ├── nudge-dispatcher/
-│   │   ├── memory-consolidator/
-│   │   └── weekly-summary/
-│   └── seed.sql                      # IFCT food data seed
-│
-└── src/
-    ├── app/
-    │   ├── (auth)/                   # Login, signup, callback
-    │   ├── (onboarding)/             # Onboarding wizard
-    │   ├── (app)/                    # Main authenticated app
-    │   │   ├── chat/                 # Home: chat interface
-    │   │   ├── today/                # Today's logs and totals
-    │   │   ├── trends/               # Weekly/monthly analytics
-    │   │   └── profile/              # User profile + memory inspector
-    │   ├── api/
-    │   │   ├── chat/route.ts         # Main message handler (orchestrator)
-    │   │   ├── meals/route.ts        # CRUD on meals
-    │   │   ├── memory/route.ts       # Memory inspection/edit
-    │   │   ├── nudges/ack/route.ts   # User responds to a nudge
-    │   │   └── push/subscribe/route.ts # Web Push subscription
-    │   ├── layout.tsx
-    │   ├── page.tsx                  # Marketing landing
-    │   └── manifest.ts               # PWA manifest
-    ├── components/
-    │   ├── ui/                       # shadcn primitives
-    │   ├── chat/                     # Chat-specific components
-    │   ├── charts/                   # Radar, line, bar charts
-    │   ├── meals/                    # Meal cards, log forms
-    │   └── onboarding/               # Wizard steps
-    ├── lib/
-    │   ├── supabase/
-    │   │   ├── client.ts             # Browser client
-    │   │   ├── server.ts             # Server-side client
-    │   │   └── middleware.ts         # Auth middleware
-    │   ├── claude/
-    │   │   ├── client.ts             # Anthropic SDK wrapper
-    │   │   ├── prompts.ts            # Prompt loader with caching
-    │   │   └── types.ts              # Shared agent types
-    │   ├── agents/
-    │   │   ├── orchestrator.ts       # Main entry point per message
-    │   │   ├── router.ts             # Intent classifier
-    │   │   ├── nutrition.ts          # Meal estimation agent
-    │   │   ├── coach.ts              # Insights agent
-    │   │   └── nudge.ts              # Nudge generator
-    │   ├── memory/
-    │   │   ├── reader.ts             # Load layered memory for context
-    │   │   ├── writer.ts             # Update memory layers
-    │   │   ├── consolidator.ts       # Background pattern extraction
-    │   │   └── semantic.ts           # Semantic dictionary (user vocab)
-    │   ├── nutrition/
-    │   │   ├── lookup.ts             # Fuzzy match items against ifct_foods table
-    │   │   ├── multipliers.ts        # Load cooking + source multiplier tables
-    │   │   ├── calculator.ts         # Compose: lookup × multipliers × calibration → ranges
-    │   │   ├── calibration.ts        # User correction history → portion bias
-    │   │   ├── micros.ts             # Micronutrient flagging (B12, Ca, D, K, Ω3)
-    │   │   ├── targets.ts            # Daily targets per profile
-    │   │   └── pipeline.ts           # Orchestrate stages 2-5 of the hybrid pipeline
-    │   ├── nudges/
-    │   │   ├── scheduler.ts          # Decide what to nudge when
-    │   │   ├── push.ts               # Web Push delivery
-    │   │   └── policy.ts             # Frequency caps, escalation rules
-    │   └── safety/
-    │       ├── conditions.ts         # Medical condition rules
-    │       └── allergens.ts          # Allergen checks
-    └── types/
-        └── database.ts               # Generated Supabase types
+│   ├── functions/
+│   ├── migrations/
+│   └── seed.sql
+├── tailwind.config.ts
+├── tsconfig.json
+└── vitest.config.ts
 ```
+
+### Target (planned)
+
+The items below are planned structure targets for upcoming phases. They may not exist yet and should be treated as roadmap intent, not current state.
+
+```
+# Planned modules and deeper subtrees (examples)
+- prompts/agents/SAFETY_RULES.md hardening and eval expansion
+- src/lib/nutrition/{lookup,multipliers,calculator,calibration,micros,targets}.ts
+- src/lib/nudges/{scheduler,push,policy}.ts
+- supabase/functions/{nudge-dispatcher,memory-consolidator,weekly-summary}/
+- additional supabase migrations for memory/nudge/analytics phases
+```
+
+> Maintenance note: regenerate the **Current (implemented)** tree after each major phase completion so this document stays accurate.
 
 ## Conventions
 
