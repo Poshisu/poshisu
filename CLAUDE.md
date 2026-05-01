@@ -23,7 +23,7 @@ The product's differentiation is interaction quality: logging a meal should feel
 
 | Layer | Choice | Why |
 |---|---|---|
-| Framework | Next.js 15 (App Router, TypeScript, Turbopack) | Best PWA story, server components, edge-ready |
+| Framework | Next.js 16.2.4 (App Router, TypeScript, Turbopack) | Best PWA story, server components, edge-ready |
 | UI | Tailwind CSS v4 + shadcn/ui | Composable, accessible, fast to build |
 | Charts | Recharts | React-native, works with shadcn theme |
 | Database | Supabase (Postgres + RLS) | Managed, auth included, real-time |
@@ -125,6 +125,9 @@ The items below are planned structure targets for upcoming phases. They may not 
 ## Conventions
 
 ### Code style
+
+- **Runtime versions source of truth:** documentation must treat `package.json` as the canonical source for Next.js/React/runtime versions.
+- **App Router compatibility (Next.js 16):** prefer route handlers and server components that follow current App Router conventions; verify behavior against the installed Next.js 16 docs before introducing deprecated patterns.
 - **TypeScript strict mode** everywhere. No `any` without a `// @ts-expect-error: <reason>` comment.
 - **Server Components by default.** Only use `"use client"` when you need interactivity.
 - **Server Actions** for mutations from forms. **Route handlers** only when an external system needs to call us (webhooks, push subscriptions).
@@ -138,6 +141,8 @@ The items below are planned structure targets for upcoming phases. They may not 
 - **Every table has `created_at timestamptz default now()` and `updated_at timestamptz default now()`** with a trigger to maintain `updated_at`.
 - **Use `gen_random_uuid()` for IDs** (built into Postgres 13+).
 - **Migrations are append-only.** Never edit a committed migration. Add a new one.
+- **Migration dependency order is strict:** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql`.
+- **When adding a new migration, update all migration lists in docs in the same commit.**
 
 ### Agents
 - **Every agent has its system prompt in `prompts/agents/`** as a markdown file. The TypeScript code loads it at startup and passes it to the API with `cache_control` set.

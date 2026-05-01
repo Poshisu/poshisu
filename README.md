@@ -6,7 +6,27 @@ Nourish is a Progressive Web App with a chat-first interface powered by a multi-
 
 ## What's in this repository
 
-This is a **complete project artifact set** — everything you need to build the Nourish MVP using Claude Code. It is not a codebase (yet). It is the blueprint that produces the codebase.
+This is a **working codebase with the foundation implemented** plus the complete project artifact set used to continue building the Nourish MVP.
+
+> **Status as of 2026-05-01:** Foundation is implemented and running; onboarding, chat intelligence, and advanced coaching modules are still in progress.
+
+## Current Implementation Status
+
+### ✅ Implemented
+
+- Core Next.js app structure and deployable PWA shell
+- Supabase schema and migration set for core product domains
+- Scheduled edge functions for nudges, memory consolidation, and summaries
+- Agent prompt system scaffolding and reference nutrition data
+- Foundational docs, architecture, and build-plan artifacts
+
+### 🚧 In progress
+
+- End-to-end onboarding UX and progressive profiling flows
+- Production-grade chat orchestration and multi-agent routing integration
+- Meal logging UX polish (text/photo/voice) and estimator quality tuning
+- Trends/insights product surfaces and personalized coaching logic
+- Nudge UX refinement, reliability hardening, and beta-readiness QA
 
 ### Documents
 
@@ -51,7 +71,13 @@ This is a **complete project artifact set** — everything you need to build the
 | `supabase/migrations/0004_analytics_views.sql` | Materialized views for trends queries |
 | `supabase/migrations/0005_rate_limits.sql` | Per-user rate limiting |
 | `supabase/migrations/0006_schedules.sql` | pg_cron job schedules for all background tasks |
+| `supabase/migrations/0007_hybrid_pipeline_and_fixes.sql` | Adds hybrid nutrition pipeline schema and supporting data fixes |
+| `supabase/migrations/0008_security_definer_hardening.sql` | Hardens SECURITY DEFINER functions and privilege boundaries |
 | `supabase/seed.sql` | IFCT food data seed (~30 common Indian foods) |
+
+**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql`.
+
+**Important:** The migration list is append-only. Never edit committed migration files; always add a new migration and update this list whenever a new migration is added.
 
 ### Edge functions
 
@@ -81,6 +107,22 @@ This is a **complete project artifact set** — everything you need to build the
 | `memory-schema/SKILL.md` | Memory table schema, layer rules, read/write patterns |
 | `indian-food-estimation/SKILL.md` | Indian food domain knowledge: portions, oil, cooking methods |
 
+## Roadmap
+
+The original phase-by-phase build plan remains the source of truth for what comes next.
+
+### Build timeline
+
+| Phase | Time | What you get |
+|---|---|---|
+| 0 — Foundation | 1 week | Deployed PWA shell with auth, DB, CI |
+| 1 — Onboarding | 1 week | Signup → progressive onboarding → profile |
+| 2 — Chat & Logging | 2 weeks | Text/photo/voice meal logging with estimates |
+| 3 — Memory | 1 week | Layered memory, semantic dictionary, consolidator |
+| 4 — Trends | 1 week | Today view, trends charts, insights |
+| 5 — Nudges | 1 week | Proactive check-ins with Web Push |
+| 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
+
 ## How to use this
 
 ### Prerequisites
@@ -100,21 +142,26 @@ This is a **complete project artifact set** — everything you need to build the
 4. **Copy-paste each prompt** into Claude Code. Let it work. Review. Move on.
 5. **Use sub-agents** as specified: `code-reviewer` before commits, `test-writer` after features, `prompt-evaluator` after prompt changes.
 
-### Build timeline
+## Tech stack
 
-| Phase | Time | What you get |
-|---|---|---|
-| 0 — Foundation | 1 week | Deployed PWA shell with auth, DB, CI |
-| 1 — Onboarding | 1 week | Signup → progressive onboarding → profile |
-| 2 — Chat & Logging | 2 weeks | Text/photo/voice meal logging with estimates |
-| 3 — Memory | 1 week | Layered memory, semantic dictionary, consolidator |
-| 4 — Trends | 1 week | Today view, trends charts, insights |
-| 5 — Nudges | 1 week | Proactive check-ins with Web Push |
-| 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
+Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
+
+
+## Route implementation status
+
+| Planned Route | Implemented? | File Path | Notes |
+|---|---|---|---|
+| `/api/chat` | No (planned) | _Not implemented yet_ | Planned chat orchestration API route for meal and coaching interactions. |
+| `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
+| `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
+| `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
+| `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
 
 ## Tech stack
 
-Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
+Runtime version policy: use `package.json` as the canonical source of truth for framework/runtime versions in docs (including Next.js and React).
+
+App Router compatibility note (Next.js 16): new work should follow App Router conventions and avoid relying on legacy Pages Router patterns unless explicitly required.
 
 ## Cost
 
