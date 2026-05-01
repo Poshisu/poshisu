@@ -157,6 +157,16 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
 | `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
 
+## Feature Maturity
+
+This snapshot clarifies build maturity so product and engineering planning stay aligned.
+
+- **Chat:** Placeholder shell
+- **Today:** Placeholder shell
+- **Trends:** Placeholder shell
+- **Profile memory inspector:** Not implemented yet
+- **Auth and app shell:** Implemented baseline
+
 ## Tech stack
 
 Runtime version policy: use `package.json` as the canonical source of truth for framework/runtime versions in docs (including Next.js and React).
