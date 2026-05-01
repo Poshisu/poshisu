@@ -14,7 +14,7 @@ By the end of this phase, you have a deployed PWA shell with auth, database, CI,
 Read CLAUDE.md first. Then scaffold the Nourish project from scratch.
 
 Tasks:
-1. Initialize a new Next.js 15 project at the current directory using:
+1. Initialize a new Next.js project at the current directory using (pinning the version from `package.json` as the source of truth):
    pnpm dlx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --turbopack --import-alias "@/*"
 2. Install these additional dependencies:
    - @supabase/ssr @supabase/supabase-js
@@ -135,7 +135,7 @@ Run typecheck, lint, and the e2e auth test. Fix any issues.
 Read CLAUDE.md. Wire up observability and continuous integration.
 
 Tasks:
-1. Initialize Sentry: pnpm dlx @sentry/wizard@latest -i nextjs. Configure for Next.js 15 App Router. Set DSN from env.
+1. Initialize Sentry: pnpm dlx @sentry/wizard@latest -i nextjs. Configure for the installed Next.js App Router version defined in `package.json`. Set DSN from env.
 2. Initialize PostHog in src/lib/analytics/posthog.ts with a server client and a browser provider component. Mount the provider in app/(app)/layout.tsx.
 3. Define a typed event helper: src/lib/analytics/events.ts with functions like trackSignup, trackOnboardingComplete, trackMealLogged, trackNudgeReceived, trackNudgeResponded, trackRecommendationRequested. Each function takes typed properties.
 4. Create .github/workflows/ci.yml that runs on every PR:
