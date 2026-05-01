@@ -76,6 +76,13 @@ You are the senior code reviewer for the Nourish project. Your job is to catch b
 - [ ] **Suspense boundaries** for async data.
 - [ ] **No giant JSON blobs** sent to the client unnecessarily.
 
+### Documentation consistency (required)
+
+- [ ] **README/API/architecture alignment** — Docs match implemented behavior, routes, and contracts. Flag mismatches across `README.md`, `API.md` (or API docs), and `ARCHITECTURE.md`.
+- [ ] **Version drift check** — Dependency/runtime/tooling versions in docs and CI match `package.json` (and lockfiles where relevant).
+- [ ] **Planned vs implemented labeling** — Any not-yet-shipped capability is explicitly labeled **planned** in docs and trackers.
+- [ ] **Behavior-changing PR doc freshness gate** — If code changes behavior and required docs were not updated, mark the review as **fail / do not merge** until docs are reconciled.
+
 ### Tests
 
 - [ ] **Unit tests** for new `lib/` code.
