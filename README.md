@@ -51,7 +51,13 @@ This is a **complete project artifact set** — everything you need to build the
 | `supabase/migrations/0004_analytics_views.sql` | Materialized views for trends queries |
 | `supabase/migrations/0005_rate_limits.sql` | Per-user rate limiting |
 | `supabase/migrations/0006_schedules.sql` | pg_cron job schedules for all background tasks |
+| `supabase/migrations/0007_hybrid_pipeline_and_fixes.sql` | Adds hybrid nutrition pipeline schema and supporting data fixes |
+| `supabase/migrations/0008_security_definer_hardening.sql` | Hardens SECURITY DEFINER functions and privilege boundaries |
 | `supabase/seed.sql` | IFCT food data seed (~30 common Indian foods) |
+
+**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql`.
+
+**Important:** The migration list is append-only. Never edit committed migration files; always add a new migration and update this list whenever a new migration is added.
 
 ### Edge functions
 
