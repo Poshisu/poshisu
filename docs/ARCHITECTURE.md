@@ -10,7 +10,7 @@
                                     │ HTTPS
                                     ▼
                      ┌─────────────────────────────────────┐
-                     │       Next.js 15 (Vercel Edge)       │
+                     │       Next.js 16.2.4 (Vercel Edge)       │
                      │  Server Components + Route Handlers  │
                      │  - /api/chat       (planned orchestrator)    │
                      │  - /api/meals      (planned CRUD)            │
@@ -235,3 +235,10 @@ For each user with nudges_enabled:
 - **PostHog** for product analytics. Key events: `signup`, `onboarding_complete`, `meal_logged`, `nudge_received`, `nudge_responded`, `recommendation_requested`.
 - **`agent_traces` table** for LLM-specific observability — token counts, latencies, costs, prompt versions.
 - **Supabase Logs** for database queries.
+
+
+## Next.js 16 App Router compatibility note
+
+This architecture assumes Next.js 16 App Router conventions (server components by default, route handlers under `app/api`, and server-first data fetching patterns). Avoid introducing legacy Pages Router-only patterns in new work.
+
+Documentation note: treat `package.json` as the canonical source of runtime versions (Next.js, React, and related framework runtime dependencies).

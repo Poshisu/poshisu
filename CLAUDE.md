@@ -23,7 +23,7 @@ The product's differentiation is interaction quality: logging a meal should feel
 
 | Layer | Choice | Why |
 |---|---|---|
-| Framework | Next.js 15 (App Router, TypeScript, Turbopack) | Best PWA story, server components, edge-ready |
+| Framework | Next.js 16.2.4 (App Router, TypeScript, Turbopack) | Best PWA story, server components, edge-ready |
 | UI | Tailwind CSS v4 + shadcn/ui | Composable, accessible, fast to build |
 | Charts | Recharts | React-native, works with shadcn theme |
 | Database | Supabase (Postgres + RLS) | Managed, auth included, real-time |
@@ -191,6 +191,9 @@ nourish/
 ## Conventions
 
 ### Code style
+
+- **Runtime versions source of truth:** documentation must treat `package.json` as the canonical source for Next.js/React/runtime versions.
+- **App Router compatibility (Next.js 16):** prefer route handlers and server components that follow current App Router conventions; verify behavior against the installed Next.js 16 docs before introducing deprecated patterns.
 - **TypeScript strict mode** everywhere. No `any` without a `// @ts-expect-error: <reason>` comment.
 - **Server Components by default.** Only use `"use client"` when you need interactivity.
 - **Server Actions** for mutations from forms. **Route handlers** only when an external system needs to call us (webhooks, push subscriptions).
