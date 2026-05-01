@@ -112,6 +112,16 @@ This is a **complete project artifact set** — everything you need to build the
 | 5 — Nudges | 1 week | Proactive check-ins with Web Push |
 | 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
 
+## Feature Maturity
+
+This snapshot clarifies build maturity so product and engineering planning stay aligned.
+
+- **Chat:** Placeholder shell
+- **Today:** Placeholder shell
+- **Trends:** Placeholder shell
+- **Profile memory inspector:** Not implemented yet
+- **Auth and app shell:** Implemented baseline
+
 ## Tech stack
 
 Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
