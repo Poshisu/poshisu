@@ -19,4 +19,5 @@ Active work only. Keep this file current during implementation.
 
 | ID | Task | Completed on (UTC) | Owner | Verification command |
 |---|---|---|---|---|
+| DOC-003 | Audit and replace stale Next.js 15 doc references; anchor versions to `package.json` | done | coding-agent | `rg -n "Next\.js 15|next 15|15 App Router" CLAUDE.md docs -S` | Updated stale BUILD_PLAN references; no stale Next.js 15 references remained in CLAUDE.md or other docs. |
 | - | _Move finished tasks here with completion date._ | - | - | - |
