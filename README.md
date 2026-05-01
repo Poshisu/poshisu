@@ -6,7 +6,27 @@ Nourish is a Progressive Web App with a chat-first interface powered by a multi-
 
 ## What's in this repository
 
-This is a **complete project artifact set** — everything you need to build the Nourish MVP using Claude Code. It is not a codebase (yet). It is the blueprint that produces the codebase.
+This is a **working codebase with the foundation implemented** plus the complete project artifact set used to continue building the Nourish MVP.
+
+> **Status as of 2026-05-01:** Foundation is implemented and running; onboarding, chat intelligence, and advanced coaching modules are still in progress.
+
+## Current Implementation Status
+
+### ✅ Implemented
+
+- Core Next.js app structure and deployable PWA shell
+- Supabase schema and migration set for core product domains
+- Scheduled edge functions for nudges, memory consolidation, and summaries
+- Agent prompt system scaffolding and reference nutrition data
+- Foundational docs, architecture, and build-plan artifacts
+
+### 🚧 In progress
+
+- End-to-end onboarding UX and progressive profiling flows
+- Production-grade chat orchestration and multi-agent routing integration
+- Meal logging UX polish (text/photo/voice) and estimator quality tuning
+- Trends/insights product surfaces and personalized coaching logic
+- Nudge UX refinement, reliability hardening, and beta-readiness QA
 
 ### Documents
 
@@ -81,6 +101,22 @@ This is a **complete project artifact set** — everything you need to build the
 | `memory-schema/SKILL.md` | Memory table schema, layer rules, read/write patterns |
 | `indian-food-estimation/SKILL.md` | Indian food domain knowledge: portions, oil, cooking methods |
 
+## Roadmap
+
+The original phase-by-phase build plan remains the source of truth for what comes next.
+
+### Build timeline
+
+| Phase | Time | What you get |
+|---|---|---|
+| 0 — Foundation | 1 week | Deployed PWA shell with auth, DB, CI |
+| 1 — Onboarding | 1 week | Signup → progressive onboarding → profile |
+| 2 — Chat & Logging | 2 weeks | Text/photo/voice meal logging with estimates |
+| 3 — Memory | 1 week | Layered memory, semantic dictionary, consolidator |
+| 4 — Trends | 1 week | Today view, trends charts, insights |
+| 5 — Nudges | 1 week | Proactive check-ins with Web Push |
+| 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
+
 ## How to use this
 
 ### Prerequisites
@@ -99,18 +135,6 @@ This is a **complete project artifact set** — everything you need to build the
 3. **Open `docs/BUILD_PLAN.md`** and start with Phase 0, Prompt 0.1.
 4. **Copy-paste each prompt** into Claude Code. Let it work. Review. Move on.
 5. **Use sub-agents** as specified: `code-reviewer` before commits, `test-writer` after features, `prompt-evaluator` after prompt changes.
-
-### Build timeline
-
-| Phase | Time | What you get |
-|---|---|---|
-| 0 — Foundation | 1 week | Deployed PWA shell with auth, DB, CI |
-| 1 — Onboarding | 1 week | Signup → progressive onboarding → profile |
-| 2 — Chat & Logging | 2 weeks | Text/photo/voice meal logging with estimates |
-| 3 — Memory | 1 week | Layered memory, semantic dictionary, consolidator |
-| 4 — Trends | 1 week | Today view, trends charts, insights |
-| 5 — Nudges | 1 week | Proactive check-ins with Web Push |
-| 6 — Polish | 1 week+ | Empty states, a11y, privacy, beta users |
 
 ## Tech stack
 
