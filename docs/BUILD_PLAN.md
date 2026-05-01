@@ -155,6 +155,16 @@ Run all checks locally to make sure they pass. Push to a feature branch and veri
 
 ## Phase 1 — Onboarding (Week 2)
 
+
+### Phase 1 implementation note (2026-05-01)
+
+> **Pivot note:** Nourish has pivoted to a **chat-first onboarding** strategy.
+>
+> - Prompts in Phase 1 that assume a long wizard (`1.1`, `1.2`, and parts of `1.4`) are now **superseded for primary flow** and should be treated as historical context.
+> - The active execution path should prioritize conversational onboarding checkpoints and progressive profiling inside chat.
+> - Keep the original wizard prompts only as fallback references until `docs/TASKS.md` marks them permanently retired.
+
+
 > **Update (May 1, 2026): Direction changed from a step-by-step onboarding wizard to a chat-first onboarding flow.**
 > The prompts below capture the **original wizard plan** and are retained for historical context only.
 > **Superseded prompts:** `Prompt 1.1 — Onboarding wizard UI` and `Prompt 1.2 — Onboarding question definitions` are superseded by the chat-first approach.
