@@ -118,7 +118,11 @@ nourish/
 │   │   ├── 0001_init.sql             # Core tables, RLS, indexes
 │   │   ├── 0002_memory_system.sql    # Memory tables and triggers
 │   │   ├── 0003_nudge_system.sql     # Nudge schedules and queue
-│   │   └── 0004_analytics_views.sql  # Materialized views for trends
+│   │   ├── 0004_analytics_views.sql  # Materialized views for trends
+│   │   ├── 0005_rate_limits.sql      # Per-user rate limiting
+│   │   ├── 0006_schedules.sql        # pg_cron schedules for background tasks
+│   │   ├── 0007_hybrid_pipeline_and_fixes.sql # Hybrid nutrition pipeline schema + data fixes
+│   │   └── 0008_security_definer_hardening.sql # SECURITY DEFINER hardening and privilege fixes
 │   ├── functions/                    # Edge functions
 │   │   ├── nudge-dispatcher/
 │   │   ├── memory-consolidator/
@@ -207,6 +211,8 @@ nourish/
 - **Every table has `created_at timestamptz default now()` and `updated_at timestamptz default now()`** with a trigger to maintain `updated_at`.
 - **Use `gen_random_uuid()` for IDs** (built into Postgres 13+).
 - **Migrations are append-only.** Never edit a committed migration. Add a new one.
+- **Migration dependency order is strict:** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql`.
+- **When adding a new migration, update all migration lists in docs in the same commit.**
 
 ### Agents
 - **Every agent has its system prompt in `prompts/agents/`** as a markdown file. The TypeScript code loads it at startup and passes it to the API with `cache_control` set.
