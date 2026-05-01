@@ -155,6 +155,11 @@ Run all checks locally to make sure they pass. Push to a feature branch and veri
 
 ## Phase 1 — Onboarding (Week 2)
 
+> **Update (May 1, 2026): Direction changed from a step-by-step onboarding wizard to a chat-first onboarding flow.**
+> The prompts below capture the **original wizard plan** and are retained for historical context only.
+> **Superseded prompts:** `Prompt 1.1 — Onboarding wizard UI` and `Prompt 1.2 — Onboarding question definitions` are superseded by the chat-first approach.
+> Source of truth for current onboarding implementation work: `docs/TASKS.md` task **DOCS-ONBOARD-CHAT-001**.
+
 By the end of this phase, a new user can sign up, complete a 6-question mandatory onboarding, and have a generated `profile.md` saved to their memory.
 
 ### Prompt 1.1 — Onboarding wizard UI
