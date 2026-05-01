@@ -114,7 +114,12 @@ This is a **complete project artifact set** — everything you need to build the
 
 ## Tech stack
 
-Next.js 15 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
+Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
+
+
+Runtime version policy: use `package.json` as the canonical source of truth for framework/runtime versions in docs (including Next.js and React).
+
+App Router compatibility note (Next.js 16): new work should follow App Router conventions and avoid relying on legacy Pages Router patterns unless explicitly required.
 
 ## Cost
 
