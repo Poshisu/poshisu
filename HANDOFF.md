@@ -4,10 +4,10 @@
 Introduce and enforce lightweight operational documentation standards and PR checklist coverage for documentation updates.
 
 ## Last completed step
-Created root-level tracking docs: `TASKS.md`, `DECISIONS.md`, and `BACKLOG.md`, plus initialized this handoff file.
+Added `.github/PULL_REQUEST_TEMPLATE.md` (uppercase canonical path) by duplicating the existing template, preserving checklist content.
 
 ## Next command
-`pnpm lint && pnpm test`
+`git status`
 
 ## Known blockers
 - None currently identified.
