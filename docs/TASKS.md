@@ -1,6 +1,6 @@
 # TASKS — Active Execution Plan
 
-_Last updated: 2026-05-01_
+_Last updated: 2026-05-02_
 
 ## Current phase snapshot
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
@@ -17,13 +17,13 @@ Status: `in_progress`
 | DOC-001 | Finalize doc source-of-truth alignment | `README.md`, `docs/ARCHITECTURE.md`, `CLAUDE.md`, `docs/BUILD_PLAN.md` | Next.js/runtime/version and planned-vs-implemented wording are consistent | `rg -n "Next\.js|planned|implemented" README.md docs/ARCHITECTURE.md CLAUDE.md docs/BUILD_PLAN.md` | done |
 | DOC-002 | Maintain ADR log with key historical decisions | `docs/DECISIONS.md` | ADR template present + backfilled core decisions | `rg -n "ADR Template|## 2026-" docs/DECISIONS.md` | done |
 | DOC-003 | Maintain active task ledger | `docs/TASKS.md` | Current phase + task table + owner/dependency visibility | `rg -n "Current phase snapshot|Milestone plan|Dependencies" docs/TASKS.md` | done |
-| DOC-004 | Define Phase 1 onboarding product spec and copy contract | `docs/BUILD_PLAN.md`, `docs/TASKS.md`, `docs/PRD.md` | Mandatory/optional fields, completion rule, non-goals, UX states, consent and safety copy are explicit and consistent | `rg -n "onboarding product-spec contract|Exact consent copy|Exact safety copy|Phase 1 explicit non-goals|Required onboarding UX states" docs/BUILD_PLAN.md docs/TASKS.md docs/PRD.md` | done |
 
 ### M2 — Phase 1 completion (chat-first onboarding)
 Status: `pending`
 
 | ID | Task | Files | Acceptance criteria | Verify | Status |
 |---|---|---|---|---|---|
+| P1-000 | Freeze Phase 1 onboarding contract (chat-first, English-only MVP) | `docs/ONBOARDING_FLOW.md`, `docs/TASKS.md`, `docs/BUILD_PLAN.md` | Mandatory vs progressive fields finalized, conversational tone locked, canonical field naming and completion criteria documented | `rg -n "chat-first|English-only|mandatory fields|medications_affecting_diet|Phase 1 completion" docs/TASKS.md docs/BUILD_PLAN.md docs/ONBOARDING_FLOW.md` | done |
 | P1-001 | Ship chat-first onboarding entry flow | `src/app/(onboarding)/**`, `src/app/(app)/chat/**` | New user can complete required profile capture in chat without wizard dependency | `pnpm test:e2e -g onboarding` | pending |
 | P1-002 | Persist onboarding-derived profile and safety fields | `src/lib/agents/*`, `src/lib/memory/*`, `supabase/migrations/*` | Profile memory row + core structured fields saved with validation | `pnpm test` | pending |
 | P1-003 | Add onboarding failure/recovery UX states | `src/app/(onboarding)/**`, `src/components/**` | Loading/error/retry states implemented and accessible | `pnpm test && pnpm test:e2e -g onboarding` | pending |
@@ -39,9 +39,14 @@ Status: `pending`
 
 ## Dependencies on PM/founder (you)
 
-1. Validate final legal/compliance wording for approved consent and safety copy before production release.
-2. Provide **acceptance criteria for MVP meal log** (what is "good enough" for first beta users).
-3. Confirm **risk posture** for fail-closed limiter and deferred CSP rollout in early beta.
+Resolved for Phase 1 kickoff:
+- Conversational tone approved for onboarding copy.
+- English-only UX approved for Phase 1 MVP.
+
+Still needed:
+1. Confirm whether onboarding requires all three meal anchors (breakfast/lunch/dinner) or allows sparse defaults.
+2. Confirm canonical medication field naming in product copy (`medications_affecting_diet`) vs short label (`medications`).
+3. Provide **acceptance criteria for MVP meal log** (what is "good enough" for first beta users).
 4. Provide **test accounts and QA scenarios** for first realistic UAT pass.
 
 ## Blockers / risks
