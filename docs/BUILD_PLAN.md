@@ -172,6 +172,20 @@ Run all checks locally to make sure they pass. Push to a feature branch and veri
 
 By the end of this phase, a new user can sign up, complete a 6-question mandatory onboarding, and have a generated `profile.md` saved to their memory.
 
+### Phase 1 onboarding product-spec contract (effective May 1, 2026)
+
+- **Mandatory fields before completion:** first name, age range, sex, height/weight, primary goal, medical conditions, allergies/intolerances, dietary preference.
+- **Optional progressive fields:** wake/sleep window, meal timing windows, cuisine/staples, cooking context, oil usage, portion confidence, hydration baseline, budget/access constraints.
+- **Completion rule:** mark onboarding complete only after all mandatory fields validate + consent and safety acknowledgments accepted + successful `profile.md` memory write.
+- **Exact consent copy:** "I consent to Nourish using my health and meal information to personalize coaching. I understand Nourish is not a medical provider and does not replace professional advice."
+- **Exact safety copy:** "Safety check: I will not rely on Nourish for emergency or urgent medical decisions. If I feel unwell or unsafe, I will contact a licensed clinician or local emergency services."
+- **Phase 1 explicit non-goals:** no diagnosis/treatment/medication advice, no wearable sync, no Swiggy/Zomato integration, no multilingual onboarding, no WhatsApp onboarding.
+- **Required onboarding UX states:**
+  - Loading: "Saving your profile…"
+  - Empty: "Tell me a bit about this so I can personalize your plan."
+  - Error: "I couldn't save that yet. Please try again." (+ Retry)
+  - Success: "You're all set — your personalized coaching is ready."
+
 ### Prompt 1.1 — Onboarding wizard UI
 
 ```

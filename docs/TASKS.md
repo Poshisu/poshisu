@@ -17,6 +17,7 @@ Status: `in_progress`
 | DOC-001 | Finalize doc source-of-truth alignment | `README.md`, `docs/ARCHITECTURE.md`, `CLAUDE.md`, `docs/BUILD_PLAN.md` | Next.js/runtime/version and planned-vs-implemented wording are consistent | `rg -n "Next\.js|planned|implemented" README.md docs/ARCHITECTURE.md CLAUDE.md docs/BUILD_PLAN.md` | done |
 | DOC-002 | Maintain ADR log with key historical decisions | `docs/DECISIONS.md` | ADR template present + backfilled core decisions | `rg -n "ADR Template|## 2026-" docs/DECISIONS.md` | done |
 | DOC-003 | Maintain active task ledger | `docs/TASKS.md` | Current phase + task table + owner/dependency visibility | `rg -n "Current phase snapshot|Milestone plan|Dependencies" docs/TASKS.md` | done |
+| DOC-004 | Define Phase 1 onboarding product spec and copy contract | `docs/BUILD_PLAN.md`, `docs/TASKS.md`, `docs/PRD.md` | Mandatory/optional fields, completion rule, non-goals, UX states, consent and safety copy are explicit and consistent | `rg -n "onboarding product-spec contract|Exact consent copy|Exact safety copy|Phase 1 explicit non-goals|Required onboarding UX states" docs/BUILD_PLAN.md docs/TASKS.md docs/PRD.md` | done |
 
 ### M2 — Phase 1 completion (chat-first onboarding)
 Status: `pending`
@@ -38,7 +39,7 @@ Status: `pending`
 
 ## Dependencies on PM/founder (you)
 
-1. Confirm **chat-first onboarding copy and constraints** (required questions, tone, privacy consent text).
+1. Validate final legal/compliance wording for approved consent and safety copy before production release.
 2. Provide **acceptance criteria for MVP meal log** (what is "good enough" for first beta users).
 3. Confirm **risk posture** for fail-closed limiter and deferred CSP rollout in early beta.
 4. Provide **test accounts and QA scenarios** for first realistic UAT pass.
