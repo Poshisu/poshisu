@@ -1,354 +1,235 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
-import type { OnboardingAnswers, PrimaryGoal } from "@/lib/onboarding/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
+import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
+type ChatMessage = { role: "assistant" | "user"; content: string };
 
-const STEPS = ["Basics", "Body", "Goal", "Medical", "Food boundaries", "How you eat", "Review"] as const;
+const QUESTIONS = [
+  "What should I call you?",
+  "How old are you?",
+  "What is your primary health goal right now?",
+  "Any conditions I should know (diabetes, PCOS, hypertension, etc.)?",
+  "Any diet pattern or allergies to remember?",
+  "What are your usual meal times? (e.g. breakfast 09:00, lunch 13:00, dinner 19:00)",
+] as const;
+
+const STARTING_DRAFT: OnboardingAnswers = {
+  name: "",
+  age: 25,
+  gender: "prefer-not-to-say",
+  height_cm: 165,
+  weight_kg: 65,
+  city: "",
+  primary_goal: "maintain",
+  goal_target_kg: undefined,
+  goal_timeline_weeks: undefined,
+  conditions: [],
+  conditions_other: "",
+  medications_affecting_diet: "",
+  dietary_pattern: "none",
+  allergies: [],
+  dislikes: "",
+  meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
+  eating_context: "mixed",
+  estimation_preference: "midpoint",
+};
 
 export function ChatOnboardingFlow({ firstName }: Props) {
-  const [step, setStep] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-    const [isPending, startTransition] = useTransition();
-  const [draft, setDraft] = useState<OnboardingAnswers>({
-    name: firstName,
-    age: 25,
-    gender: "prefer-not-to-say",
-    height_cm: 165,
-    weight_kg: 65,
-    city: "",
-    primary_goal: "maintain",
-    conditions: [],
-    conditions_other: "",
-    medications_affecting_diet: "",
-    dietary_pattern: "none",
-    allergies: [],
-    dislikes: "",
-    meal_times: {
-      breakfast: "09:00",
-      lunch: "13:00",
-      dinner: "19:00",
-      snacks: "",
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content:
+        `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
     },
-    eating_context: "mixed",
-    estimation_preference: "midpoint",
-  });
+    { role: "assistant", content: QUESTIONS[0] },
+  ]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
 
-  const progress = useMemo(() => Math.round(((step + 1) / STEPS.length) * 100), [step]);
+  const isReviewStep = questionIndex >= QUESTIONS.length;
 
-  function next() {
-    const validationMessage = validateCurrentStep(step, draft);
-    if (validationMessage) {
-      setError(validationMessage);
+  const summary = useMemo(
+    () => [
+      `Name: ${draft.name || firstName}`,
+      `Age: ${draft.age}`,
+      `Goal: ${draft.primary_goal}`,
+      `Conditions: ${draft.conditions.length ? draft.conditions.join(", ") : "none shared"}`,
+      `Diet: ${draft.dietary_pattern}`,
+      `Meal times: ${draft.meal_times.breakfast}, ${draft.meal_times.lunch}, ${draft.meal_times.dinner}`,
+    ],
+    [draft, firstName],
+  );
+
+  function captureAnswer(idx: number, answer: string) {
+    const text = answer.trim();
+    if (!text) return;
+
+    setDraft((current) => {
+      const next = { ...current };
+      if (idx === 0) next.name = text;
+      if (idx === 1) next.age = Number.parseInt(text, 10) || current.age;
+      if (idx === 2) {
+        const lower = text.toLowerCase();
+        if (lower.includes("lose")) next.primary_goal = "lose-weight";
+        else if (lower.includes("gain") || lower.includes("muscle")) next.primary_goal = "gain-weight";
+        else if (lower.includes("condition")) next.primary_goal = "manage-condition";
+        else if (lower.includes("well")) next.primary_goal = "wellness";
+        else next.primary_goal = "maintain";
+      }
+      if (idx === 3) {
+        const lower = text.toLowerCase();
+        const conditions: OnboardingAnswers["conditions"] = [];
+        if (lower.includes("diabetes")) conditions.push("type-2-diabetes");
+        if (lower.includes("pcos") || lower.includes("pcod")) conditions.push("pcos-pcod");
+        if (lower.includes("hyper") || lower.includes("blood pressure")) conditions.push("hypertension");
+        next.conditions = conditions;
+        next.conditions_other = !conditions.length && !lower.includes("none") ? text : "";
+      }
+      if (idx === 4) {
+        const lower = text.toLowerCase();
+        if (lower.includes("jain")) next.dietary_pattern = "jain";
+        else if (lower.includes("vegan")) next.dietary_pattern = "vegan";
+        else if (lower.includes("egg")) next.dietary_pattern = "veg-egg";
+        else if (lower.includes("non")) next.dietary_pattern = "non-veg";
+        else if (lower.includes("veg")) next.dietary_pattern = "veg";
+        else next.dietary_pattern = "none";
+      }
+      if (idx === 5) {
+        const found = text.match(/(\d{1,2}:\d{2})/g) ?? [];
+        next.meal_times = {
+          breakfast: found[0] ?? current.meal_times.breakfast,
+          lunch: found[1] ?? current.meal_times.lunch,
+          dinner: found[2] ?? current.meal_times.dinner,
+        };
+      }
+      return next;
+    });
+  }
+
+  async function submitMessage() {
+    const text = input.trim();
+    if (!text) return;
+
+    setError(null);
+    setMessages((m) => [...m, { role: "user", content: text }]);
+    captureAnswer(questionIndex, text);
+    setInput("");
+
+    if (questionIndex < QUESTIONS.length - 1) {
+      const nextIndex = questionIndex + 1;
+      setQuestionIndex(nextIndex);
+      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex] }]);
       return;
     }
 
-    setError(null);
-    setStep((prev) => Math.min(prev + 1, STEPS.length - 1));
-  }
-
-  function back() {
-    if (saving) return;
-    setError(null);
-    setStep((prev) => Math.max(prev - 1, 0));
+    setQuestionIndex(QUESTIONS.length);
+    setMessages((m) => [
+      ...m,
+      {
+        role: "assistant",
+        content:
+          "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
+      },
+    ]);
   }
 
   async function confirmAndContinue() {
-    setError(null);
-
     if (!confirmed) {
-      setError("Please confirm your profile before continuing to chat.");
+      setError("Please confirm the profile summary before we continue.");
       return;
     }
 
-    const parsed = onboardingAnswersSchema.safeParse({
-      ...draft,
-      city: draft.city?.trim() || undefined,
-      conditions_other: draft.conditions_other?.trim() || undefined,
-      medications_affecting_diet: draft.medications_affecting_diet?.trim() || undefined,
-      dislikes: draft.dislikes?.trim() || undefined,
-      allergies: draft.allergies.filter(Boolean),
-      meal_times: {
-        ...draft.meal_times,
-        snacks: draft.meal_times.snacks?.trim() || undefined,
-      },
-    });
-
+    const parsed = onboardingAnswersSchema.safeParse(draft);
     if (!parsed.success) {
-      setError("A few fields still need fixing. Please review your details and try again.");
+      setError("I still need a few details to be sure this is accurate. Please answer in a bit more detail.");
       return;
     }
 
-    setSaving(true);
-    startTransition(async () => {
-      try {
-        const result = await completeOnboardingAction(parsed.data);
-        if (!result.ok) {
-          setError("Could not generate your profile right now. Please retry.");
-          return;
-        }
-        window.location.assign("/chat");
-      } catch {
-        setError("Could not generate your profile right now. Please retry.");
-      } finally {
-        setSaving(false);
-      }
-    });
+    setLoading(true);
+    setError(null);
+    try {
+      await completeOnboardingAction(parsed.data);
+      window.location.assign("/chat");
+    } catch {
+      setError("Could not complete onboarding right now. Please retry.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-6">
-      <header className="space-y-2">
-        <p className="text-sm text-muted-foreground">Step {step + 1} of {STEPS.length}</p>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
-          <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Let&apos;s set up your coach, {firstName}.</h1>
-        <p className="text-sm text-muted-foreground">Quick chat-style setup. You can edit everything later.</p>
-      </header>
-
-      <Card>
+    <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
+      <Card className="rounded-[28px] border-[#D9CBB7] bg-[#FFFDF8] shadow-[0_8px_28px_rgba(17,28,24,0.08)]">
         <CardHeader>
-          <CardTitle as="h2">{STEPS[step]}</CardTitle>
-          <CardDescription>{getPrompt(step)}</CardDescription>
+          <CardTitle as="h1" className="text-2xl text-[#0B3F35]">Nourish onboarding</CardTitle>
+          <CardDescription className="text-[#34433C]">
+            A short conversational setup so your coach understands your context.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <StepFields step={step} draft={draft} setDraft={setDraft} />
-
-          {error ? (
-            <p aria-live="polite" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
-
-          <div className="flex items-center justify-between pt-2">
-            <Button variant="outline" onClick={back} disabled={step === 0 || saving}>
-              Back
-            </Button>
-
-            {step < STEPS.length - 1 ? (
-              <Button onClick={next} disabled={saving}>Next</Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={confirmed}
-                    onChange={(e) => setConfirmed(e.target.checked)}
-                    aria-label="I confirm this profile looks right"
-                  />
-                  I confirm this profile looks right
-                </label>
-                <Button onClick={confirmAndContinue} disabled={saving}>
-                  {saving || isPending ? "Saving..." : "Confirm and open chat"}
-                </Button>
+          <div className="max-h-[52vh] space-y-3 overflow-y-auto rounded-2xl bg-[#FBF7EF] p-4">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[#EEF7F1] text-[#0B3F35]" : "ml-auto bg-[#0B3F35] text-[#FFFDF8]"}`}>
+                {msg.content}
               </div>
-            )}
+            ))}
           </div>
 
-          {step === STEPS.length - 1 ? (
-            <>
-                        <p className="text-xs text-muted-foreground">
-              By continuing, you agree that Nourish can use this profile to personalize coaching. You can update this any
-              time.
-            </p>
-            </>
-          ) : null}
+          {isReviewStep ? (
+            <div className="space-y-3 rounded-2xl border border-[#D9CBB7] bg-white p-4 text-sm text-[#111C18]">
+              <p className="font-medium">What I understood</p>
+              <ul className="list-disc space-y-1 pl-5">
+                {summary.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <label className="flex items-center gap-2 text-sm text-[#34433C]">
+                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+                This looks right. Start building my health context.
+              </label>
+              <Button onClick={confirmAndContinue} disabled={loading} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
+                {loading ? "Saving profile..." : "Start building"}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type your answer naturally..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void submitMessage();
+                  }
+                }}
+                className="rounded-full border-[#D9CBB7]"
+              />
+              <Button onClick={() => void submitMessage()} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
+                Send
+              </Button>
+            </div>
+          )}
+
+          {error ? <p className="rounded-xl border border-[#B94A48] bg-[#fff2f2] px-3 py-2 text-sm text-[#B94A48]">{error}</p> : null}
+
+          <p className="text-xs text-[#6C7A73]">
+            Prefer to skip for now? <Link href="/chat" className="underline">Open chat</Link>
+          </p>
         </CardContent>
       </Card>
-
-      <p className="text-xs text-muted-foreground">
-        Need to skip for now? <Link href="/chat" className="underline">Open chat anyway</Link>
-      </p>
     </main>
   );
-}
-
-function StepFields({ step, draft, setDraft }: { step: number; draft: OnboardingAnswers; setDraft: Dispatch<SetStateAction<OnboardingAnswers>> }) {
-  if (step === 0) {
-    return (
-      <>
-        <div className="space-y-2">
-          <Label htmlFor="name">What should I call you?</Label>
-          <Input id="name" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="age">Age</Label>
-            <Input id="age" type="number" value={draft.age} onChange={(e) => setDraft((d) => ({ ...d, age: Number(e.target.value) }))} />
-          </div>
-          <div className="space-y-2">
-            <Label>Gender</Label>
-            <Select value={draft.gender} onValueChange={(value: OnboardingAnswers["gender"]) => setDraft((d) => ({ ...d, gender: value }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="non-binary">Non-binary</SelectItem>
-                <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="height">Height (cm)</Label>
-          <Input id="height" type="number" value={draft.height_cm} onChange={(e) => setDraft((d) => ({ ...d, height_cm: Number(e.target.value) }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight">Weight (kg)</Label>
-          <Input id="weight" type="number" value={draft.weight_kg} onChange={(e) => setDraft((d) => ({ ...d, weight_kg: Number(e.target.value) }))} />
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 2) {
-    return (
-      <div className="space-y-3">
-        <div className="space-y-2">
-          <Label>Primary goal</Label>
-          <Select value={draft.primary_goal} onValueChange={(value: PrimaryGoal) => setDraft((d) => ({ ...d, primary_goal: value }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="lose-weight">Lose weight</SelectItem>
-              <SelectItem value="gain-weight">Gain weight / build muscle</SelectItem>
-              <SelectItem value="maintain">Maintain and eat better</SelectItem>
-              <SelectItem value="manage-condition">Manage a health condition</SelectItem>
-              <SelectItem value="wellness">General wellness and energy</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 3) {
-    return (
-      <div className="space-y-2">
-        <Label htmlFor="conditions">Conditions (comma separated, optional)</Label>
-        <Input
-          id="conditions"
-          placeholder="e.g. pcos-pcod, hypertension"
-          value={draft.conditions.join(", ")}
-          onChange={(e) =>
-            setDraft((d) => ({
-              ...d,
-              conditions: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean) as OnboardingAnswers["conditions"],
-            }))
-          }
-        />
-      </div>
-    );
-  }
-
-  if (step === 4) {
-    return (
-      <div className="space-y-2">
-        <Label>Dietary pattern</Label>
-        <Select value={draft.dietary_pattern} onValueChange={(value: OnboardingAnswers["dietary_pattern"]) => setDraft((d) => ({ ...d, dietary_pattern: value }))}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="veg">Vegetarian</SelectItem>
-            <SelectItem value="veg-egg">Vegetarian + eggs</SelectItem>
-            <SelectItem value="non-veg">Non-vegetarian</SelectItem>
-            <SelectItem value="vegan">Vegan</SelectItem>
-            <SelectItem value="jain">Jain</SelectItem>
-            <SelectItem value="pescetarian">Pescetarian</SelectItem>
-            <SelectItem value="none">No restrictions</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  }
-
-  if (step === 5) {
-    return (
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="breakfast">Breakfast</Label>
-          <Input id="breakfast" value={draft.meal_times.breakfast ?? ""} onChange={(e) => setDraft((d) => ({ ...d, meal_times: { ...d.meal_times, breakfast: e.target.value } }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="lunch">Lunch</Label>
-          <Input id="lunch" value={draft.meal_times.lunch ?? ""} onChange={(e) => setDraft((d) => ({ ...d, meal_times: { ...d.meal_times, lunch: e.target.value } }))} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="dinner">Dinner</Label>
-          <Input id="dinner" value={draft.meal_times.dinner ?? ""} onChange={(e) => setDraft((d) => ({ ...d, meal_times: { ...d.meal_times, dinner: e.target.value } }))} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2 rounded-md border border-border p-3 text-sm">
-      <p><strong>Name:</strong> {draft.name}</p>
-      <p><strong>Goal:</strong> {draft.primary_goal}</p>
-      <p><strong>Meal check-ins:</strong> {draft.meal_times.breakfast}, {draft.meal_times.lunch}, {draft.meal_times.dinner}</p>
-      <p className="text-muted-foreground">You can always update this later in your profile.</p>
-    </div>
-  );
-}
-
-function validateCurrentStep(step: number, draft: OnboardingAnswers): string | null {
-  if (step === 0) {
-    if (!draft.name || draft.name.trim().length < 2) return "Please share a name with at least 2 letters.";
-    if (draft.age < 13 || draft.age > 100) return "Age should be between 13 and 100.";
-  }
-
-  if (step === 1) {
-    if (draft.height_cm < 100 || draft.height_cm > 250) return "Height should be between 100 and 250 cm.";
-    if (draft.weight_kg < 25 || draft.weight_kg > 250) return "Weight should be between 25 and 250 kg.";
-  }
-
-  if (step === 5) {
-    const hhMm = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    if (!draft.meal_times.breakfast || !hhMm.test(draft.meal_times.breakfast)) return "Breakfast time must be HH:mm.";
-    if (!draft.meal_times.lunch || !hhMm.test(draft.meal_times.lunch)) return "Lunch time must be HH:mm.";
-    if (!draft.meal_times.dinner || !hhMm.test(draft.meal_times.dinner)) return "Dinner time must be HH:mm.";
-  }
-
-  return null;
-}
-
-function getPrompt(step: number): string {
-  switch (step) {
-    case 0:
-      return "Let's start with basics so I can personalize your guidance.";
-    case 1:
-      return "These help me set realistic targets for you.";
-    case 2:
-      return "Tell me the main outcome you want so I can optimize recommendations.";
-    case 3:
-      return "This is the most important part for safe guidance.";
-    case 4:
-      return "Let me know your hard food boundaries so I never suggest the wrong thing.";
-    case 5:
-      return "Default meal check-ins are 9am, 1pm, and 7pm. We'll personalize as we learn your schedule.";
-    case 6:
-      return "Review your profile before we start chat.";
-    default:
-      return "";
-  }
 }

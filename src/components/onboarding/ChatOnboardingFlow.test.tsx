@@ -2,42 +2,40 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ChatOnboardingFlow } from "@/components/onboarding/ChatOnboardingFlow";
 
-describe("ChatOnboardingFlow", () => {
-  it("renders first step and moves forward after valid name", () => {
+describe("ChatOnboardingFlow conversational", () => {
+  it("renders chat onboarding and first assistant prompt", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    expect(screen.getByText("Nourish onboarding")).toBeInTheDocument();
+    expect(screen.getByText("What should I call you?")).toBeInTheDocument();
+  });
+
+  it("advances through conversational questions", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
-    expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByText("Step 2 of 7")).toBeInTheDocument();
+    const messages = ["Aarti", "29", "Lose weight", "None", "Vegetarian", "09:00 13:00 19:00"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+
+    expect(screen.getByText("What I understood")).toBeInTheDocument();
   });
 
-  it("shows validation error when name is too short", () => {
-    render(<ChatOnboardingFlow firstName="A" />);
-
-    const input = screen.getByLabelText("What should I call you?");
-    fireEvent.change(input, { target: { value: "A" } });
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-
-    expect(screen.getByText("Please share a name with at least 2 letters.")).toBeInTheDocument();
-  });
-
-  it("requires profile confirmation before opening chat", () => {
-    const assignSpy = vi.fn();
+  it("requires profile confirmation before continue", () => {
     Object.defineProperty(window, "location", {
-      value: { assign: assignSpy },
+      value: { assign: vi.fn() },
       writable: true,
     });
 
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
-    for (let i = 0; i < 6; i += 1) {
-      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    const messages = ["Aarti", "29", "Maintain", "None", "Vegetarian", "09:00 13:00 19:00"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
     }
 
-    expect(screen.getByText("Step 7 of 7")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Confirm and open chat" }));
-
-    expect(screen.getByText("Please confirm your profile before continuing to chat.")).toBeInTheDocument();
-    expect(assignSpy).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
+    expect(screen.getByText("Please confirm the profile summary before we continue.")).toBeInTheDocument();
   });
 });
