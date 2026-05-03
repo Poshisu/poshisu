@@ -10,10 +10,10 @@
 When applicable, I updated the following documentation and kept it consistent with this PR:
 
 - [ ] `README.md`
-- [ ] `TASKS.md`
-- [ ] `DECISIONS.md`
-- [ ] `HANDOFF.md`
-- [ ] `BACKLOG.md` (only if unscheduled ideas changed)
+- [ ] `docs/TASKS.md`
+- [ ] `docs/DECISIONS.md`
+- [ ] `docs/BUILD_PLAN.md`
+- [ ] `docs/ARCHITECTURE.md`
 - [ ] Other impacted docs in `docs/` (list below)
 
 ### Docs updated in this PR
