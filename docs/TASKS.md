@@ -1,6 +1,6 @@
 # TASKS — Active Execution Plan
 
-_Last updated: 2026-05-02_
+_Last updated: 2026-05-03_
 
 ## Current phase snapshot
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
@@ -26,6 +26,7 @@ Status: `pending`
 | P1-000 | Freeze Phase 1 onboarding contract (chat-first, English-only MVP) | `docs/ONBOARDING_FLOW.md`, `docs/TASKS.md`, `docs/BUILD_PLAN.md` | Mandatory vs progressive fields finalized, conversational tone locked, canonical field naming and completion criteria documented | `rg -n "chat-first|English-only|mandatory fields|medications_affecting_diet|Phase 1 completion" docs/TASKS.md docs/BUILD_PLAN.md docs/ONBOARDING_FLOW.md` | done |
 | P1-001A | Define onboarding schema + type contract with validation rules | `src/lib/onboarding/types.ts`, `src/lib/onboarding/schema.ts`, `src/lib/onboarding/schema.test.ts` | Canonical `OnboardingAnswers` type and Zod schema implemented with conditional goal rules and meal-time validation | `pnpm run typecheck && pnpm run test -- src/lib/onboarding/schema.test.ts` | done |
 | P1-001B | Build chat-first onboarding UI skeleton with checkpoint progression | `src/app/(onboarding)/onboarding/page.tsx`, `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Conversational checkpoint flow exists with progress indicator, basic validation, and navigation states | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
+| P1-001C | Add onboarding recovery UX + required review/confirm gate | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Loading/error/retry scaffolding exists and user cannot enter chat without explicit review confirmation | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-001 | Ship chat-first onboarding entry flow | `src/app/(onboarding)/**`, `src/app/(app)/chat/**` | New user can complete required profile capture in chat without wizard dependency | `pnpm test:e2e -g onboarding` | in_progress |
 | P1-002 | Persist onboarding-derived profile and safety fields | `src/lib/agents/*`, `src/lib/memory/*`, `supabase/migrations/*` | Profile memory row + core structured fields saved with validation | `pnpm test` | pending |
 | P1-003 | Add onboarding failure/recovery UX states | `src/app/(onboarding)/**`, `src/components/**` | Loading/error/retry states implemented and accessible | `pnpm test && pnpm test:e2e -g onboarding` | pending |
@@ -46,10 +47,13 @@ Resolved for Phase 1 kickoff:
 - English-only UX approved for Phase 1 MVP.
 
 Still needed:
-1. Confirm whether onboarding requires all three meal anchors (breakfast/lunch/dinner) or allows sparse defaults.
-2. Confirm canonical medication field naming in product copy (`medications_affecting_diet`) vs short label (`medications`).
-3. Provide **acceptance criteria for MVP meal log** (what is "good enough" for first beta users).
-4. Provide **test accounts and QA scenarios** for first realistic UAT pass.
+1. Provide **acceptance criteria for MVP meal log** (what is "good enough" for first beta users).
+2. Provide **test accounts and QA scenarios** for first realistic UAT pass.
+
+Decisions now locked:
+- Onboarding requires all three meal anchors during setup (default 09:00, 13:00, 19:00).
+- Profile review/confirm screen is required before entering chat.
+- Canonical field naming remains `medications_affecting_diet` (UI copy can stay conversational).
 
 ## Blockers / risks
 - No completed end-to-end chat logging flow yet (`/api/chat` still planned).
