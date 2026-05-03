@@ -1,7 +1,7 @@
 # Nourish — Product Requirements Document
 
 **Version:** 1.0 (MVP)
-**Last updated:** April 2026
+**Last updated:** May 1, 2026
 **Owner:** Founder/PM
 
 ---
@@ -78,6 +78,55 @@ In India, food logging is broken. The leading apps (HealthifyMe, Healthify Smart
 - 8 progressive questions surfaced over the first week as conversational asks during normal interactions.
 - Generates a `profile.md` for the user at the end of mandatory onboarding.
 - User sees and can edit their generated profile before confirming.
+
+
+### 6.2.1 Phase 1 onboarding spec (chat-first, mandatory for launch)
+
+**Mandatory onboarding fields (must be captured before user is marked onboarded):**
+1. First name (preferred display name).
+2. Age range (`18-24`, `25-34`, `35-44`, `45-54`, `55+`).
+3. Sex (`female`, `male`, `intersex`, `prefer_not_to_say`) for nutrition calculations where relevant.
+4. Height + weight (metric with unit normalization).
+5. Primary goal (`fat_loss`, `glucose_control`, `maintenance`, `muscle_gain`, `energy`).
+6. Medical conditions (multi-select + free text fallback).
+7. Allergies/intolerances (multi-select + free text fallback).
+8. Dietary preference (`veg`, `eggetarian`, `non_veg`, `vegan`, `jain`, `other`).
+
+**Optional progressive fields (collected after activation through normal chat):**
+- Typical wake/sleep time window.
+- Typical meal timing window (breakfast/lunch/dinner slots).
+- Cuisine and staple preference (regional patterns).
+- Cooking context (home-cooked, office cafeteria, delivery-heavy).
+- Oil/ghee usage pattern for home food.
+- Portion confidence level (`low`, `medium`, `high`).
+- Hydration baseline and water reminder preference.
+- Budget/access constraints (e.g., can order food vs must cook).
+
+**Completion rule for onboarding (Phase 1):**
+- Onboarding status changes to `complete` only when:
+  - all mandatory fields validate,
+  - consent + safety acknowledgment are accepted, and
+  - at least one successful `profile.md` memory write is confirmed.
+- If any step fails (validation or memory write), status remains `in_progress` and user returns to the missing checkpoint in chat.
+
+**Exact user-facing consent copy (must match app UI):**
+> "I consent to Nourish using my health and meal information to personalize coaching. I understand Nourish is not a medical provider and does not replace professional advice."
+
+**Exact user-facing safety copy (must match app UI):**
+> "Safety check: I will not rely on Nourish for emergency or urgent medical decisions. If I feel unwell or unsafe, I will contact a licensed clinician or local emergency services."
+
+**Phase 1 explicit non-goals (not in launch scope):**
+- No diagnosis, treatment planning, medication dosing, or emergency triage.
+- No wearable ingestion (Apple Health, Google Fit, Oura, Whoop).
+- No external ordering integrations (Swiggy/Zomato).
+- No multilingual onboarding (English-only in Phase 1).
+- No proactive voice calls or WhatsApp bot onboarding.
+
+**Required UX states for onboarding checkpoints:**
+- **Loading:** "Saving your profile…" with disabled actions and visible progress.
+- **Empty (no answer yet):** "Tell me a bit about this so I can personalize your plan."
+- **Error (recoverable):** "I couldn't save that yet. Please try again." + `Retry` action.
+- **Success:** "You're all set — your personalized coaching is ready." + continue CTA to chat.
 
 ### 6.3 Meal logging
 - **Photo:** User uploads or captures a photo. Agent identifies dishes, estimates portions and macros. Returns within 15 seconds.
