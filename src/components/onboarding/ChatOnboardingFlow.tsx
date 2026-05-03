@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
-import { previewProfileAction } from "@/app/(onboarding)/actions";
+import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import type { OnboardingAnswers, PrimaryGoal } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
@@ -20,8 +20,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [profileMarkdown, setProfileMarkdown] = useState<string>("");
-  const [isPending, startTransition] = useTransition();
+    const [isPending, startTransition] = useTransition();
   const [draft, setDraft] = useState<OnboardingAnswers>({
     name: firstName,
     age: 25,
@@ -94,12 +93,11 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setSaving(true);
     startTransition(async () => {
       try {
-        const result = await previewProfileAction(parsed.data);
+        const result = await completeOnboardingAction(parsed.data);
         if (!result.ok) {
           setError("Could not generate your profile right now. Please retry.");
           return;
         }
-        setProfileMarkdown(result.profileMarkdown);
         window.location.assign("/chat");
       } catch {
         setError("Could not generate your profile right now. Please retry.");
@@ -161,10 +159,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
           {step === STEPS.length - 1 ? (
             <>
-            {profileMarkdown ? (
-              <pre className="max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-xs">{profileMarkdown}</pre>
-            ) : null}
-            <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
               By continuing, you agree that Nourish can use this profile to personalize coaching. You can update this any
               time.
             </p>
