@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ChatOnboardingFlow } from "@/components/onboarding/ChatOnboardingFlow";
+import { isOnboardingComplete } from "@/lib/auth/onboardingState";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -16,6 +17,16 @@ export default async function OnboardingPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  const { data: onboardingRow } = await supabase
+    .from("users" as never)
+    .select("onboarded_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (isOnboardingComplete(onboardingRow as { onboarded_at: string | null } | null)) {
+    redirect("/chat");
   }
 
   const firstName =
