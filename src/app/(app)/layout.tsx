@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SideNav, TabBar } from "@/components/app/AppShellNav";
 import { Button } from "@/components/ui/button";
+import { isOnboardingComplete } from "@/lib/auth/onboardingState";
 import { createClient } from "@/lib/supabase/server";
 import { logoutAction } from "./actions";
 
@@ -15,6 +16,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) {
     redirect("/login");
+  }
+
+  const { data: onboardingRow } = await supabase
+    .from("users" as never)
+    .select("onboarded_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!isOnboardingComplete(onboardingRow as { onboarded_at: string | null } | null)) {
+    redirect("/onboarding");
   }
 
   return (
