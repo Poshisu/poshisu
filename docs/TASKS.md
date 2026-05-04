@@ -51,7 +51,7 @@ Status: `pending`
 | P2-001A | Implement minimal orchestrator routing contract (`handleMessage`) with typed response blocks | `src/lib/agents/orchestrator.ts`, `src/lib/agents/orchestrator.test.ts` | `handleMessage(userId, message)` validates payload and routes only `meal_log_candidate` vs fallback guidance | `pnpm run test -- src/lib/agents/orchestrator.test.ts` | done |
 | P2-001 | Implement `/api/chat` orchestrator endpoint | `src/app/api/chat/route.ts`, `src/lib/agents/orchestrator.ts` | Authenticated chat request returns structured assistant response | `pnpm test` | pending |
 | P2-002 | Integrate hybrid nutrition pipeline in request flow | `src/lib/nutrition/**`, `src/lib/safety/**` | Deterministic macro/micro ranges and safety checks executed for meal logs | `pnpm test` | pending |
-| P2-003 | Save meal logs + show in Today page | `src/app/(app)/today/page.tsx`, DB access modules | Newly logged meal appears in Today with summary cards | `pnpm test:e2e -g meal` | pending |
+| P2-003 | Save meal logs + show in Today page | `src/app/(app)/today/page.tsx`, `src/app/chat/confirm/route.ts`, `src/lib/meals/*` | Minimal confirm-save flow persists approved estimate and newly saved meal appears in Today list | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | in_progress |
 
 ## Dependencies on PM/founder (you)
 

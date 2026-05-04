@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   description: "Chat with your Nourish coach.",
 };
 
+const MOCK_ESTIMATE = {
+  mealSlot: "lunch",
+  sourceText: "2 rotis and a bowl of dal",
+  items: [
+    { name: "roti", quantity_g: 120, household_unit: "2 medium" },
+    { name: "dal", quantity_g: 180, household_unit: "1 bowl" },
+  ],
+  kcalLow: 420,
+  kcalHigh: 520,
+  kcalLead: 470,
+  confidence: 0.83,
+} as const;
+
 export default async function ChatPage() {
   const supabase = await createClient();
   const {
@@ -18,29 +31,31 @@ export default async function ChatPage() {
     redirect("/login");
   }
 
-  const firstName =
-    (user.user_metadata?.name as string | undefined)?.split(" ")[0] ?? user.email?.split("@")[0] ?? "there";
-
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Hey, {firstName}.</h1>
-        <p className="text-sm text-muted-foreground">Ready when you are.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Chat</h1>
+        <p className="text-sm text-muted-foreground">Review this meal estimate and confirm to save.</p>
       </header>
 
       <Card>
         <CardHeader>
-          <CardTitle as="h2">Your coach is getting ready</CardTitle>
+          <CardTitle as="h2">Estimated meal: 2 rotis and dal</CardTitle>
           <CardDescription>
-            Soon you&apos;ll be able to log meals in plain English — &ldquo;2 rotis and a bowl of dal for lunch&rdquo; — snap
-            a photo of your plate, or ask what to eat next. We&apos;re putting the finishing touches on the chat now.
+            {MOCK_ESTIMATE.kcalLow}–{MOCK_ESTIMATE.kcalHigh} kcal · confidence {Math.round(MOCK_ESTIMATE.confidence * 100)}%
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <p>
-            In the meantime, your account is set up and your profile is saved. Use the tabs to peek at Today, Trends,
-            and Me — they&apos;ll come alive as you start logging.
-          </p>
+        <CardContent className="space-y-3 text-sm">
+          <p>This is a minimal confirm-save flow for the first end-to-end logging loop.</p>
+          <form action="/chat/confirm" method="post" className="space-y-2">
+            <input type="hidden" name="payload" value={JSON.stringify(MOCK_ESTIMATE)} />
+            <button
+              type="submit"
+              className="rounded-md bg-[#0B3F35] px-3 py-2 font-medium text-[#FFFDF8] hover:bg-[#105846]"
+            >
+              Looks right — save meal
+            </button>
+          </form>
         </CardContent>
       </Card>
     </div>

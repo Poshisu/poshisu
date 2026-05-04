@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
+import { loadTodayMeals } from "@/lib/meals/today";
 
 export const metadata: Metadata = {
   title: "Today",
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TodayPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, meals } = await loadTodayMeals();
 
   if (!user) {
     redirect("/login");
@@ -25,18 +22,24 @@ export default async function TodayPage() {
         <p className="text-sm text-muted-foreground">Your meals, totals, and balance.</p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle as="h2">No meals logged yet today</CardTitle>
-          <CardDescription>
-            As soon as your coach is live, everything you tell it will show up here — running totals for calories,
-            protein, fiber, hydration, and a daily radar that shows what&apos;s balanced and what&apos;s off.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <p>Start in Chat — even a rough note like &ldquo;idli and sambar for breakfast&rdquo; works.</p>
-        </CardContent>
-      </Card>
+      {meals.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle as="h2">No meals logged yet today</CardTitle>
+            <CardDescription>Confirm an estimate in Chat and it will appear here immediately.</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : (
+        meals.map((meal) => (
+          <Card key={meal.id}>
+            <CardHeader>
+              <CardTitle as="h2" className="capitalize">{meal.meal_slot ?? "Meal"}</CardTitle>
+              <CardDescription>{meal.kcal_low}–{meal.kcal_high} kcal</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">{meal.source_text ?? "Saved meal"}</CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }
