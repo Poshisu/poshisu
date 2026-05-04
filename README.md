@@ -142,6 +142,17 @@ The original phase-by-phase build plan remains the source of truth for what come
 4. **Copy-paste each prompt** into Claude Code. Let it work. Review. Move on.
 5. **Use sub-agents** as specified: `code-reviewer` before commits, `test-writer` after features, `prompt-evaluator` after prompt changes.
 
+
+### Database type generation workflow
+
+`src/types/database.ts` is generated from your local Supabase schema and should never be edited manually.
+
+1. Start local Supabase services (`pnpm supabase start`).
+2. Regenerate types after any migration change: `pnpm db:types`.
+3. Before opening a PR that touches DB access code, verify generated types are current: `pnpm db:types:check`.
+
+CI enforces this with the same `db:types:check` command and fails when committed types are stale.
+
 ## Tech stack
 
 Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
@@ -151,7 +162,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
-| `/api/chat` | No (planned) | _Not implemented yet_ | Planned chat orchestration API route for meal and coaching interactions. |
+| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
 | `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
 | `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
