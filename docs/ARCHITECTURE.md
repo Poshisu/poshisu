@@ -1,12 +1,18 @@
 # Nourish — System Architecture
 
+## Status legend
+
+- ✅ Implemented
+- 🚧 In progress
+- 🗺️ Planned
+
 ## Status badge legend
 
 - 🟢 **Implemented** — shipped in code today
 - 🟡 **In progress** — partially implemented or actively being built
 - 🔵 **Planned** — not implemented yet
 
-## High-level diagram
+## High-level diagram 🚧
 
 ```
                      ┌─────────────────────────────────────┐
@@ -60,7 +66,7 @@
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription route. |
 | `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
 
-## Request flow: user logs a meal
+## Request flow: user logs a meal 🗺️
 
 ```
 User: [photo of thali]
@@ -208,7 +214,7 @@ Hub-and-spoke with a Router orchestrator. See `prompts/agents/` for the full sys
 └─────────────────────┘    └─────────────────────┘    └─────────────────────┘
 ```
 
-## Data flow: nudges
+## Data flow: nudges 🚧
 
 ```
 pg_cron every 15 min

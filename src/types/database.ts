@@ -3,9 +3,70 @@
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+type MealTimes = {
+  breakfast?: string;
+  lunch?: string;
+  dinner?: string;
+  snacks?: string;
+};
+
 export interface Database {
   public: {
-    Tables: Record<string, never>;
+    Tables: {
+      users: {
+        Row: {
+          id: string;
+          onboarded_at: string | null;
+          estimation_preference: "conservative" | "midpoint" | "liberal" | null;
+        };
+        Insert: {
+          id: string;
+          onboarded_at?: string | null;
+          estimation_preference?: "conservative" | "midpoint" | "liberal" | null;
+        };
+        Update: {
+          id?: string;
+          onboarded_at?: string | null;
+          estimation_preference?: "conservative" | "midpoint" | "liberal" | null;
+        };
+        Relationships: [];
+      };
+      user_profiles: {
+        Row: {
+          user_id: string;
+          age: number;
+          gender: "female" | "male" | "non-binary" | "prefer-not-to-say";
+          height_cm: number;
+          weight_kg: number;
+          city: string | null;
+          primary_goal: "lose-weight" | "gain-weight" | "maintain" | "manage-condition" | "wellness";
+          goal_target_kg: number | null;
+          goal_timeline_weeks: number | null;
+          conditions: string[];
+          conditions_other: string | null;
+          medications: string | null;
+          dietary_pattern: "veg" | "veg-egg" | "non-veg" | "vegan" | "jain" | "pescetarian" | "none";
+          allergies: string[];
+          dislikes: string | null;
+          meal_times: MealTimes;
+          eating_context: "home" | "mixed" | "out" | "varies";
+        };
+        Insert: Database["public"]["Tables"]["user_profiles"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["user_profiles"]["Row"]>;
+        Relationships: [];
+      };
+      memories: {
+        Row: {
+          user_id: string;
+          layer: string;
+          key: string;
+          content: string;
+        };
+        Insert: Database["public"]["Tables"]["memories"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["memories"]["Row"]>;
+        Relationships: [];
+      };
+    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
