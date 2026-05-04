@@ -162,7 +162,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
-| `/api/chat` | No (planned) | _Not implemented yet_ | Planned chat orchestration API route for meal and coaching interactions. |
+| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
 | `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
 | `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
