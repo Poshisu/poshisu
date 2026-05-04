@@ -40,6 +40,9 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `docs/INTEGRATIONS.md` | Future plans: Swiggy/Zomato scraping, WhatsApp, wearables. |
 | `docs/COSTS.md` | Detailed cost model: per-interaction, per-user, at scale, with optimizations. |
 | `docs/PROMPTS_GUIDE.md` | How to write, test, and iterate on agent prompts. |
+| `TESTING.md` | Testing layers, exact commands, fixtures, and failure triage playbook. |
+| `SECURITY.md` | Auth/RLS model, validation boundaries, LLM risk controls, and security checklist. |
+| `RUNBOOK.md` | Deploy checks, rollback procedures, and incident diagnostics. |
 
 ### Agent system prompts
 
