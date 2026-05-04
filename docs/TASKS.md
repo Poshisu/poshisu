@@ -17,6 +17,7 @@ Status: `in_progress`
 | DOC-001 | Finalize doc source-of-truth alignment | `README.md`, `docs/ARCHITECTURE.md`, `CLAUDE.md`, `docs/BUILD_PLAN.md` | Next.js/runtime/version and planned-vs-implemented wording are consistent | `rg -n "Next\.js|planned|implemented" README.md docs/ARCHITECTURE.md CLAUDE.md docs/BUILD_PLAN.md` | done |
 | DOC-002 | Maintain ADR log with key historical decisions | `docs/DECISIONS.md` | ADR template present + backfilled core decisions | `rg -n "ADR Template|## 2026-" docs/DECISIONS.md` | done |
 | DOC-003 | Maintain active task ledger | `docs/TASKS.md` | Current phase + task table + owner/dependency visibility | `rg -n "Current phase snapshot|Milestone plan|Dependencies" docs/TASKS.md` | done |
+| DOC-004 | Add core operational docs (`TESTING.md`, `SECURITY.md`, `RUNBOOK.md`) and cross-link in README | `TESTING.md`, `SECURITY.md`, `RUNBOOK.md`, `README.md`, `docs/TASKS.md` | New docs exist with actionable commands/checklists and README links to all three files | `rg -n "TESTING.md|SECURITY.md|RUNBOOK.md" README.md docs/TASKS.md && test -f TESTING.md && test -f SECURITY.md && test -f RUNBOOK.md` | done |
 
 ### M1.1 — Developer workflow hardening (DB type generation)
 Status: `done`
@@ -71,4 +72,4 @@ Decisions now locked:
 ## Blockers / risks
 - No completed end-to-end chat logging flow yet (`/api/chat` still planned).
 - Build plan contains historical wizard prompts that can confuse contributors if not clearly superseded.
-- Core docs exist but several operational files (`HANDOFF.md`, `TESTING.md`, `SECURITY.md`) are still missing as first-class runbooks.
+- Core docs now include operational runbooks (`TESTING.md`, `SECURITY.md`, `RUNBOOK.md`); keep them in parity with behavior changes every PR.
