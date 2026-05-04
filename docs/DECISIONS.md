@@ -178,25 +178,26 @@ A common wrapper improves consistency, centralizes logging/sanitization, and red
 ### Migration path
 If future framework primitives provide first-class typed action errors, migrate wrapper internals to those primitives while preserving the public response contract.
 
-## 2026-05-04 — Idempotent onboarding completion writes
+
+## 2026-05-04 — Enforce generated Supabase DB types in CI
 
 ### Context
-`completeOnboardingAction` performs multi-table writes (`user_profiles`, `memories`, and `users.onboarded_at`). Duplicate submissions or partial failures could leave onboarding state inconsistent.
+`src/types/database.ts` was intended to be generated from schema state, but drift risk remained when migrations changed without regenerating types.
 
 ### Options
-1. Keep current sequential writes with no idempotency guard.
-2. Add operation-key logging + onboarded-state guard + compensating rollback.
-3. Move onboarding writes into a single Postgres RPC transaction.
+1. Keep manual discipline and rely on reviewer memory.
+2. Generate types locally with no automated stale check.
+3. Standardize generation command and enforce freshness in CI.
 
 ### Decision
-Adopt option 2 now: deterministic onboarding operation key, explicit guard using `users.onboarded_at`, step-level structured logs, and compensating cleanup when final user update fails.
+Adopt `pnpm db:types` for local regeneration and `pnpm db:types:check` in CI after starting the local Supabase stack.
 
 ### Why
-This improves reliability immediately with minimal migration risk while preserving clear retry behavior for clients.
+This keeps runtime DB access types aligned with schema changes and catches drift automatically in pull requests.
 
 ### Tradeoffs
-- **Pros:** duplicate submits become safe, failures easier to diagnose, retry guidance is explicit.
-- **Cons:** compensation logic is best-effort and not as strong as a true database transaction.
+- **Pros:** deterministic contributor workflow, fewer schema/type mismatches, automated PR guardrail.
+- **Cons:** CI now boots a local Supabase stack, which adds runtime and Docker dependency.
 
 ### Migration path
-If partial-write incidents persist, move to option 3 by introducing a transactional RPC/stored procedure that commits all onboarding writes atomically.
+If CI runtime becomes too costly, switch generation/check to a remote shadow database URL while preserving the same script interface.

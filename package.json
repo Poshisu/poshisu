@@ -15,7 +15,8 @@
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "eval:prompts": "tsx scripts/eval-prompts.ts",
-    "db:types": "supabase gen types typescript --local > src/types/database.ts"
+    "db:types": "node scripts/db-types-check.mjs stdout > src/types/database.ts",
+    "db:types:check": "node scripts/db-types-check.mjs check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",

@@ -18,6 +18,13 @@ Status: `in_progress`
 | DOC-002 | Maintain ADR log with key historical decisions | `docs/DECISIONS.md` | ADR template present + backfilled core decisions | `rg -n "ADR Template|## 2026-" docs/DECISIONS.md` | done |
 | DOC-003 | Maintain active task ledger | `docs/TASKS.md` | Current phase + task table + owner/dependency visibility | `rg -n "Current phase snapshot|Milestone plan|Dependencies" docs/TASKS.md` | done |
 
+### M1.1 — Developer workflow hardening (DB type generation)
+Status: `done`
+
+| ID | Task | Files | Acceptance criteria | Verify | Status |
+|---|---|---|---|---|---|
+| DEVEX-DBTYPES-001 | Add reproducible DB type generation + stale check in CI | `package.json`, `scripts/db-types-check.mjs`, `.github/workflows/ci.yml`, `README.md` | Contributors can regenerate with `pnpm db:types` and CI fails when `src/types/database.ts` is stale | `pnpm run db:types:check` | done |
+
 ### M2 — Phase 1 completion (chat-first onboarding)
 Status: `pending`
 

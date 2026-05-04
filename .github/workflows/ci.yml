@@ -39,6 +39,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+
+      - name: Start Supabase local stack
+        run: pnpm dlx supabase start
+
+      - name: Check generated DB types are current
+        run: pnpm run db:types:check
+
       - name: Lint
         run: pnpm run lint
 
