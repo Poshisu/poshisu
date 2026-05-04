@@ -27,7 +27,7 @@ const STARTING_DRAFT: OnboardingAnswers = {
   gender: "prefer-not-to-say",
   height_cm: 165,
   weight_kg: 65,
-  city: "",
+  city: "Not shared",
   primary_goal: "maintain",
   goal_target_kg: undefined,
   goal_timeline_weeks: undefined,
@@ -56,6 +56,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
@@ -146,6 +147,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   }
 
   async function confirmAndContinue() {
+    if (loading) return;
     if (!confirmed) {
       setError("Please confirm the profile summary before we continue.");
       return;
@@ -158,12 +160,14 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     }
 
     setLoading(true);
+    setCanRetry(false);
     setError(null);
     try {
       await completeOnboardingAction(parsed.data);
       window.location.assign("/chat");
     } catch {
-      setError("Could not complete onboarding right now. Please retry.");
+      setError("We couldn’t save your onboarding yet. Check your connection and retry.");
+      setCanRetry(true);
     } finally {
       setLoading(false);
     }
@@ -196,12 +200,18 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                 ))}
               </ul>
               <label className="flex items-center gap-2 text-sm text-[#34433C]">
-                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+                <input type="checkbox" checked={confirmed} disabled={loading} onChange={(e) => setConfirmed(e.target.checked)} />
                 This looks right. Start building my health context.
               </label>
               <Button onClick={confirmAndContinue} disabled={loading} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
                 {loading ? "Saving profile..." : "Start building"}
               </Button>
+              {loading ? <p className="text-xs text-[#34433C]">This can take a few seconds while we prepare your profile.</p> : null}
+              {canRetry && !loading ? (
+                <Button type="button" variant="outline" onClick={() => void confirmAndContinue()} className="rounded-full border-[#D9CBB7]">
+                  Retry save
+                </Button>
+              ) : null}
             </div>
           ) : (
             <div className="flex gap-2">
