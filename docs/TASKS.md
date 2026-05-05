@@ -6,6 +6,7 @@ _Last updated: 2026-05-05_
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
 - **State:** foundation implemented; onboarding + chat intelligence not yet production-complete
 - **Execution focus:** restart product delivery with chat-first onboarding and minimal end-to-end logging loop
+- `docs/TASKS.md` is source of truth for current execution order; `docs/BUILD_PLAN.md` retains historical prompts.
 
 ## Milestone plan
 
@@ -37,6 +38,7 @@ Status: `pending`
 | P1-001C | Add onboarding recovery UX + required review/confirm gate | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Loading/error/retry scaffolding exists and user cannot enter chat without explicit review confirmation | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-001D | Integrate onboarding parser preview action with retry-safe error handling | `src/app/(onboarding)/actions.ts`, `src/lib/agents/onboarding-parser.ts`, `src/components/onboarding/ChatOnboardingFlow.tsx` | Confirm step validates payload server-side and requests profile markdown generation; parser failures surface user-retry message | `pnpm run typecheck && pnpm run test -- src/lib/agents/onboarding-parser.test.ts src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-001E | Replace static step form UX with conversational chat onboarding thread | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Users answer onboarding prompts in a chat transcript with free-text replies and a chat-native summary confirmation step | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
+| P1-001F | Add multimodal onboarding event schema + media placeholders + parser branching | `src/app/(onboarding)/actions.ts`, `src/lib/onboarding/message-events.ts`, `src/lib/onboarding/transcription.ts`, `src/lib/agents/onboarding-parser.ts` | Multimodal event payload validates with Zod; parser path can return extract vs clarify; audio transcript placeholder feeds extraction input path | `pnpm run test -- src/lib/onboarding/message-events.test.ts src/lib/agents/onboarding-parser.test.ts` | done |
 | P1-001 | Ship chat-first onboarding entry flow | `src/app/(onboarding)/**`, `src/app/(app)/chat/**` | New user can complete required profile capture in chat without wizard dependency | `pnpm test:e2e -g onboarding` | in_progress |
 | P1-001F | Add onboarding confidence labels, contextual chips, and low-confidence clarifier prompts | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Assistant messages show confidence labels, chips are contextual per question, and ambiguous answers trigger clarifier prompts with low-confidence labeling | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-002A | Persist onboarding profile + memory rows + onboarded state in one server action | `src/app/(onboarding)/actions.ts`, `src/lib/agents/onboarding-parser.ts` | Confirm action writes `user_profiles`, `memories(profile/patterns)`, and `users.onboarded_at` after schema validation | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx src/lib/agents/onboarding-parser.test.ts` | done |
@@ -54,6 +56,16 @@ Status: `pending`
 | P2-001 | Implement `/api/chat` orchestrator endpoint | `src/app/api/chat/route.ts`, `src/lib/agents/orchestrator.ts` | Authenticated chat request returns structured assistant response | `pnpm test` | pending |
 | P2-002 | Integrate hybrid nutrition pipeline in request flow | `src/lib/nutrition/**`, `src/lib/safety/**` | Deterministic macro/micro ranges and safety checks executed for meal logs | `pnpm test` | pending |
 | P2-003 | Save meal logs + show in Today page | `src/app/(app)/today/page.tsx`, `src/app/chat/confirm/route.ts`, `src/lib/meals/*` | Minimal confirm-save flow persists approved estimate and newly saved meal appears in Today list | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | in_progress |
+
+## Crosswalk: Tactical A–E to Roadmap Phases
+
+| Tactical Task (A–E) | Phase/Milestone mapping (M2/M3 + P1/P2 IDs) | Dependencies | Current status | Exit criteria |
+|---|---|---|---|---|
+| A — Onboarding contract + schema hardening | M2 · P1-000, P1-001A | `docs/ONBOARDING_FLOW.md` contract freeze, canonical naming alignment | done | Contract is frozen in docs and schema/tests enforce required onboarding fields and validation behavior. |
+| B — Chat-first onboarding UX completion | M2 · P1-001, P1-001B, P1-001C, P1-001D, P1-001E, P1-004A | A complete; route guard logic wired to onboarding state | in_progress | New users can complete chat-first onboarding with confirm gate, resilient error/retry UX, and enforced route redirects. |
+| C — Onboarding persistence + idempotent completion | M2 · P1-002, P1-002A, P1-002B | A and B complete; parser/action validation and safe write sequencing | in_progress | Confirm action writes profile + memory + onboarding marker atomically/idempotently without inconsistent duplicate writes. |
+| D — Chat orchestrator MVP endpoint | M3 · P2-001A, P2-001 | C complete; authenticated API + safe envelope/error contract | pending | `/api/chat` handles authenticated requests through orchestrator routing and returns deterministic, safe client responses. |
+| E — Minimum lovable meal logging loop | M3 · P2-002, P2-003 | D complete; nutrition pipeline integration + confirm-save flow | in_progress | User can submit meal input, review estimate, confirm save, and see the saved meal reflected in Today view. |
 
 ## Dependencies on PM/founder (you)
 

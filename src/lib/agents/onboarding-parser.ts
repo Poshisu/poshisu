@@ -3,7 +3,28 @@ import { getAnthropicClient } from "@/lib/claude/client";
 import { loadPrompt } from "@/lib/claude/prompts";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
+export type OnboardingParseDecision =
+  | { mode: "extract"; promptInput: string }
+  | { mode: "clarify"; question: string };
+
 const MODEL = "claude-3-5-haiku-latest";
+
+
+export function decideOnboardingParseMode(input: { text?: string; transcript?: string }): OnboardingParseDecision {
+  const combined = [input.text?.trim(), input.transcript?.trim()].filter(Boolean).join("\n\n").trim();
+
+  if (!combined) {
+    return {
+      mode: "clarify",
+      question: "Could you share a quick summary of your onboarding details so I can continue?",
+    };
+  }
+
+  return {
+    mode: "extract",
+    promptInput: combined,
+  };
+}
 
 export async function generateOnboardingProfile(answers: OnboardingAnswers): Promise<string> {
   const client = getAnthropicClient();

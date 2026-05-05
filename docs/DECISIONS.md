@@ -202,3 +202,27 @@ This balances user continuity (always gets a reply) with security hygiene (no st
 
 ### Migration path
 Once observability and tracing mature, keep the same client envelope but add internal structured error codes and retry policies per failure type.
+
+
+## 2026-05-05 — Multimodal onboarding parser intake with clarify fallback
+
+### Context
+Onboarding now needs to accept text plus staged media metadata (image/file/audio) without blocking current profile extraction flows.
+
+### Options
+1. Keep text-only parser and defer multimodal payload support entirely.
+2. Accept multimodal payloads but force extraction even when no textual signal exists.
+3. Add a typed multimodal intake schema and explicit extract-vs-clarify parser branch.
+
+### Decision
+Adopt typed multimodal intake with explicit parser branching (`extract` or `clarify`) and a placeholder audio transcription adapter.
+
+### Why
+This keeps current onboarding extraction stable while enabling safe incremental rollout of image/file/audio handling paths.
+
+### Tradeoffs
+- **Pros:** strict boundary validation, safer fallback behavior, low-risk path to future transcription and OCR.
+- **Cons:** adds new intermediate response shape and temporary placeholder transcript path.
+
+### Migration path
+Replace placeholder transcription with real STT integration and feed OCR/vision summaries into the same parse branching contract.

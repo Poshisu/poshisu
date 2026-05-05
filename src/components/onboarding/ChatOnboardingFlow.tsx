@@ -48,6 +48,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
+      type: "text",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
       confidence: "high",
@@ -61,6 +62,28 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [confirmed, setConfirmed] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
+
+  function toAttachmentMetadata(file: File): AttachmentMetadata {
+    return {
+      name: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+      token: `local-${crypto.randomUUID()}`,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function addAttachmentMessage(type: "image" | "audio" | "file", attachment: AttachmentMetadata, label: string) {
+    setMessages((current) => [
+      ...current,
+      {
+        role: "user",
+        type,
+        content: label,
+        attachment,
+      },
+    ]);
+  }
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -156,7 +179,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     if (!text) return;
 
     setError(null);
-    setMessages((m) => [...m, { role: "user", content: text }]);
+    setMessages((m) => [...m, { role: "user", type: "text", content: text }]);
     captureAnswer(questionIndex, text);
     setInput("");
     const assessment = inferConfidenceAndClarifier(questionIndex, text);
@@ -176,6 +199,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       ...m,
       {
         role: "assistant",
+        type: "text",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
         confidence: "high",
