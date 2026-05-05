@@ -4,8 +4,10 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { parseOnboardingAnswers } from "@/lib/onboarding/schema";
-import { generateOnboardingProfile } from "@/lib/agents/onboarding-parser";
+import { decideOnboardingParseMode, generateOnboardingProfile } from "@/lib/agents/onboarding-parser";
 import { createClient } from "@/lib/supabase/server";
+import { parseMultimodalMessageEvent } from "@/lib/onboarding/message-events";
+import { transcribeOnboardingAudio } from "@/lib/onboarding/transcription";
 
 type OnboardingErrorCategory = "validation" | "auth" | "idempotency" | "persistence" | "partial_write";
 
@@ -35,6 +37,33 @@ function buildOnboardingOperationKey(userId: string, sessionToken: string | unde
 function logOnboardingStep(step: string, metadata: Record<string, unknown>) {
   console.info(`[onboarding.complete] ${step}`, metadata);
 }
+
+
+export const parseOnboardingEventAction = withServerActionLogging("parseOnboardingEvent", async (rawInput: unknown) => {
+  const event = parseMultimodalMessageEvent(rawInput);
+  const transcription = await transcribeOnboardingAudio(event);
+
+  const decision = decideOnboardingParseMode({
+    text: event.text,
+    transcript: transcription?.transcript,
+  });
+
+  if (decision.mode === "clarify") {
+    return { ok: true as const, mode: "clarify" as const, question: decision.question };
+  }
+
+  return {
+    ok: true as const,
+    mode: "extract" as const,
+    promptInput: decision.promptInput,
+    media: {
+      imageCount: event.images.length,
+      fileCount: event.files.length,
+      audioCount: event.audio.length,
+      transcriptionPlaceholder: Boolean(transcription?.placeholder),
+    },
+  };
+});
 
 export const previewProfileAction = withServerActionLogging("previewOnboardingProfile", async (rawInput: unknown) => {
   const parsed = parseOnboardingAnswers(rawInput);
