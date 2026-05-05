@@ -36,6 +36,25 @@ describe("ChatOnboardingFlow conversational", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
     expect(screen.getByText("Nourish onboarding")).toBeInTheDocument();
     expect(screen.getByText("What should I call you?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Upload photo")).toBeInTheDocument();
+    expect(screen.getByLabelText("Use camera")).toBeInTheDocument();
+    expect(screen.getByLabelText("Upload file")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Voice" })).toBeInTheDocument();
+  });
+
+  it("adds image, file, and audio messages with attachment metadata", async () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+
+    const photo = new File(["img"], "meal.jpg", { type: "image/jpeg" });
+    const doc = new File(["pdf"], "report.pdf", { type: "application/pdf" });
+
+    fireEvent.change(screen.getByLabelText("Upload photo"), { target: { files: [photo] } });
+    fireEvent.change(screen.getByLabelText("Upload file"), { target: { files: [doc] } });
+    fireEvent.click(screen.getByRole("button", { name: "Voice" }));
+
+    expect(await screen.findByText("Shared photo: meal.jpg")).toBeInTheDocument();
+    expect(screen.getByText("Uploaded file: report.pdf")).toBeInTheDocument();
+    expect(screen.getByText("Voice note captured (placeholder)")).toBeInTheDocument();
   });
 
   it("advances through conversational questions", () => {
@@ -48,6 +67,39 @@ describe("ChatOnboardingFlow conversational", () => {
     }
 
     expect(screen.getByText("What I understood")).toBeInTheDocument();
+  });
+
+  it("shows contextual chips and applies chip-driven updates", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Aarti" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "29" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Maintain" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "None" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vegetarian" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "09:00 13:00 19:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(screen.getByText("Diet: veg")).toBeInTheDocument();
+    expect(screen.getByText("Conditions: none shared")).toBeInTheDocument();
+  });
+
+  it("shows low-confidence clarifier prompts for ambiguous inputs", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    const messages = ["Aarti", "29", "Maintain", "None", "allergy to peanuts but i dislike milk", "depends"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+
+    expect(screen.getByText(/medical allergy or mostly a dislike/i)).toBeInTheDocument();
+    expect(screen.getByText(/approximate times/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
   });
 
   it("requires profile confirmation before continue", () => {

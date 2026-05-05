@@ -10,7 +10,9 @@ import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
-type ChatMessage = { role: "assistant" | "user"; content: string };
+type ConfidenceLabel = "high" | "medium" | "low";
+type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
+type SuggestionChip = { label: string; value: string };
 
 const QUESTIONS = [
   "What should I call you?",
@@ -46,10 +48,12 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
+      type: "text",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
+      confidence: "high",
     },
-    { role: "assistant", content: QUESTIONS[0] },
+    { role: "assistant", content: QUESTIONS[0], confidence: "high" },
   ]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -59,7 +63,58 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
 
+  function toAttachmentMetadata(file: File): AttachmentMetadata {
+    return {
+      name: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+      token: `local-${crypto.randomUUID()}`,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function addAttachmentMessage(type: "image" | "audio" | "file", attachment: AttachmentMetadata, label: string) {
+    setMessages((current) => [
+      ...current,
+      {
+        role: "user",
+        type,
+        content: label,
+        attachment,
+      },
+    ]);
+  }
+
   const isReviewStep = questionIndex >= QUESTIONS.length;
+
+  const chips: SuggestionChip[] = useMemo(() => {
+    if (isReviewStep) return [];
+    if (questionIndex === 3) return [{ label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
+    if (questionIndex === 4) return [{ label: "Vegetarian", value: "Vegetarian" }, { label: "Vegan", value: "Vegan" }, { label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
+    if (questionIndex === 5) return [{ label: "09:00 13:00 19:00", value: "09:00 13:00 19:00" }, { label: "Skip for now", value: "Skip for now" }];
+    return [{ label: "Skip for now", value: "Skip for now" }];
+  }, [isReviewStep, questionIndex]);
+
+  function inferConfidenceAndClarifier(idx: number, text: string): { confidence: ConfidenceLabel; clarifier?: string } {
+    const lower = text.toLowerCase();
+    if (lower.includes("skip for now") || lower === "skip") {
+      return { confidence: "low", clarifier: "No problem — we can revisit this later in chat." };
+    }
+    if (idx === 4 && (lower.includes("allergy") || lower.includes("allergic")) && (lower.includes("dislike") || lower.includes("hate"))) {
+      return { confidence: "low", clarifier: "Quick check: is that a medical allergy or mostly a dislike? This helps me avoid unsafe suggestions." };
+    }
+    if (idx === 5 && !/(\d{1,2}:\d{2})/.test(lower)) {
+      return { confidence: "low", clarifier: "Could you share approximate times (like 09:00, 13:00, 19:00)? Even rough times are fine." };
+    }
+    if (idx === 5 && (lower.includes("depends") || lower.includes("random") || lower.includes("varies"))) {
+      return { confidence: "low", clarifier: "Got it. Rough windows still help — do you usually eat early, mid, or late for each meal?" };
+    }
+    if (idx <= 1 && text.trim().length < 2) {
+      return { confidence: "medium", clarifier: "Could you share a bit more so I capture this correctly?" };
+    }
+    return { confidence: "high" };
+  }
+
 
   const summary = useMemo(
     () => [
@@ -124,14 +179,18 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     if (!text) return;
 
     setError(null);
-    setMessages((m) => [...m, { role: "user", content: text }]);
+    setMessages((m) => [...m, { role: "user", type: "text", content: text }]);
     captureAnswer(questionIndex, text);
     setInput("");
+    const assessment = inferConfidenceAndClarifier(questionIndex, text);
+    if (assessment.clarifier) {
+      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier!, confidence: assessment.confidence }]);
+    }
 
     if (questionIndex < QUESTIONS.length - 1) {
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex] }]);
+      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex], confidence: "high" }]);
       return;
     }
 
@@ -140,8 +199,10 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       ...m,
       {
         role: "assistant",
+        type: "text",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
+        confidence: "high",
       },
     ]);
   }
