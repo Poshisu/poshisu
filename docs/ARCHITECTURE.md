@@ -60,7 +60,7 @@
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
-| `/api/chat` | No (planned) | _Not implemented yet_ | Planned orchestrator route for chat and meal logging flows. |
+| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-chat endpoint with payload validation, per-user rate limiting, and minimal orchestrator intent routing. |
 | `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD route. |
 | `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit route. |
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription route. |

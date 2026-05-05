@@ -48,4 +48,44 @@ test.describe("auth flow", () => {
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page.getByRole("alert")).toBeVisible();
   });
+
+  test("signup → onboarding → log meal → confirm → appears in Today", async ({ page }) => {
+    const unique = `e2e-meal+${Date.now()}@example.test`;
+    const password = "Test-Password-1234";
+
+    await page.goto("/signup");
+    await page.getByLabel("Email").fill(unique);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: /create account/i }).click();
+
+    await page.waitForLoadState("networkidle");
+    if (!page.url().includes("/onboarding")) {
+      await expect(page.getByRole("status")).toContainText(/check your inbox/i);
+      return;
+    }
+
+    const answers = [
+      "Aarti",
+      "31",
+      "Lose weight",
+      "none",
+      "vegetarian",
+      "08:30 13:00 19:30",
+    ];
+
+    for (const answer of answers) {
+      await page.getByPlaceholder("Type your answer naturally...").fill(answer);
+      await page.getByRole("button", { name: "Send" }).click();
+    }
+
+    await page.getByRole("checkbox", { name: /this looks right/i }).check();
+    await page.getByRole("button", { name: /start building/i }).click();
+
+    await expect(page).toHaveURL(/\/chat/);
+
+    await page.getByRole("button", { name: /looks right — save meal/i }).click();
+    await expect(page).toHaveURL(/\/today/);
+    await expect(page.getByRole("heading", { name: /lunch/i })).toBeVisible();
+    await expect(page.getByText(/2 rotis and a bowl of dal/i)).toBeVisible();
+  });
 });

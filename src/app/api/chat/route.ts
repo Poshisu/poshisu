@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { orchestrate } from "@/lib/agents/orchestrator";
-import type { AgentContext } from "@/lib/claude/types";
+import { handleMessage } from "@/lib/agents/orchestrator";
 import { enforceChatRateLimit } from "@/lib/rate-limit/chat";
 import { createClient } from "@/lib/supabase/server";
 
@@ -78,19 +77,15 @@ export async function POST(request: Request) {
   }
 
   let assistantText = FALLBACK_RESPONSE;
-  let intent: AgentContext["intent"] = "unknown";
+  let intent = "general_fallback_guidance";
 
   try {
-    const orchestrated = await orchestrate({
-      userId: user.id,
-      messages: [{ role: "user", content: parsed.data.text }],
-      intent: "unknown",
-    });
-
-    if (orchestrated.content.trim()) {
-      assistantText = orchestrated.content;
-    }
+    const orchestrated = await handleMessage(user.id, { text: parsed.data.text });
     intent = orchestrated.intent;
+    const firstTextBlock = orchestrated.blocks.find((block) => block.type === "text");
+    if (firstTextBlock && firstTextBlock.text.trim()) {
+      assistantText = firstTextBlock.text;
+    }
   } catch {
     // deterministic fallback above
   }

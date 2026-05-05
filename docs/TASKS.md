@@ -50,9 +50,9 @@ Status: `pending`
 | ID | Task | Files | Acceptance criteria | Verify | Status |
 |---|---|---|---|---|---|
 | P2-001A | Implement minimal orchestrator routing contract (`handleMessage`) with typed response blocks | `src/lib/agents/orchestrator.ts`, `src/lib/agents/orchestrator.test.ts` | `handleMessage(userId, message)` validates payload and routes only `meal_log_candidate` vs fallback guidance | `pnpm run test -- src/lib/agents/orchestrator.test.ts` | done |
-| P2-001 | Implement `/api/chat` orchestrator endpoint | `src/app/api/chat/route.ts`, `src/lib/agents/orchestrator.ts` | Authenticated chat request returns structured assistant response | `pnpm test` | pending |
+| P2-001 | Implement `/api/chat` orchestrator endpoint | `src/app/api/chat/route.ts`, `src/lib/agents/orchestrator.ts` | Authenticated chat request returns structured assistant response | `pnpm test` | done |
 | P2-002 | Integrate hybrid nutrition pipeline in request flow | `src/lib/nutrition/**`, `src/lib/safety/**` | Deterministic macro/micro ranges and safety checks executed for meal logs | `pnpm test` | pending |
-| P2-003 | Save meal logs + show in Today page | `src/app/(app)/today/page.tsx`, `src/app/chat/confirm/route.ts`, `src/lib/meals/*` | Minimal confirm-save flow persists approved estimate and newly saved meal appears in Today list | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | in_progress |
+| P2-003 | Save meal logs + show in Today page | `src/app/(app)/today/page.tsx`, `src/app/chat/confirm/route.ts`, `src/lib/meals/*` | Minimal confirm-save flow persists approved estimate and newly saved meal appears in Today list | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | done |
 
 ## Dependencies on PM/founder (you)
 
@@ -70,6 +70,6 @@ Decisions now locked:
 - Canonical field naming remains `medications_affecting_diet` (UI copy can stay conversational).
 
 ## Blockers / risks
-- No completed end-to-end chat logging flow yet (`/api/chat` still planned).
+- Hybrid nutrition pipeline remains pending for meal estimation depth and safety checks.
 - Build plan contains historical wizard prompts that can confuse contributors if not clearly superseded.
 - Core docs now include operational runbooks (`TESTING.md`, `SECURITY.md`, `RUNBOOK.md`); keep them in parity with behavior changes every PR.
