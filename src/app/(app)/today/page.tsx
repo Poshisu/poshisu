@@ -23,7 +23,7 @@ export default async function TodayPage() {
       </header>
 
       {meals.length === 0 ? (
-        <Card>
+        <Card className="surface-card rounded-2xl">
           <CardHeader>
             <CardTitle as="h2">No meals logged yet today</CardTitle>
             <CardDescription>Confirm an estimate in Chat and it will appear here immediately.</CardDescription>
@@ -31,7 +31,7 @@ export default async function TodayPage() {
         </Card>
       ) : (
         meals.map((meal) => (
-          <Card key={meal.id}>
+          <Card key={meal.id} className="surface-card rounded-2xl">
             <CardHeader>
               <CardTitle as="h2" className="capitalize">{meal.meal_slot ?? "Meal"}</CardTitle>
               <CardDescription>{meal.kcal_low}–{meal.kcal_high} kcal</CardDescription>

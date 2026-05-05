@@ -25,7 +25,7 @@ export default async function TrendsPage() {
         <p className="text-sm text-muted-foreground">Weekly and monthly patterns.</p>
       </header>
 
-      <Card>
+      <Card className="surface-card rounded-2xl">
         <CardHeader>
           <CardTitle as="h2">A few days of logging and this page comes alive</CardTitle>
           <CardDescription>

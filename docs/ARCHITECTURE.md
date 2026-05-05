@@ -248,6 +248,27 @@ For each user with nudges_enabled:
 - **`agent_traces` table** for LLM-specific observability — token counts, latencies, costs, prompt versions.
 - **Supabase Logs** for database queries.
 
+## UI Design Token Conventions (to prevent style drift)
+
+Design tokens live in `src/app/globals.css` and are the default source for color, radius, shadow, and typography scale decisions across app surfaces.
+
+### Token families
+
+- **Color tokens:** `--surface-*`, `--brand*`, `--border-*`, `--success`, `--warning`, `--info`, plus existing semantic tokens (`--background`, `--card`, etc.).
+- **Radius scale:** `--radius-sm` → `--radius-3xl` (small controls to hero cards).
+- **Shadow scale:** `--shadow-soft`, `--shadow-card`, `--shadow-lifted`.
+- **Type scale:** `--type-scale-xs` → `--type-scale-3xl`.
+
+### Usage rules
+
+1. **Never hardcode hex/oklch values in feature components** for product surfaces; reference tokens via utility classes (e.g. `bg-[color:var(--brand)]`) or shared surface classes.
+2. Use shared surface utilities:
+   - `.surface-card` for standard cards (progress cards, folder/report cards).
+   - `.surface-card-hero` for high-emphasis cards (onboarding container, coach/home top cards).
+3. Prefer semantic text classes (`text-muted-foreground`, `text-foreground`) unless intentional emphasis requires brand tokens.
+4. Add new tokens in `globals.css` first, then consume in components. Do not introduce one-off visual values in page-level JSX.
+5. Dark mode must receive corresponding token values whenever a new token is added.
+
 
 ## Next.js 16 App Router compatibility note
 

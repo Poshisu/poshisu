@@ -175,40 +175,40 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
   return (
     <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
-      <Card className="rounded-[28px] border-[#D9CBB7] bg-[#FFFDF8] shadow-[0_8px_28px_rgba(17,28,24,0.08)]">
+      <Card className="surface-card-hero rounded-3xl">
         <CardHeader>
-          <CardTitle as="h1" className="text-2xl text-[#0B3F35]">Nourish onboarding</CardTitle>
-          <CardDescription className="text-[#34433C]">
+          <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Nourish onboarding</CardTitle>
+          <CardDescription className="text-[color:var(--muted-foreground)]">
             A short conversational setup so your coach understands your context.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="max-h-[52vh] space-y-3 overflow-y-auto rounded-2xl bg-[#FBF7EF] p-4">
+          <div className="max-h-[52vh] space-y-3 overflow-y-auto rounded-2xl bg-[color:var(--surface-soft)] p-4 shadow-[var(--shadow-soft)]">
             {messages.map((msg, idx) => (
-              <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[#EEF7F1] text-[#0B3F35]" : "ml-auto bg-[#0B3F35] text-[#FFFDF8]"}`}>
+              <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--brand-muted)]" : "ml-auto bg-[color:var(--brand)] text-[color:var(--brand-foreground)]"}`}>
                 {msg.content}
               </div>
             ))}
           </div>
 
           {isReviewStep ? (
-            <div className="space-y-3 rounded-2xl border border-[#D9CBB7] bg-white p-4 text-sm text-[#111C18]">
+            <div className="surface-card space-y-3 rounded-2xl border p-4 text-sm text-foreground">
               <p className="font-medium">What I understood</p>
               <ul className="list-disc space-y-1 pl-5">
                 {summary.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-              <label className="flex items-center gap-2 text-sm text-[#34433C]">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" checked={confirmed} disabled={loading} onChange={(e) => setConfirmed(e.target.checked)} />
                 This looks right. Start building my health context.
               </label>
-              <Button onClick={confirmAndContinue} disabled={loading} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
+              <Button onClick={confirmAndContinue} disabled={loading} className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90">
                 {loading ? "Saving profile..." : "Start building"}
               </Button>
-              {loading ? <p className="text-xs text-[#34433C]">This can take a few seconds while we prepare your profile.</p> : null}
+              {loading ? <p className="text-xs text-muted-foreground">This can take a few seconds while we prepare your profile.</p> : null}
               {canRetry && !loading ? (
-                <Button type="button" variant="outline" onClick={() => void confirmAndContinue()} className="rounded-full border-[#D9CBB7]">
+                <Button type="button" variant="outline" onClick={() => void confirmAndContinue()} className="rounded-full border-[color:var(--border-soft)]">
                   Retry save
                 </Button>
               ) : null}
@@ -225,17 +225,17 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                     void submitMessage();
                   }
                 }}
-                className="rounded-full border-[#D9CBB7]"
+                className="rounded-full border-[color:var(--border-soft)] bg-[color:var(--surface-raised)]"
               />
-              <Button onClick={() => void submitMessage()} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
+              <Button onClick={() => void submitMessage()} className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90">
                 Send
               </Button>
             </div>
           )}
 
-          {error ? <p className="rounded-xl border border-[#B94A48] bg-[#fff2f2] px-3 py-2 text-sm text-[#B94A48]">{error}</p> : null}
+          {error ? <p className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]">{error}</p> : null}
 
-          <p className="text-xs text-[#6C7A73]">
+          <p className="text-xs text-muted-foreground">
             Prefer to skip for now? <Link href="/chat" className="underline">Open chat</Link>
           </p>
         </CardContent>

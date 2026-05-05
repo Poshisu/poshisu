@@ -28,7 +28,7 @@ export default async function ProfilePage() {
         <p className="text-sm text-muted-foreground">Signed in as {user.email}</p>
       </header>
 
-      <Card>
+      <Card className="surface-card rounded-2xl">
         <CardHeader>
           <CardTitle as="h2">What I&apos;ll remember about you</CardTitle>
           <CardDescription>
