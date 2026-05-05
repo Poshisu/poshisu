@@ -117,3 +117,8 @@ If CI fails while local passes, capture:
 - failing test name
 - environment difference
 - immediate mitigation in `docs/TASKS.md`
+
+
+## 7) Vercel deployment UAT (manual)
+
+For modality-focused manual UAT on Vercel (text/image/audio/file/chips), use `docs/UAT_VERCEL.md` as the canonical checklist and pass/fail reporting template.
