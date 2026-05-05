@@ -41,6 +41,7 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `docs/COSTS.md` | Detailed cost model: per-interaction, per-user, at scale, with optimizations. |
 | `docs/PROMPTS_GUIDE.md` | How to write, test, and iterate on agent prompts. |
 | `TESTING.md` | Testing layers, exact commands, fixtures, and failure triage playbook. |
+| `docs/UAT_VERCEL.md` | Vercel manual UAT checklist for text/image/audio/file/chips with pass/fail and triage templates. |
 | `SECURITY.md` | Auth/RLS model, validation boundaries, LLM risk controls, and security checklist. |
 | `RUNBOOK.md` | Deploy checks, rollback procedures, and incident diagnostics. |
 
