@@ -10,20 +10,9 @@ import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
-type MessageType = "text" | "image" | "audio" | "file";
-type AttachmentMetadata = {
-  name: string;
-  mimeType: string;
-  sizeBytes: number;
-  token: string;
-  createdAt: string;
-};
-type ChatMessage = {
-  role: "assistant" | "user";
-  type: MessageType;
-  content: string;
-  attachment?: AttachmentMetadata;
-};
+type ConfidenceLabel = "high" | "medium" | "low";
+type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
+type SuggestionChip = { label: string; value: string };
 
 const QUESTIONS = [
   "What should I call you?",
@@ -62,8 +51,9 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       type: "text",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
+      confidence: "high",
     },
-    { role: "assistant", type: "text", content: QUESTIONS[0] },
+    { role: "assistant", content: QUESTIONS[0], confidence: "high" },
   ]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -96,6 +86,35 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   }
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
+
+  const chips: SuggestionChip[] = useMemo(() => {
+    if (isReviewStep) return [];
+    if (questionIndex === 3) return [{ label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
+    if (questionIndex === 4) return [{ label: "Vegetarian", value: "Vegetarian" }, { label: "Vegan", value: "Vegan" }, { label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
+    if (questionIndex === 5) return [{ label: "09:00 13:00 19:00", value: "09:00 13:00 19:00" }, { label: "Skip for now", value: "Skip for now" }];
+    return [{ label: "Skip for now", value: "Skip for now" }];
+  }, [isReviewStep, questionIndex]);
+
+  function inferConfidenceAndClarifier(idx: number, text: string): { confidence: ConfidenceLabel; clarifier?: string } {
+    const lower = text.toLowerCase();
+    if (lower.includes("skip for now") || lower === "skip") {
+      return { confidence: "low", clarifier: "No problem — we can revisit this later in chat." };
+    }
+    if (idx === 4 && (lower.includes("allergy") || lower.includes("allergic")) && (lower.includes("dislike") || lower.includes("hate"))) {
+      return { confidence: "low", clarifier: "Quick check: is that a medical allergy or mostly a dislike? This helps me avoid unsafe suggestions." };
+    }
+    if (idx === 5 && !/(\d{1,2}:\d{2})/.test(lower)) {
+      return { confidence: "low", clarifier: "Could you share approximate times (like 09:00, 13:00, 19:00)? Even rough times are fine." };
+    }
+    if (idx === 5 && (lower.includes("depends") || lower.includes("random") || lower.includes("varies"))) {
+      return { confidence: "low", clarifier: "Got it. Rough windows still help — do you usually eat early, mid, or late for each meal?" };
+    }
+    if (idx <= 1 && text.trim().length < 2) {
+      return { confidence: "medium", clarifier: "Could you share a bit more so I capture this correctly?" };
+    }
+    return { confidence: "high" };
+  }
+
 
   const summary = useMemo(
     () => [
@@ -163,11 +182,15 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setMessages((m) => [...m, { role: "user", type: "text", content: text }]);
     captureAnswer(questionIndex, text);
     setInput("");
+    const assessment = inferConfidenceAndClarifier(questionIndex, text);
+    if (assessment.clarifier) {
+      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier!, confidence: assessment.confidence }]);
+    }
 
     if (questionIndex < QUESTIONS.length - 1) {
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", type: "text", content: QUESTIONS[nextIndex] }]);
+      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex], confidence: "high" }]);
       return;
     }
 
@@ -179,6 +202,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
         type: "text",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
+        confidence: "high",
       },
     ]);
   }
@@ -223,7 +247,8 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           <div className="max-h-[52vh] space-y-3 overflow-y-auto rounded-2xl bg-[#FBF7EF] p-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[#EEF7F1] text-[#0B3F35]" : "ml-auto bg-[#0B3F35] text-[#FFFDF8]"}`}>
-                {msg.content}
+                <span>{msg.content}</span>
+                {msg.role === "assistant" && msg.confidence ? <span className="mt-2 block text-[11px] opacity-70">Confidence: {msg.confidence}</span> : null}
               </div>
             ))}
           </div>
@@ -252,86 +277,29 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="flex flex-wrap gap-2" aria-label="Composer controls">
-                <label className="inline-flex">
-                  <input
-                    aria-label="Upload photo"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      addAttachmentMessage("image", toAttachmentMetadata(file), `Shared photo: ${file.name}`);
-                      e.currentTarget.value = "";
-                    }}
-                  />
-                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">Photo</span>
-                </label>
-                <label className="inline-flex">
-                  <input
-                    aria-label="Use camera"
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      addAttachmentMessage("image", toAttachmentMetadata(file), `Captured image: ${file.name}`);
-                      e.currentTarget.value = "";
-                    }}
-                  />
-                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">Camera</span>
-                </label>
-                <label className="inline-flex">
-                  <input
-                    aria-label="Upload file"
-                    type="file"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      addAttachmentMessage("file", toAttachmentMetadata(file), `Uploaded file: ${file.name}`);
-                      e.currentTarget.value = "";
-                    }}
-                  />
-                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">File</span>
-                </label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-full border-[#D9CBB7]"
-                  onClick={() => {
-                    const clip: AttachmentMetadata = {
-                      name: `voice-note-${messages.length + 1}.webm`,
-                      mimeType: "audio/webm",
-                      sizeBytes: 0,
-                      token: `local-${crypto.randomUUID()}`,
-                      createdAt: new Date().toISOString(),
-                    };
-                    addAttachmentMessage("audio", clip, "Voice note captured (placeholder)");
-                  }}
-                >
-                  Voice
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                {chips.map((chip) => (
+                  <Button key={chip.label} type="button" variant="outline" className="rounded-full border-[#D9CBB7]" onClick={() => setInput(chip.value)}>
+                    {chip.label}
+                  </Button>
+                ))}
               </div>
               <div className="flex gap-2">
-              <Input
-                placeholder="Type your answer naturally..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void submitMessage();
-                  }
-                }}
-                className="rounded-full border-[#D9CBB7]"
-              />
-              <Button onClick={() => void submitMessage()} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
-                Send
-              </Button>
+                <Input
+                  placeholder="Type your answer naturally..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void submitMessage();
+                    }
+                  }}
+                  className="rounded-full border-[#D9CBB7]"
+                />
+                <Button onClick={() => void submitMessage()} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
+                  Send
+                </Button>
               </div>
             </div>
           )}

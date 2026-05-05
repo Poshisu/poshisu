@@ -1,6 +1,6 @@
 # TASKS — Active Execution Plan
 
-_Last updated: 2026-05-04_
+_Last updated: 2026-05-05_
 
 ## Current phase snapshot
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
@@ -40,6 +40,7 @@ Status: `pending`
 | P1-001E | Replace static step form UX with conversational chat onboarding thread | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Users answer onboarding prompts in a chat transcript with free-text replies and a chat-native summary confirmation step | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-001F | Add multimodal onboarding event schema + media placeholders + parser branching | `src/app/(onboarding)/actions.ts`, `src/lib/onboarding/message-events.ts`, `src/lib/onboarding/transcription.ts`, `src/lib/agents/onboarding-parser.ts` | Multimodal event payload validates with Zod; parser path can return extract vs clarify; audio transcript placeholder feeds extraction input path | `pnpm run test -- src/lib/onboarding/message-events.test.ts src/lib/agents/onboarding-parser.test.ts` | done |
 | P1-001 | Ship chat-first onboarding entry flow | `src/app/(onboarding)/**`, `src/app/(app)/chat/**` | New user can complete required profile capture in chat without wizard dependency | `pnpm test:e2e -g onboarding` | in_progress |
+| P1-001F | Add onboarding confidence labels, contextual chips, and low-confidence clarifier prompts | `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/components/onboarding/ChatOnboardingFlow.test.tsx` | Assistant messages show confidence labels, chips are contextual per question, and ambiguous answers trigger clarifier prompts with low-confidence labeling | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | P1-002A | Persist onboarding profile + memory rows + onboarded state in one server action | `src/app/(onboarding)/actions.ts`, `src/lib/agents/onboarding-parser.ts` | Confirm action writes `user_profiles`, `memories(profile/patterns)`, and `users.onboarded_at` after schema validation | `pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx src/lib/agents/onboarding-parser.test.ts` | done |
 | P1-002 | Persist onboarding-derived profile and safety fields | `src/lib/agents/*`, `src/lib/memory/*`, `supabase/migrations/*` | Profile memory row + core structured fields saved with validation | `pnpm test` | in_progress |
 | P1-002B | Harden onboarding completion idempotency + structured retry-safe writes | `src/app/(onboarding)/actions.ts`, `docs/TASKS.md`, `docs/DECISIONS.md` | Duplicate submits do not create inconsistent state; write-step logs emitted with safe metadata; partial-write path returns retry guidance | `pnpm run typecheck && pnpm run lint` | done |
