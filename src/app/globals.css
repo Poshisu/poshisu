@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
 @theme inline {
+  --color-surface-canvas: var(--surface-canvas);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-brand-soft: var(--surface-brand-soft);
+  --color-border-soft: var(--border-soft);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,12 +40,46 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 18px);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-card: var(--shadow-card);
+  --shadow-lifted: var(--shadow-lifted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --text-xs: var(--type-scale-xs);
+  --text-sm: var(--type-scale-sm);
+  --text-base: var(--type-scale-base);
+  --text-lg: var(--type-scale-lg);
+  --text-xl: var(--type-scale-xl);
+  --text-2xl: var(--type-scale-2xl);
+  --text-3xl: var(--type-scale-3xl);
 }
 
 :root {
   --radius: 0.5rem;
+  --surface-canvas: oklch(0.985 0.006 92.1);
+  --surface-raised: oklch(0.998 0.003 92.5);
+  --surface-soft: oklch(0.967 0.011 91.3);
+  --surface-brand-soft: oklch(0.955 0.036 160.2);
+  --border-soft: oklch(0.9 0.013 82.4);
+  --border-strong: oklch(0.78 0.025 78.9);
+  --brand: oklch(0.43 0.102 164.8);
+  --brand-foreground: oklch(0.99 0.003 101.2);
+  --brand-muted: oklch(0.32 0.052 164.1);
+  --success: oklch(0.62 0.13 153.8);
+  --warning: oklch(0.76 0.16 78.4);
+  --info: oklch(0.63 0.12 233.1);
+  --type-scale-xs: 0.75rem;
+  --type-scale-sm: 0.875rem;
+  --type-scale-base: 1rem;
+  --type-scale-lg: 1.125rem;
+  --type-scale-xl: 1.375rem;
+  --type-scale-2xl: 1.75rem;
+  --type-scale-3xl: 2rem;
+  --shadow-soft: 0 1px 2px rgba(7, 18, 15, 0.06);
+  --shadow-card: 0 10px 24px rgba(8, 19, 16, 0.08);
+  --shadow-lifted: 0 18px 36px rgba(8, 19, 16, 0.12);
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
@@ -60,6 +106,21 @@
 }
 
 .dark {
+  --surface-canvas: oklch(0.205 0.011 180.2);
+  --surface-raised: oklch(0.24 0.012 179.3);
+  --surface-soft: oklch(0.285 0.013 178.5);
+  --surface-brand-soft: oklch(0.32 0.044 165.1);
+  --border-soft: oklch(0.39 0.017 176.6);
+  --border-strong: oklch(0.56 0.028 171.4);
+  --brand: oklch(0.76 0.114 162.7);
+  --brand-foreground: oklch(0.2 0.014 177.4);
+  --brand-muted: oklch(0.69 0.09 161.3);
+  --success: oklch(0.72 0.1 157.2);
+  --warning: oklch(0.8 0.13 84.1);
+  --info: oklch(0.74 0.11 236.9);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 12px 26px rgba(0, 0, 0, 0.34);
+  --shadow-lifted: 0 20px 42px rgba(0, 0, 0, 0.42);
   --background: oklch(0.147 0.004 49.25);
   --foreground: oklch(0.985 0.001 106.423);
   --card: oklch(0.216 0.006 56.043);
@@ -86,9 +147,21 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--surface-canvas);
   color: var(--foreground);
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+}
+
+.surface-card {
+  border-color: var(--border-soft);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.surface-card-hero {
+  border-color: var(--border-strong);
+  background: linear-gradient(160deg, var(--surface-raised), var(--surface-brand-soft));
+  box-shadow: var(--shadow-lifted);
 }
 
 @media (prefers-reduced-motion: reduce) {

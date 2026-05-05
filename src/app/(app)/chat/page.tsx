@@ -38,7 +38,7 @@ export default async function ChatPage() {
         <p className="text-sm text-muted-foreground">Review this meal estimate and confirm to save.</p>
       </header>
 
-      <Card>
+      <Card className="surface-card-hero rounded-3xl">
         <CardHeader>
           <CardTitle as="h2">Estimated meal: 2 rotis and dal</CardTitle>
           <CardDescription>
@@ -49,10 +49,7 @@ export default async function ChatPage() {
           <p>This is a minimal confirm-save flow for the first end-to-end logging loop.</p>
           <form action="/chat/confirm" method="post" className="space-y-2">
             <input type="hidden" name="payload" value={JSON.stringify(MOCK_ESTIMATE)} />
-            <button
-              type="submit"
-              className="rounded-md bg-[#0B3F35] px-3 py-2 font-medium text-[#FFFDF8] hover:bg-[#105846]"
-            >
+            <button type="submit" className="rounded-lg bg-[color:var(--brand)] px-3 py-2 font-medium text-[color:var(--brand-foreground)] hover:opacity-90">
               Looks right — save meal
             </button>
           </form>

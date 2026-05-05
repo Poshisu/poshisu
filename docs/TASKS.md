@@ -46,6 +46,7 @@ Status: `pending`
 | P1-002B | Harden onboarding completion idempotency + structured retry-safe writes | `src/app/(onboarding)/actions.ts`, `docs/TASKS.md`, `docs/DECISIONS.md` | Duplicate submits do not create inconsistent state; write-step logs emitted with safe metadata; partial-write path returns retry guidance | `pnpm run typecheck && pnpm run lint` | done |
 | P1-004A | Enforce onboarding route guards from `users.onboarded_at` | `src/app/(app)/layout.tsx`, `src/app/(onboarding)/onboarding/page.tsx`, `src/lib/auth/onboardingState.ts` | Non-onboarded users are redirected to onboarding; onboarded users are redirected away from onboarding to chat | `pnpm run typecheck && pnpm run test -- src/lib/auth/onboardingState.test.ts` | done |
 | P1-003 | Add onboarding failure/recovery UX states | `src/app/(onboarding)/**`, `src/components/**` | Loading/error/retry states implemented and accessible | `pnpm test && pnpm test:e2e -g onboarding` | in_progress |
+| P1-005 | Introduce shared design tokens and apply to onboarding/chat/home card surfaces | `src/app/globals.css`, `src/components/onboarding/ChatOnboardingFlow.tsx`, `src/app/(app)/*/page.tsx`, `docs/ARCHITECTURE.md` | Color/radius/shadow/type tokens defined centrally and consumed by onboarding chat, coach/home top card, progress cards, and folder/report cards with conventions documented | `pnpm run typecheck && pnpm run lint` | done |
 
 ### M3 — Phase 2 slice (minimum lovable meal logging)
 Status: `pending`
