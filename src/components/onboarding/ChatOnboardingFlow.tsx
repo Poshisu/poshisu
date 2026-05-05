@@ -10,7 +10,20 @@ import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
-type ChatMessage = { role: "assistant" | "user"; content: string };
+type MessageType = "text" | "image" | "audio" | "file";
+type AttachmentMetadata = {
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  token: string;
+  createdAt: string;
+};
+type ChatMessage = {
+  role: "assistant" | "user";
+  type: MessageType;
+  content: string;
+  attachment?: AttachmentMetadata;
+};
 
 const QUESTIONS = [
   "What should I call you?",
@@ -46,10 +59,11 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
+      type: "text",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
     },
-    { role: "assistant", content: QUESTIONS[0] },
+    { role: "assistant", type: "text", content: QUESTIONS[0] },
   ]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -58,6 +72,28 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [confirmed, setConfirmed] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
+
+  function toAttachmentMetadata(file: File): AttachmentMetadata {
+    return {
+      name: file.name,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+      token: `local-${crypto.randomUUID()}`,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  function addAttachmentMessage(type: "image" | "audio" | "file", attachment: AttachmentMetadata, label: string) {
+    setMessages((current) => [
+      ...current,
+      {
+        role: "user",
+        type,
+        content: label,
+        attachment,
+      },
+    ]);
+  }
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -124,14 +160,14 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     if (!text) return;
 
     setError(null);
-    setMessages((m) => [...m, { role: "user", content: text }]);
+    setMessages((m) => [...m, { role: "user", type: "text", content: text }]);
     captureAnswer(questionIndex, text);
     setInput("");
 
     if (questionIndex < QUESTIONS.length - 1) {
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex] }]);
+      setMessages((m) => [...m, { role: "assistant", type: "text", content: QUESTIONS[nextIndex] }]);
       return;
     }
 
@@ -140,6 +176,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       ...m,
       {
         role: "assistant",
+        type: "text",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
       },
@@ -214,7 +251,72 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               ) : null}
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2" aria-label="Composer controls">
+                <label className="inline-flex">
+                  <input
+                    aria-label="Upload photo"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      addAttachmentMessage("image", toAttachmentMetadata(file), `Shared photo: ${file.name}`);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">Photo</span>
+                </label>
+                <label className="inline-flex">
+                  <input
+                    aria-label="Use camera"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      addAttachmentMessage("image", toAttachmentMetadata(file), `Captured image: ${file.name}`);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">Camera</span>
+                </label>
+                <label className="inline-flex">
+                  <input
+                    aria-label="Upload file"
+                    type="file"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      addAttachmentMessage("file", toAttachmentMetadata(file), `Uploaded file: ${file.name}`);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <span className="cursor-pointer rounded-full border border-[#D9CBB7] px-3 py-2 text-sm">File</span>
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full border-[#D9CBB7]"
+                  onClick={() => {
+                    const clip: AttachmentMetadata = {
+                      name: `voice-note-${messages.length + 1}.webm`,
+                      mimeType: "audio/webm",
+                      sizeBytes: 0,
+                      token: `local-${crypto.randomUUID()}`,
+                      createdAt: new Date().toISOString(),
+                    };
+                    addAttachmentMessage("audio", clip, "Voice note captured (placeholder)");
+                  }}
+                >
+                  Voice
+                </Button>
+              </div>
+              <div className="flex gap-2">
               <Input
                 placeholder="Type your answer naturally..."
                 value={input}
@@ -230,6 +332,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               <Button onClick={() => void submitMessage()} className="rounded-full bg-[#0B3F35] text-[#FFFDF8] hover:bg-[#105846]">
                 Send
               </Button>
+              </div>
             </div>
           )}
 
