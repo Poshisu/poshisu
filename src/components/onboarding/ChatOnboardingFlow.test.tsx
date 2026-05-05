@@ -50,6 +50,39 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getByText("What I understood")).toBeInTheDocument();
   });
 
+  it("shows contextual chips and applies chip-driven updates", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Aarti" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "29" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Maintain" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "None" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vegetarian" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "09:00 13:00 19:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(screen.getByText("Diet: veg")).toBeInTheDocument();
+    expect(screen.getByText("Conditions: none shared")).toBeInTheDocument();
+  });
+
+  it("shows low-confidence clarifier prompts for ambiguous inputs", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    const messages = ["Aarti", "29", "Maintain", "None", "allergy to peanuts but i dislike milk", "depends"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+
+    expect(screen.getByText(/medical allergy or mostly a dislike/i)).toBeInTheDocument();
+    expect(screen.getByText(/approximate times/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
+  });
+
   it("requires profile confirmation before continue", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
