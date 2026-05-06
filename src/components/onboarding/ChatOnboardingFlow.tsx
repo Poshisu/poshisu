@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import type { OnboardingAnswers } from "@/lib/onboarding/types";
 type Props = { firstName: string };
 type ConfidenceLabel = "high" | "medium" | "low";
 type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
-type SuggestionChip = { label: string; value: string };
 
 const QUESTIONS = [
   "What should I call you?",
@@ -48,7 +47,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      type: "text",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
       confidence: "high",
@@ -63,37 +61,22 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
 
-  function toAttachmentMetadata(file: File): AttachmentMetadata {
-    return {
-      name: file.name,
-      mimeType: file.type || "application/octet-stream",
-      sizeBytes: file.size,
-      token: `local-${crypto.randomUUID()}`,
-      createdAt: new Date().toISOString(),
-    };
-  }
-
-  function addAttachmentMessage(type: "image" | "audio" | "file", attachment: AttachmentMetadata, label: string) {
-    setMessages((current) => [
-      ...current,
-      {
-        role: "user",
-        type,
-        content: label,
-        attachment,
-      },
-    ]);
-  }
-
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
-  const chips: SuggestionChip[] = useMemo(() => {
-    if (isReviewStep) return [];
-    if (questionIndex === 3) return [{ label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
-    if (questionIndex === 4) return [{ label: "Vegetarian", value: "Vegetarian" }, { label: "Vegan", value: "Vegan" }, { label: "None", value: "None" }, { label: "Skip for now", value: "Skip for now" }];
-    if (questionIndex === 5) return [{ label: "09:00 13:00 19:00", value: "09:00 13:00 19:00" }, { label: "Skip for now", value: "Skip for now" }];
-    return [{ label: "Skip for now", value: "Skip for now" }];
-  }, [isReviewStep, questionIndex]);
+  const chips =
+    questionIndex === 3
+      ? ["None", "Skip for now"]
+      : questionIndex === 4
+        ? ["Vegetarian", "Vegan", "None", "Skip for now"]
+        : questionIndex === 5
+          ? ["09:00 13:00 19:00", "Skip for now"]
+          : ["Skip for now"];
+
+
+
+  function addAttachmentMessage(content: string) {
+    setMessages((current) => [...current, { role: "user", content }]);
+  }
 
   function inferConfidenceAndClarifier(idx: number, text: string): { confidence: ConfidenceLabel; clarifier?: string } {
     const lower = text.toLowerCase();
@@ -116,17 +99,14 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   }
 
 
-  const summary = useMemo(
-    () => [
+  const summary = [
       `Name: ${draft.name || firstName}`,
       `Age: ${draft.age}`,
       `Goal: ${draft.primary_goal}`,
       `Conditions: ${draft.conditions.length ? draft.conditions.join(", ") : "none shared"}`,
       `Diet: ${draft.dietary_pattern}`,
       `Meal times: ${draft.meal_times.breakfast}, ${draft.meal_times.lunch}, ${draft.meal_times.dinner}`,
-    ],
-    [draft, firstName],
-  );
+  ];
 
   function captureAnswer(idx: number, answer: string) {
     const text = answer.trim();
@@ -179,7 +159,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     if (!text) return;
 
     setError(null);
-    setMessages((m) => [...m, { role: "user", type: "text", content: text }]);
+    setMessages((m) => [...m, { role: "user", content: text }]);
     captureAnswer(questionIndex, text);
     setInput("");
     const assessment = inferConfidenceAndClarifier(questionIndex, text);
@@ -199,7 +179,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       ...m,
       {
         role: "assistant",
-        type: "text",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
         confidence: "high",
@@ -248,6 +227,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             {messages.map((msg, idx) => (
               <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--brand-muted)]" : "ml-auto bg-[color:var(--brand)] text-[color:var(--brand-foreground)]"}`}>
                 {msg.content}
+                {msg.confidence ? <div className="mt-1 text-[10px] opacity-70">Confidence: {msg.confidence}</div> : null}
               </div>
             ))}
           </div>
@@ -275,6 +255,29 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               ) : null}
             </div>
           ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+              {chips.map((chip) => (
+                <Button key={chip} type="button" variant="outline" className="rounded-full" onClick={() => setInput(chip)}>
+                  {chip}
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <label className="cursor-pointer rounded-full border px-3 py-1">
+                Upload photo
+                <input aria-label="Upload photo" type="file" accept="image/*" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Shared photo: ${f.name}`);}} />
+              </label>
+              <label className="cursor-pointer rounded-full border px-3 py-1">
+                Use camera
+                <input aria-label="Use camera" type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Shared photo: ${f.name}`);}} />
+              </label>
+              <label className="cursor-pointer rounded-full border px-3 py-1">
+                Upload file
+                <input aria-label="Upload file" type="file" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Uploaded file: ${f.name}`);}} />
+              </label>
+              <Button type="button" variant="outline" className="rounded-full" onClick={()=>addAttachmentMessage("Voice note captured (placeholder)")}>Voice</Button>
+            </div>
             <div className="flex gap-2">
               <Input
                 placeholder="Type your answer naturally..."
@@ -292,6 +295,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                 Send
               </Button>
             </div>
+            </>
           )}
 
           {error ? <p className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]">{error}</p> : null}
