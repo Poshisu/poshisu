@@ -1,6 +1,6 @@
 # TASKS — Active Execution Plan
 
-_Last updated: 2026-05-05_
+_Last updated: 2026-05-06_
 
 ## Current phase snapshot
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
@@ -87,3 +87,10 @@ Decisions now locked:
 - Hybrid nutrition pipeline remains pending for meal estimation depth and safety checks.
 - Build plan contains historical wizard prompts that can confuse contributors if not clearly superseded.
 - Core docs now include operational runbooks (`TESTING.md`, `SECURITY.md`, `RUNBOOK.md`); keep them in parity with behavior changes every PR.
+
+
+## Immediate next sprint (speed-to-E2E)
+
+1. **Close Phase 1 onboarding finish line**: complete `P1-001`, `P1-002`, and `P1-003` with a passing onboarding E2E run (`pnpm test:e2e -g onboarding`).
+2. **Unblock meal loop quality**: implement `P2-002` hybrid nutrition pipeline integration and verify deterministic safety checks with test coverage.
+3. **Run first beta-ready gate**: execute lint, typecheck, unit tests, build, and scoped E2E in CI + Vercel preview and document residual failures in `RUNBOOK.md`.
