@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -13,7 +14,7 @@ concurrency:
 env:
   # pnpm picks this up automatically; pin once, reuse across jobs.
   NODE_VERSION: "22"
-  PNPM_VERSION: "9"
+  PNPM_VERSION: "10"
 
 jobs:
   verify:
@@ -39,11 +40,43 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Detect DB-related changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.sha }}"
+            files=$(git diff --name-only "$base" "$head")
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+            files=$(git diff --name-only "$base" "$head")
+          else
+            # workflow_dispatch fallback: run full checks
+            echo "db_related=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if echo "$files" | grep -Eq '^(supabase/|src/types/database.ts|scripts/db-types-check.mjs|src/lib/supabase/)'; then
+            echo "db_related=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "db_related=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Supabase CLI
+        if: steps.changes.outputs.db_related == "true"
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.92.1
 
       - name: Start Supabase local stack
-        run: pnpm dlx supabase start
+        if: steps.changes.outputs.db_related == "true"
+        run: supabase start
 
       - name: Check generated DB types are current
+        if: steps.changes.outputs.db_related == "true"
         run: pnpm run db:types:check
 
       - name: Lint
