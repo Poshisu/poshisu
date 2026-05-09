@@ -147,7 +147,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 
 | Seq | Stage | Task ID | Task | Acceptance criteria | Verify command | Status |
 |---|---|---|---|---|---|---|
-| 1 | Stage 1 | S1-T01 | Close onboarding chat entry flow (`P1-001`) | New user completes mandatory onboarding and is routed to chat via guarded flow | `pnpm run test:e2e -g onboarding` | in_progress |
+| 1 | Stage 1 | S1-T01 | Close onboarding chat entry flow (`P1-001`) | New user completes mandatory onboarding and is routed to chat via guarded flow | `pnpm run test:e2e -g onboarding` | blocked (env) |
 | 2 | Stage 1 | S1-T02 | Close onboarding persistence (`P1-002`) | Confirm step writes profile + memory + onboarded marker idempotently | `pnpm run test -- src/lib/agents/onboarding-parser.test.ts src/components/onboarding/ChatOnboardingFlow.test.tsx` | todo |
 | 3 | Stage 1 | S1-T03 | Close onboarding failure/recovery (`P1-003`) | Loading/error/retry states are accessible and deterministic | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx && pnpm run test:e2e -g onboarding` | todo |
 | 4 | Stage 2 | S2-T01 | Implement hybrid nutrition pipeline integration (`P2-002`) | Deterministic macro/micro + safety checks wired into request flow | `pnpm run test -- src/lib/nutrition src/lib/safety` | todo |
@@ -240,3 +240,34 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 - Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.
 - Provide first beta test account matrix and scenario priorities before Stage 7 UAT gate.
 - Approve safety/copy/privacy changes when escalated by engineering.
+
+
+## Phase status snapshot (as of 2026-05-09)
+
+| Phase | Status | Remaining work to close phase |
+|---|---|---|
+| Phase 0 (Foundation) | mostly done | keep CI/doc parity stable and maintain DB type freshness gate |
+| Phase 1 (Onboarding) | **in progress** | close `S1-T01`, `S1-T02`, `S1-T03` (onboarding E2E + persistence + recovery UX) |
+| Phase 2 (Chat & Meal Logging) | partial | close `S2-T01`, `S2-T02`, `S2-T03` (hybrid nutrition + meal confirm/save reliability + chat contract hardening) |
+| Phase 3 (Memory) | partial/planned | close `S3-T02` plus profile memory editing and visibility contract completion |
+| Phase 4 (Trends) | planned | close `S4-T02` trends charts/insights production readiness |
+| Phase 5 (Nudges) | planned | close `S3-T03` + downstream nudges delivery and policy hardening |
+| Phase 6 (Polish/Beta) | planned | close `S5-*`, `S6-*`, and `S7-*` gates before launch |
+
+### Remaining tasks to finish Phase 1 specifically
+1. `S1-T01` — close onboarding chat entry flow with passing onboarding E2E.
+2. `S1-T02` — close onboarding persistence guarantees with idempotent writes and regression coverage.
+3. `S1-T03` — close onboarding failure/recovery UX with accessible deterministic states.
+
+### Remaining phases and task groups (post-Phase 1)
+- **Phase 2:** `S2-T01`, `S2-T02`, `S2-T03`
+- **Phase 3:** `S3-T01`, `S3-T02`, `S3-T03`
+- **Phase 4:** `S4-T01`, `S4-T02`, `S4-T03`
+- **Phase 5:** `S5-T01`, `S5-T02`, `S5-T03`
+- **Phase 6/Launch readiness:** `S6-T01`, `S6-T02`, `S6-T03`, `S7-T01`, `S7-T02`, `S7-T03`, `S7-T04`
+
+
+### S1-T01 block status (2026-05-09)
+- Static/unit checks pass (`lint`, `typecheck`, onboarding-focused `vitest`).
+- Onboarding E2E is currently blocked by missing Supabase env vars required by middleware (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).
+- Unblock action: provide preview/local-safe env values in `.env.local` (or Playwright webServer env config) and re-run `pnpm run test:e2e -g onboarding`.
