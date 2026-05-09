@@ -4,18 +4,30 @@ import { spawnSync } from 'node:child_process';
 
 const mode = process.argv[2] ?? 'write';
 
-const generated = spawnSync('pnpm', ['exec', 'supabase', 'gen', 'types', 'typescript', '--local'], {
-  encoding: 'utf8',
-});
+function runSupabase(args) {
+  return spawnSync('pnpm', args, { encoding: 'utf8' });
+}
+
+let generated = spawnSync('supabase', ['gen', 'types', 'typescript', '--local'], { encoding: 'utf8' });
 
 if (generated.status !== 0) {
-  process.stderr.write(
-    [
-      generated.stderr?.trim() || 'Failed to generate Supabase types.',
-      'Tip: run `pnpm install` and ensure the Supabase CLI binary is available via `pnpm exec supabase --version`.',
-    ].join('\n') + '\n',
-  );
-  process.exit(generated.status ?? 1);
+  generated = runSupabase(['exec', 'supabase', 'gen', 'types', 'typescript', '--local']);
+}
+
+if (generated.status !== 0) {
+  const fallback = runSupabase(['dlx', 'supabase', 'gen', 'types', 'typescript', '--local']);
+  if (fallback.status === 0) {
+    generated = fallback;
+  } else {
+    process.stderr.write(
+      [
+        generated.stderr?.trim() || fallback.stderr?.trim() || 'Failed to generate Supabase types.',
+        'Tried `supabase ...`, `pnpm exec supabase ...`, and `pnpm dlx supabase ...`.',
+        'Tip: confirm network egress + run `pnpm exec supabase --version` locally.',
+      ].join('\n') + '\n',
+    );
+    process.exit(generated.status ?? fallback.status ?? 1);
+  }
 }
 
 const header = [
