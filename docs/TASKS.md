@@ -200,3 +200,43 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 
 ### Next after S1-T01
 - `S1-T02`: close onboarding persistence guarantees (`P1-002`) with idempotent writes and regression tests.
+
+
+## Testing ownership model (team-run, PM verifies via Vercel UI)
+
+### Team responsibilities (engineering + QA automation)
+- Run all local/internal automated checks on every task PR: install, lint, typecheck, unit tests, integration tests, build, and scoped E2E.
+- Capture command outputs in PR body and flag pass/fail/blocked status before requesting PM review.
+- Triage and fix failures without asking PM to run local commands.
+- Deploy Preview to Vercel and provide the preview URL + focused test script for PM flow checks.
+
+### PM responsibilities (no local testing)
+- Verify expected user flows in Vercel Preview UI only (onboarding/chat/today/trends/profile as relevant to task).
+- Report UX or behavior mismatches from preview interaction (screenshots + step numbers).
+- Provide product sign-off decisions when behavior is acceptable for the stage gate.
+
+### Standard automated test command set (team-run)
+1. `pnpm install --frozen-lockfile`
+2. `pnpm run lint`
+3. `pnpm run typecheck`
+4. `pnpm run test`
+5. `pnpm run build`
+6. `pnpm run test:e2e -g onboarding` (or task-scoped E2E target)
+7. `pnpm run db:types:check` (when DB-related files touched)
+8. `pnpm run eval:prompts` (when prompt/agent behavior touched)
+
+### Vercel UI verification flow
+1. Engineer posts Vercel preview URL + exact test steps tied to task acceptance criteria.
+2. PM validates only visible behavior in preview UI (no CLI/local setup).
+3. PM logs pass/fail against checklist and returns any UX/flow defects.
+4. Engineer resolves defects and reposts updated preview for re-check.
+
+### Immediate next execution queue
+- **Current active:** `S1-T01` (in_progress)
+- **Next:** `S1-T02` onboarding persistence guarantees
+- **Then:** `S1-T03` onboarding failure/recovery completion
+
+### Dependencies requiring PM/founder action
+- Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.
+- Provide first beta test account matrix and scenario priorities before Stage 7 UAT gate.
+- Approve safety/copy/privacy changes when escalated by engineering.
