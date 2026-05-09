@@ -4,12 +4,17 @@ import { spawnSync } from 'node:child_process';
 
 const mode = process.argv[2] ?? 'write';
 
-const generated = spawnSync('pnpm', ['dlx', 'supabase', 'gen', 'types', 'typescript', '--local'], {
+const generated = spawnSync('pnpm', ['exec', 'supabase', 'gen', 'types', 'typescript', '--local'], {
   encoding: 'utf8',
 });
 
 if (generated.status !== 0) {
-  process.stderr.write(generated.stderr || 'Failed to generate Supabase types.\n');
+  process.stderr.write(
+    [
+      generated.stderr?.trim() || 'Failed to generate Supabase types.',
+      'Tip: run `pnpm install` and ensure the Supabase CLI binary is available via `pnpm exec supabase --version`.',
+    ].join('\n') + '\n',
+  );
   process.exit(generated.status ?? 1);
 }
 
