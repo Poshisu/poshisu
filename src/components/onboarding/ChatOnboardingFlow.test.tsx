@@ -102,13 +102,12 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
   });
 
-  it("requires profile confirmation before continue", () => {
+  it("keeps start building disabled until profile is confirmed", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
     completeReviewStep();
 
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-    expect(screen.getByText("Please confirm the profile summary before we continue.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start building" })).toBeDisabled();
   });
 
   it("shows a clear server failure message and supports retry", async () => {
