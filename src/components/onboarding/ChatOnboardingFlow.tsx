@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -301,7 +300,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           {error ? <p className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]">{error}</p> : null}
 
           <p className="text-xs text-muted-foreground">
-            Prefer to skip for now? <Link href="/chat" className="underline">Open chat</Link>
+            You can refine any onboarding answer later from your profile after setup is complete.
           </p>
         </CardContent>
       </Card>

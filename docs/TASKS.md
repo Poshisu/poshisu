@@ -270,4 +270,5 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 ### S1-T01 block status (2026-05-10)
 - Static/unit checks pass (`lint`, `typecheck`, onboarding-focused `vitest`).
 - Playwright `webServer` now injects local-safe fallback env values for Supabase public vars.
-- Remaining blocker is local Supabase availability/auth config during E2E execution; run `pnpm supabase start` and re-run `pnpm run test:e2e -g onboarding`.
+- Remaining blocker in this execution environment is missing Playwright browser binaries plus blocked browser-download endpoints (HTTP 403), preventing local onboarding E2E execution.
+- Unblock action: run E2E in CI or a dev environment with Playwright browser binaries preinstalled/network-allowed, then re-run `pnpm run test:e2e -g onboarding`.
