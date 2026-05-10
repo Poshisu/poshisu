@@ -66,17 +66,17 @@ jobs:
           fi
 
       - name: Setup Supabase CLI
-        if: steps.changes.outputs.db_related == "true"
+        if: ${{ steps.changes.outputs.db_related == 'true' }}
         uses: supabase/setup-cli@v1
         with:
           version: 2.92.1
 
       - name: Start Supabase local stack
-        if: steps.changes.outputs.db_related == "true"
+        if: ${{ steps.changes.outputs.db_related == 'true' }}
         run: supabase start
 
       - name: Check generated DB types are current
-        if: steps.changes.outputs.db_related == "true"
+        if: ${{ steps.changes.outputs.db_related == 'true' }}
         run: pnpm run db:types:check
 
       - name: Lint
