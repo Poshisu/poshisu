@@ -243,7 +243,11 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                 <input type="checkbox" checked={confirmed} disabled={loading} onChange={(e) => setConfirmed(e.target.checked)} />
                 This looks right. Start building my health context.
               </label>
-              <Button onClick={confirmAndContinue} disabled={loading} className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90">
+              <Button
+                onClick={confirmAndContinue}
+                disabled={loading || !confirmed}
+                className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
+              >
                 {loading ? "Saving profile..." : "Start building"}
               </Button>
               {loading ? <p className="text-xs text-muted-foreground">This can take a few seconds while we prepare your profile.</p> : null}
