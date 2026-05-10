@@ -132,7 +132,7 @@ The original phase-by-phase build plan remains the source of truth for what come
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
+- pnpm 10.x
 - Supabase account (free tier is fine)
 - Anthropic API key
 - Vercel account (free tier is fine)
