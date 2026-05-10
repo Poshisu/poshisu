@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -45,14 +47,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          files=""
+
+          safe_diff_names() {
+            local base_ref="$1"
+            local head_ref="$2"
+
+            if ! git cat-file -e "${base_ref}^{commit}" 2>/dev/null; then
+              echo ""
+              return 0
+            fi
+
+            git diff --name-only "$base_ref" "$head_ref"
+          }
+
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="${{ github.event.pull_request.base.sha }}"
             head="${{ github.sha }}"
-            files=$(git diff --name-only "$base" "$head")
+            files=$(safe_diff_names "$base" "$head")
           elif [ "${{ github.event_name }}" = "push" ]; then
             base="${{ github.event.before }}"
             head="${{ github.sha }}"
-            files=$(git diff --name-only "$base" "$head")
+            files=$(safe_diff_names "$base" "$head")
           else
             # workflow_dispatch fallback: avoid DB-gated checks unless DB files changed in branch
             echo "db_related=false" >> "$GITHUB_OUTPUT"
