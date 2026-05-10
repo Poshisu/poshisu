@@ -267,7 +267,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 - **Phase 6/Launch readiness:** `S6-T01`, `S6-T02`, `S6-T03`, `S7-T01`, `S7-T02`, `S7-T03`, `S7-T04`
 
 
-### S1-T01 block status (2026-05-09)
+### S1-T01 block status (2026-05-10)
 - Static/unit checks pass (`lint`, `typecheck`, onboarding-focused `vitest`).
-- Onboarding E2E is currently blocked by missing Supabase env vars required by middleware (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`).
-- Unblock action: provide preview/local-safe env values in `.env.local` (or Playwright webServer env config) and re-run `pnpm run test:e2e -g onboarding`.
+- Playwright `webServer` now injects local-safe fallback env values for Supabase public vars.
+- Remaining blocker is local Supabase availability/auth config during E2E execution; run `pnpm supabase start` and re-run `pnpm run test:e2e -g onboarding`.
