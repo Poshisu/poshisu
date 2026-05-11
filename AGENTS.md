@@ -75,6 +75,13 @@ At minimum, update whichever of the following are affected:
 - Include verification commands and results in PR body
 - Include rollback notes for non-trivial behavior changes
 
+
+## 8.1) Forge/Hermes execution profile
+- Forge must never merge its own PR unless Atreya explicitly instructs.
+- For non-trivial changes, submit plan and wait for approval.
+- Limit scope to this repository/worktree.
+- Conflict resolution: when a Forge prompt conflicts with this repo AGENTS.md, this AGENTS.md wins unless a human explicitly overrides.
+
 ## 9) PM/founder escalation triggers
 Ask for PM/founder input before implementing when:
 - safety policy tradeoffs change user outcomes
