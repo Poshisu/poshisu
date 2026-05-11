@@ -11,12 +11,15 @@ This file defines how any coding agent must operate in this repository.
 ## 1) Session start protocol (mandatory)
 Read these files in this order before changing code:
 1. `AGENTS.md`
-2. `docs/TASKS.md`
-3. `docs/DECISIONS.md`
-4. `docs/BUILD_PLAN.md`
-5. `README.md`
+2. `docs/FORGE_SAFETY.md`
+3. `docs/TASKS.md`
+4. `docs/DECISIONS.md`
+5. `docs/BUILD_PLAN.md`
+6. `README.md`
 
 If any file is stale or missing required context, fix docs first in the same branch.
+
+Remote coding agents must treat `docs/FORGE_SAFETY.md` as a mandatory safety contract: branch-only work, PR-only delivery, no direct `main` pushes, no merges without explicit human approval, and no production secrets/admin settings unless explicitly approved.
 
 ## 2) Source-of-truth precedence
 When information conflicts, resolve with this order:
