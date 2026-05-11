@@ -250,7 +250,11 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               >
                 {loading ? "Saving profile..." : "Start building"}
               </Button>
-              {loading ? <p className="text-xs text-muted-foreground">This can take a few seconds while we prepare your profile.</p> : null}
+              {loading ? (
+                <p role="status" className="text-xs text-muted-foreground">
+                  This can take a few seconds while we prepare your profile.
+                </p>
+              ) : null}
               {canRetry && !loading ? (
                 <Button type="button" variant="outline" onClick={() => void confirmAndContinue()} className="rounded-full border-[color:var(--border-soft)]">
                   Retry save
@@ -285,6 +289,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               <Input
                 placeholder="Type your answer naturally..."
                 value={input}
+                disabled={loading}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -294,14 +299,26 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                 }}
                 className="rounded-full border-[color:var(--border-soft)] bg-[color:var(--surface-raised)]"
               />
-              <Button onClick={() => void submitMessage()} className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90">
+              <Button
+                onClick={() => void submitMessage()}
+                disabled={loading}
+                className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
+              >
                 Send
               </Button>
             </div>
             </>
           )}
 
-          {error ? <p className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]">{error}</p> : null}
+          {error ? (
+            <p
+              role="alert"
+              aria-live="assertive"
+              className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]"
+            >
+              {error}
+            </p>
+          ) : null}
 
           <p className="text-xs text-muted-foreground">
             You can refine any onboarding answer later from your profile after setup is complete.
