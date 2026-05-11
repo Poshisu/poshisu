@@ -42,6 +42,7 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `docs/PROMPTS_GUIDE.md` | How to write, test, and iterate on agent prompts. |
 | `TESTING.md` | Testing layers, exact commands, fixtures, and failure triage playbook. |
 | `docs/UAT_VERCEL.md` | Vercel manual UAT checklist for text/image/audio/file/chips with pass/fail and triage templates. |
+| `docs/MEAL_LOG_MVP_ACCEPTANCE.md` | Go/no-go acceptance gate for meal logging (latency, clarification policy, safety, and test scenarios). |
 | `SECURITY.md` | Auth/RLS model, validation boundaries, LLM risk controls, and security checklist. |
 | `RUNBOOK.md` | Deploy checks, rollback procedures, and incident diagnostics. |
 
@@ -132,7 +133,7 @@ The original phase-by-phase build plan remains the source of truth for what come
 ### Prerequisites
 
 - Node.js 20+
-- pnpm
+- pnpm 10.x
 - Supabase account (free tier is fine)
 - Anthropic API key
 - Vercel account (free tier is fine)
