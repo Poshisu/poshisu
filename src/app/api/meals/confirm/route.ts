@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid meal confirmation payload" }, { status: 400 });
   }
 
-  await confirmMealEstimate(parsed.data);
+  const result = await confirmMealEstimate(parsed.data);
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json({ ok: true, status: result.status, mealId: result.mealId }, { status: result.status === "saved" ? 201 : 200 });
 }

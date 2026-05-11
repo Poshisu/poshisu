@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/chat?error=invalid_confirm", request.url), { status: 303 });
   }
 
-  await confirmMealEstimate(parsed.data);
-  return NextResponse.redirect(new URL("/today", request.url), { status: 303 });
+  const result = await confirmMealEstimate(parsed.data);
+  const destination = result.status === "duplicate_ignored" ? "/today?status=duplicate_ignored" : "/today?status=saved";
+  return NextResponse.redirect(new URL(destination, request.url), { status: 303 });
 }
