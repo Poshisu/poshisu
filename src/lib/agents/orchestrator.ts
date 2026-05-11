@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
+import { evaluateMealSafety } from "@/lib/safety/check";
 
 export type OrchestratorIntent = "meal_log_candidate" | "general_fallback_guidance";
 
@@ -11,6 +13,11 @@ export type AssistantResponseBlock =
       type: "meal_log_candidate";
       summary: string;
       needsConfirmation: true;
+      confidence: "high" | "medium" | "low";
+      estimate: { kcalMin: number; kcalMax: number; protein: number; carbs: number; fat: number; fiber: number };
+      rationale: string;
+      clarificationQuestions: string[];
+      safetyFlags: { allergenFlags: string[]; conditionFlags: string[] };
     };
 
 export interface OrchestratorResponse {
@@ -21,6 +28,8 @@ export interface OrchestratorResponse {
 const messageSchema = z
   .object({
     text: z.string().trim().min(1),
+    allergies: z.array(z.string()).optional(),
+    conditions: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -45,9 +54,17 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
     throw new Error("Invalid message payload: expected { text: string }.");
   }
 
-  const text = parsedMessage.data.text;
+  const { text, allergies = [], conditions = [] } = parsedMessage.data;
 
   if (mealLogPattern.test(text)) {
+    const parsed = parseItemsFromText(text);
+    const nutrition = await runPipeline(parsed.items);
+    const safetyFlags = evaluateMealSafety({ foods: parsed.items, allergies, conditions });
+
+    const clarificationQuestions = parsed.isAmbiguous
+      ? nutrition.clarificationQuestions.slice(0, 2)
+      : nutrition.clarificationQuestions;
+
     return {
       intent: "meal_log_candidate",
       blocks: [
@@ -55,10 +72,25 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
           type: "meal_log_candidate",
           summary: summarizeMealCandidate(text),
           needsConfirmation: true,
+          confidence: parsed.isAmbiguous ? "low" : nutrition.confidence,
+          estimate: {
+            kcalMin: nutrition.kcalMin,
+            kcalMax: nutrition.kcalMax,
+            protein: nutrition.protein,
+            carbs: nutrition.carbs,
+            fat: nutrition.fat,
+            fiber: nutrition.fiber,
+          },
+          rationale: nutrition.rationale,
+          clarificationQuestions,
+          safetyFlags,
         },
         {
           type: "text",
-          text: "I can log this meal. Please confirm if the summary looks right.",
+          text:
+            clarificationQuestions.length > 0
+              ? "I can estimate this, but I need up to two quick clarifications first."
+              : "I can log this meal. Please confirm if the estimate looks right.",
         },
       ],
     };
