@@ -120,10 +120,25 @@ describe("ChatOnboardingFlow conversational", () => {
     fireEvent.click(screen.getByRole("checkbox"));
 
     fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-    expect(await screen.findByText("We couldn’t save your onboarding yet. Check your connection and retry.")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "We couldn’t save your onboarding yet. Check your connection and retry.",
+    );
+    expect(screen.getByRole("button", { name: "Start building" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
     await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("disables chat input and send while profile save is pending", async () => {
+    completeOnboardingActionMock.mockImplementation(() => new Promise(() => {}));
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+
+    completeReviewStep();
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
+
+    expect(screen.queryByPlaceholderText("Type your answer naturally...")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/prepare your profile/i);
   });
 
   it("redirects to chat on successful submit", async () => {
