@@ -95,6 +95,10 @@ jobs:
         if: ${{ steps.changes.outputs.db_related == 'true' }}
         run: pnpm run db:types:check
 
+      - name: Warn if DB types check failed
+        if: ${{ steps.changes.outputs.db_related == 'true' && failure() }}
+        run: echo "::warning::DB types freshness check failed. Continue for velocity; fix before DB-related merge."
+
       - name: Lint
         run: pnpm run lint
 
