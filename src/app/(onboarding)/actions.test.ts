@@ -166,4 +166,55 @@ describe("completeOnboardingAction", () => {
     const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
     expect(result.status).toBe("already_completed");
   });
+
+  it("rolls back and throws when users update writes no rows and latest state is still not onboarded", async () => {
+    const memoryDeletes = vi.fn(async () => ({ error: null }));
+    const supabase = {
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { id: "user-1" } },
+          error: null,
+        })),
+      },
+      from: vi.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn(async () => ({ data: { onboarded_at: null }, error: null })),
+              })),
+            })),
+            update: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                is: vi.fn(() => ({
+                  select: vi.fn(async () => ({ data: [], error: null })),
+                })),
+              })),
+            })),
+          };
+        }
+
+        if (table === "memories") {
+          return {
+            upsert: vi.fn(async () => ({ error: null })),
+            delete: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  eq: memoryDeletes,
+                })),
+              })),
+            })),
+          };
+        }
+
+        return { upsert: vi.fn(async () => ({ error: null })) };
+      }),
+    };
+    createClientMock.mockResolvedValue(supabase);
+
+    await expect(completeOnboardingAction({ onboarding_session_token: "session-12345678" })).rejects.toThrow(
+      /partially saved/i,
+    );
+    expect(memoryDeletes).toHaveBeenCalled();
+  });
 });
