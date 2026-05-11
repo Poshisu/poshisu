@@ -42,7 +42,12 @@ vi.mock("@/lib/onboarding/transcription", () => ({
   transcribeOnboardingAudio: vi.fn(),
 }));
 
-function makeSupabaseClient(overrides?: { onboardedAt?: string | null; userUpdateError?: string | null }) {
+function makeSupabaseClient(overrides?: {
+  onboardedAt?: string | null;
+  userUpdateError?: string | null;
+  userUpdateRows?: Array<{ onboarded_at: string | null }> | null;
+  latestOnboardedAfterRace?: string | null;
+}) {
   const upsert = vi.fn(async () => ({ error: null }));
   const del = vi.fn(async () => ({ error: null }));
 
@@ -63,7 +68,12 @@ function makeSupabaseClient(overrides?: { onboardedAt?: string | null; userUpdat
           })),
           update: vi.fn(() => ({
             eq: vi.fn(() => ({
-              is: vi.fn(async () => ({ error: overrides?.userUpdateError ? { message: overrides.userUpdateError } : null })),
+              is: vi.fn(() => ({
+                select: vi.fn(async () => ({
+                  data: overrides?.userUpdateRows ?? [{ onboarded_at: "2026-05-11T00:00:00.000Z" }],
+                  error: overrides?.userUpdateError ? { message: overrides.userUpdateError } : null,
+                })),
+              })),
             })),
           })),
         };
@@ -111,5 +121,49 @@ describe("completeOnboardingAction", () => {
       /partially saved/i,
     );
     expect(supabase.__spies.del).toHaveBeenCalled();
+  });
+
+  it("returns already_completed when users update races and onboarded_at is now set", async () => {
+    const supabase = makeSupabaseClient({
+      userUpdateRows: [],
+      latestOnboardedAfterRace: "2026-05-11T00:00:00.000Z",
+    });
+    supabase.from = vi.fn((table: string) => {
+      if (table === "users") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({ data: { onboarded_at: "2026-05-11T00:00:00.000Z" }, error: null })),
+            })),
+          })),
+          update: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              is: vi.fn(() => ({
+                select: vi.fn(async () => ({ data: [], error: null })),
+              })),
+            })),
+          })),
+        };
+      }
+
+      if (table === "memories") {
+        return {
+          upsert: vi.fn(async () => ({ error: null })),
+          delete: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(async () => ({ error: null })),
+              })),
+            })),
+          })),
+        };
+      }
+
+      return { upsert: vi.fn(async () => ({ error: null })) };
+    });
+    createClientMock.mockResolvedValue(supabase);
+
+    const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
+    expect(result.status).toBe("already_completed");
   });
 });
