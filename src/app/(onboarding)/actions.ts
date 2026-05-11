@@ -156,14 +156,38 @@ export const completeOnboardingAction = withServerActionLogging("completeOnboard
 
   const onboardedAt = new Date().toISOString();
   logOnboardingStep("write_users_onboarded_at", { userId: user.id, operationKey });
-  const { error: userUpdateError } = await supabase
+  const { data: userUpdateRows, error: userUpdateError } = await supabase
     .from("users" as never)
     .update({ onboarded_at: onboardedAt, estimation_preference: input.estimation_preference } as never)
     .eq("id", user.id)
-    .is("onboarded_at", null);
+    .is("onboarded_at", null)
+    .select("onboarded_at");
 
   if (userUpdateError) {
     logOnboardingStep("compensate_on_failure", { userId: user.id, operationKey, reason: "users_update_failed" });
+    await supabase.from("memories" as never).delete().eq("user_id", user.id).eq("layer", "patterns").eq("key", "main");
+    await supabase.from("memories" as never).delete().eq("user_id", user.id).eq("layer", "profile").eq("key", "main");
+
+    throw new OnboardingPersistenceError(
+      "Onboarding partially saved and automatically rolled back. Please retry with the same onboarding session token.",
+      "partial_write",
+      true,
+    );
+  }
+
+  if (!userUpdateRows || userUpdateRows.length === 0) {
+    const { data: latestUserState, error: latestUserStateError } = await supabase
+      .from("users" as never)
+      .select("onboarded_at" as never)
+      .eq("id", user.id)
+      .single();
+
+    if (!latestUserStateError && (latestUserState as { onboarded_at: string | null }).onboarded_at) {
+      logOnboardingStep("already_complete_after_race", { userId: user.id, operationKey });
+      return { ok: true as const, profileMarkdown, operationKey, status: "already_completed" as const };
+    }
+
+    logOnboardingStep("compensate_on_failure", { userId: user.id, operationKey, reason: "users_update_no_rows" });
     await supabase.from("memories" as never).delete().eq("user_id", user.id).eq("layer", "patterns").eq("key", "main");
     await supabase.from("memories" as never).delete().eq("user_id", user.id).eq("layer", "profile").eq("key", "main");
 
