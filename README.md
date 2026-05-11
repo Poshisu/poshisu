@@ -148,6 +148,18 @@ The original phase-by-phase build plan remains the source of truth for what come
 5. **Use sub-agents** as specified: `code-reviewer` before commits, `test-writer` after features, `prompt-evaluator` after prompt changes.
 
 
+
+### Using Forge/Hermes agent
+
+For Hermes/Forge (Codespaces) sessions:
+
+1. Open `docs/FORGE_MODE.md`.
+2. Copy the **Startup prompt text (copy/paste exactly)** block.
+3. Paste it as the first prompt in your new Hermes/Forge session.
+4. Follow the first-task onboarding report template before implementation.
+
+Any edits to the Forge startup prompt must be versioned like code and accompanied by a rationale update in `docs/DECISIONS.md`.
+
 ### Database type generation workflow
 
 `src/types/database.ts` is generated from your local Supabase schema and should never be edited manually.

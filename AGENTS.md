@@ -16,6 +16,8 @@ Read these files in this order before changing code:
 4. `docs/BUILD_PLAN.md`
 5. `README.md`
 
+If using Hermes/Forge, load `docs/FORGE_MODE.md`.
+
 If any file is stale or missing required context, fix docs first in the same branch.
 
 ## 2) Source-of-truth precedence
@@ -74,6 +76,13 @@ At minimum, update whichever of the following are affected:
 - Small, reviewable diffs
 - Include verification commands and results in PR body
 - Include rollback notes for non-trivial behavior changes
+
+
+## 8.1) Forge/Hermes execution profile
+- Forge must never merge its own PR unless Atreya explicitly instructs.
+- For non-trivial changes, submit plan and wait for approval.
+- Limit scope to this repository/worktree.
+- Conflict resolution: when a Forge prompt conflicts with this repo AGENTS.md, this AGENTS.md wins unless a human explicitly overrides.
 
 ## 9) PM/founder escalation triggers
 Ask for PM/founder input before implementing when:
