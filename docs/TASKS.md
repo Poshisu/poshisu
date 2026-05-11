@@ -8,6 +8,24 @@ _Last updated: 2026-05-06_
 - **Execution focus:** restart product delivery with chat-first onboarding and minimal end-to-end logging loop
 - `docs/TASKS.md` is source of truth for current execution order; `docs/BUILD_PLAN.md` retains historical prompts.
 
+
+## Agent Onboarding PR
+
+Use this checklist for Forge/Hermes onboarding governance PRs (first PR in a new execution cycle).
+
+### Required checklist
+- [ ] Startup report completed and attached/linked in the PR body.
+- [ ] First PR contains **no product code changes** (docs/governance changes only).
+- [ ] Branch naming convention is followed (for example: `docs/<scope>-<short-description>` or `chore/<scope>-<short-description>`).
+- [ ] Verification commands and outputs are pasted in the PR body.
+- [ ] Rollback note is included in the PR body (how to revert safely if governance/docs changes need to be undone).
+
+### Pass criteria
+- Human approval is required before Forge can submit any feature PRs after onboarding.
+
+### Fail-closed rule
+- If the onboarding report is incomplete or missing, Forge must stop execution and explicitly request clarification before making or submitting additional changes.
+
 ## Milestone plan
 
 ### M1 — Documentation and execution system hardening (current)
