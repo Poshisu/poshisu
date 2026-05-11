@@ -171,9 +171,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S1-T01` (Close onboarding chat entry flow with passing onboarding E2E).
+- **Next to execute:** `S1-T02` (Close onboarding persistence guarantees with idempotent writes and regression tests).
 - **Owner:** Engineering
-- **Dependencies:** local Supabase + Playwright E2E environment configured.
+- **Dependencies:** onboarding confirm action test harness + idempotent persistence assertions.
 
 
 ### S1-T01 execution checklist
@@ -198,8 +198,8 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
    - non-onboarded and onboarded redirect behavior is deterministic
    - failures/retries do not bypass confirm gate
 
-### Next after S1-T01
-- `S1-T02`: close onboarding persistence guarantees (`P1-002`) with idempotent writes and regression tests.
+### Next after S1-T02
+- `S1-T03`: close onboarding failure/recovery UX with accessible deterministic states.
 
 
 ## Testing ownership model (team-run, PM verifies via Vercel UI)
