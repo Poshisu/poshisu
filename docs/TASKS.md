@@ -147,8 +147,8 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 
 | Seq | Stage | Task ID | Task | Acceptance criteria | Verify command | Status |
 |---|---|---|---|---|---|---|
-| 1 | Stage 1 | S1-T01 | Close onboarding chat entry flow (`P1-001`) | New user completes mandatory onboarding and is routed to chat via guarded flow | `pnpm run test:e2e -g onboarding` | blocked (env) |
-| 2 | Stage 1 | S1-T02 | Close onboarding persistence (`P1-002`) | Confirm step writes profile + memory + onboarded marker idempotently | `pnpm run test -- src/lib/agents/onboarding-parser.test.ts src/components/onboarding/ChatOnboardingFlow.test.tsx` | todo |
+| 1 | Stage 1 | S1-T01 | Close onboarding chat entry flow (`P1-001`) | New user completes mandatory onboarding and is routed to chat via guarded flow | `pnpm run test:e2e -g onboarding` | done |
+| 2 | Stage 1 | S1-T02 | Close onboarding persistence (`P1-002`) | Confirm step writes profile + memory + onboarded marker idempotently | `pnpm run test -- src/lib/agents/onboarding-parser.test.ts src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
 | 3 | Stage 1 | S1-T03 | Close onboarding failure/recovery (`P1-003`) | Loading/error/retry states are accessible and deterministic | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx && pnpm run test:e2e -g onboarding` | todo |
 | 4 | Stage 2 | S2-T01 | Implement hybrid nutrition pipeline integration (`P2-002`) | Deterministic macro/micro + safety checks wired into request flow | `pnpm run test -- src/lib/nutrition src/lib/safety` | todo |
 | 5 | Stage 2 | S2-T02 | Validate confirm-save meal loop (`P2-003` hardening) | User can confirm estimate and see saved meal in Today with regression coverage | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | todo |
@@ -171,9 +171,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S1-T02` (Close onboarding persistence guarantees with idempotent writes and regression tests).
+- **Next to execute:** `S1-T03` (Close onboarding failure/recovery UX with accessible deterministic states).
 - **Owner:** Engineering
-- **Dependencies:** onboarding confirm action test harness + idempotent persistence assertions.
+- **Dependencies:** onboarding chat tests + deterministic loading/error/retry state handling.
 
 
 ### S1-T01 execution checklist
@@ -198,8 +198,8 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
    - non-onboarded and onboarded redirect behavior is deterministic
    - failures/retries do not bypass confirm gate
 
-### Next after S1-T02
-- `S1-T03`: close onboarding failure/recovery UX with accessible deterministic states.
+### Next after S1-T03
+- `S2-T01`: implement hybrid nutrition pipeline integration (`P2-002`) with deterministic macro/micro and safety checks.
 
 
 ## Testing ownership model (team-run, PM verifies via Vercel UI)
@@ -232,9 +232,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 4. Engineer resolves defects and reposts updated preview for re-check.
 
 ### Immediate next execution queue
-- **Current active:** `S1-T01` (in_progress)
-- **Next:** `S1-T02` onboarding persistence guarantees
-- **Then:** `S1-T03` onboarding failure/recovery completion
+- **Current active:** `S1-T03` (in_progress)
+- **Next:** `S2-T01` hybrid nutrition pipeline integration
+- **Then:** `S2-T02` confirm-save meal loop hardening
 
 ### Dependencies requiring PM/founder action
 - Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.
@@ -247,7 +247,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | Phase | Status | Remaining work to close phase |
 |---|---|---|
 | Phase 0 (Foundation) | mostly done | keep CI/doc parity stable and maintain DB type freshness gate |
-| Phase 1 (Onboarding) | **in progress** | close `S1-T01`, `S1-T02`, `S1-T03` (onboarding E2E + persistence + recovery UX) |
+| Phase 1 (Onboarding) | **in progress** | close `S1-T03` (onboarding failure/recovery UX deterministic completion) |
 | Phase 2 (Chat & Meal Logging) | partial | close `S2-T01`, `S2-T02`, `S2-T03` (hybrid nutrition + meal confirm/save reliability + chat contract hardening) |
 | Phase 3 (Memory) | partial/planned | close `S3-T02` plus profile memory editing and visibility contract completion |
 | Phase 4 (Trends) | planned | close `S4-T02` trends charts/insights production readiness |
@@ -255,9 +255,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | Phase 6 (Polish/Beta) | planned | close `S5-*`, `S6-*`, and `S7-*` gates before launch |
 
 ### Remaining tasks to finish Phase 1 specifically
-1. `S1-T01` — close onboarding chat entry flow with passing onboarding E2E.
-2. `S1-T02` — close onboarding persistence guarantees with idempotent writes and regression coverage.
-3. `S1-T03` — close onboarding failure/recovery UX with accessible deterministic states.
+1. `S1-T03` — close onboarding failure/recovery UX with accessible deterministic states.
 
 ### Remaining phases and task groups (post-Phase 1)
 - **Phase 2:** `S2-T01`, `S2-T02`, `S2-T03`
@@ -267,9 +265,6 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 - **Phase 6/Launch readiness:** `S6-T01`, `S6-T02`, `S6-T03`, `S7-T01`, `S7-T02`, `S7-T03`, `S7-T04`
 
 
-### S1-T01 block status (2026-05-10)
-- Static/unit checks pass (`lint`, `typecheck`, onboarding-focused `vitest`).
-- Playwright `webServer` now injects local-safe fallback env values for Supabase public vars.
-- Remaining blocker in this execution environment is missing Playwright browser binaries plus blocked browser-download endpoints (HTTP 403), preventing local onboarding E2E execution.
-- CI now includes a dedicated `Onboarding E2E gate` job that boots local Supabase, installs Playwright Chromium, and runs `pnpm run test:e2e -g onboarding`.
-- Exit condition to close `S1-T01`: first green CI run for `Onboarding E2E gate` on this branch.
+### S1-T01 closure status (2026-05-11)
+- `Onboarding E2E gate` is now green in CI and S1-T01 is closed.
+- Local environment limitations (browser download restrictions) remain documented for reference only; CI is the source-of-truth gate for onboarding E2E pass/fail.
