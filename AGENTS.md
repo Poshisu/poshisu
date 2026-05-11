@@ -16,6 +16,8 @@ Read these files in this order before changing code:
 4. `docs/BUILD_PLAN.md`
 5. `README.md`
 
+If using Hermes/Forge, load `docs/FORGE_MODE.md`.
+
 If any file is stale or missing required context, fix docs first in the same branch.
 
 ## 2) Source-of-truth precedence

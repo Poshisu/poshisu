@@ -226,3 +226,26 @@ This keeps current onboarding extraction stable while enabling safe incremental 
 
 ### Migration path
 Replace placeholder transcription with real STT integration and feed OCR/vision summaries into the same parse branching contract.
+
+## 2026-05-11 — Versioned Hermes/Forge startup prompt contract
+
+### Context
+Team members increasingly use Hermes/Forge sessions in Codespaces, but startup instructions were inconsistent across sessions and contributors.
+
+### Options
+1. Keep ad hoc startup prompts in chat history or personal notes.
+2. Add a canonical, versioned startup prompt document in-repo.
+3. Enforce startup behavior via external tooling only.
+
+### Decision
+Adopt `docs/FORGE_MODE.md` as the canonical, versioned startup prompt contract for Hermes/Forge sessions.
+
+### Why
+A single source-of-truth startup prompt reduces process drift, improves onboarding consistency, and makes prompt/process changes auditable through normal PR review.
+
+### Tradeoffs
+- **Pros:** repeatable session bootstrapping, clearer onboarding expectations, better documentation parity.
+- **Cons:** requires disciplined updates when process changes; slight overhead for maintaining prompt text.
+
+### Migration path
+If startup automation is introduced later, keep `docs/FORGE_MODE.md` as the human-readable spec and generate automated startup config from it.
