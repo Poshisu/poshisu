@@ -1,6 +1,6 @@
 # TASKS — Active Execution Plan
 
-_Last updated: 2026-05-11_
+_Last updated: 2026-05-06_
 
 ## Current phase snapshot
 - **Roadmap phase:** Late **Phase 0** / Early **Phase 1**
@@ -167,7 +167,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 |---|---|---|---|---|---|---|
 | 1 | Stage 1 | S1-T01 | Close onboarding chat entry flow (`P1-001`) | New user completes mandatory onboarding and is routed to chat via guarded flow | `pnpm run test:e2e -g onboarding` | done |
 | 2 | Stage 1 | S1-T02 | Close onboarding persistence (`P1-002`) | Confirm step writes profile + memory + onboarded marker idempotently | `pnpm run test -- src/lib/agents/onboarding-parser.test.ts src/components/onboarding/ChatOnboardingFlow.test.tsx` | done |
-| 3 | Stage 1 | S1-T03 | Close onboarding failure/recovery (`P1-003`) | Loading/error/retry states are accessible and deterministic | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx && pnpm run test:e2e -g onboarding` | todo |
+| 3 | Stage 1 | S1-T03 | Close onboarding failure/recovery (`P1-003`) | Loading/error/retry states are accessible and deterministic | `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx && pnpm run test:e2e -g onboarding` | done |
 | 4 | Stage 2 | S2-T01 | Implement hybrid nutrition pipeline integration (`P2-002`) | Deterministic macro/micro + safety checks wired into request flow | `pnpm run test -- src/lib/nutrition src/lib/safety` | todo |
 | 5 | Stage 2 | S2-T02 | Validate confirm-save meal loop (`P2-003` hardening) | User can confirm estimate and see saved meal in Today with regression coverage | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | todo |
 | 6 | Stage 2 | S2-T03 | Harden `/api/chat` beta contract | Safe envelopes, retry/fallback behavior, and trace logging verified | `pnpm run test -- src/app/api/chat` | todo |
@@ -189,7 +189,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S1-T03` (Close onboarding failure/recovery UX with accessible deterministic states).
+- **Next to execute:** `S2-T01` (Hybrid nutrition pipeline integration with deterministic safety checks).
 - **Owner:** Engineering
 - **Dependencies:** onboarding chat tests + deterministic loading/error/retry state handling.
 
@@ -216,8 +216,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
    - non-onboarded and onboarded redirect behavior is deterministic
    - failures/retries do not bypass confirm gate
 
-### Next after S1-T03
-- `S2-T01`: implement hybrid nutrition pipeline integration (`P2-002`) with deterministic macro/micro and safety checks.
+### S1-T03 closure status (2026-05-11)
+- Loading/error/retry onboarding states now have deterministic unit test coverage.
+- Retry UX and pending-save disabled states were validated in `ChatOnboardingFlow` tests.
 
 
 ## Testing ownership model (team-run, PM verifies via Vercel UI)
@@ -250,9 +251,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 4. Engineer resolves defects and reposts updated preview for re-check.
 
 ### Immediate next execution queue
-- **Current active:** `S1-T03` (in_progress)
-- **Next:** `S2-T01` hybrid nutrition pipeline integration
-- **Then:** `S2-T02` confirm-save meal loop hardening
+- **Current active:** `S2-T01` (in_progress)
+- **Next:** `S2-T02` confirm-save meal loop hardening
+- **Then:** `S2-T03` `/api/chat` beta contract hardening
 
 ### Dependencies requiring PM/founder action
 - Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.
