@@ -93,7 +93,6 @@ jobs:
 
       - name: Check generated DB types are current
         if: ${{ steps.changes.outputs.db_related == 'true' }}
-        continue-on-error: true
         run: pnpm run db:types:check
 
       - name: Warn if DB types check failed
