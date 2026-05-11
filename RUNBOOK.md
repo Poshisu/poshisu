@@ -122,3 +122,69 @@ When incident is active, track:
 - Next update ETA
 
 After resolution, file follow-up tasks in `docs/TASKS.md` and decision notes in `docs/DECISIONS.md` when architectural changes are needed.
+
+
+## Supabase public env setup (for onboarding E2E + local preview)
+
+Use this when Playwright/web server fails with: "Your project's URL and Key are required to create a Supabase client".
+
+1. Repo root means the top folder that contains `package.json` (in this repo: `/workspace/poshisu`).
+2. Open Supabase dashboard → your project → **Settings** → **API**.
+3. Copy these two values:
+   - `Project URL`
+   - `anon public key`
+4. In repo root, create or edit `.env.local` and add:
+   - `NEXT_PUBLIC_SUPABASE_URL=<Project URL>`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon public key>`
+5. Save file and restart dev/test web server.
+6. Re-run onboarding E2E: `pnpm run test:e2e -g onboarding`.
+
+Security notes:
+- These two are public client values (safe for browser/runtime exposure).
+- Never put service-role keys in `NEXT_PUBLIC_*` variables.
+
+
+### GitHub vs local vs Vercel env placement
+- `.env.local` is local only and is intentionally gitignored (not pushed to GitHub).
+- GitHub repository secrets/variables are for GitHub Actions CI runs.
+- Vercel Project Environment Variables are for Vercel preview/production runtime.
+- You usually set the same public Supabase values in all three places as needed.
+
+
+### Exact copy-paste values for this project
+
+Add these exact pairs (same in local, GitHub Actions, and Vercel project envs):
+
+- `NEXT_PUBLIC_SUPABASE_URL` = `https://mdfsaxnlrhhqnynkiawn.supabase.co`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_YLywT4DEANbGGSYhD1zUZg_8tVHPNE4`
+
+### GitHub Actions clicks (exact)
+1. Open repo → **Settings** → **Secrets and variables** → **Actions**.
+2. Click **Variables** tab (preferred for public non-sensitive values).
+3. Click **New repository variable** and create:
+   - Name: `NEXT_PUBLIC_SUPABASE_URL`
+   - Value: `https://mdfsaxnlrhhqnynkiawn.supabase.co`
+4. Click **New repository variable** again and create:
+   - Name: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - Value: `sb_publishable_YLywT4DEANbGGSYhD1zUZg_8tVHPNE4`
+5. Re-run the failed GitHub Action workflow from the Actions tab.
+
+### Vercel clicks (exact)
+1. Open Vercel project → **Settings** → **Environment Variables**.
+2. Click **Add Environment Variable**.
+3. Add:
+   - Key: `NEXT_PUBLIC_SUPABASE_URL`
+   - Value: `https://mdfsaxnlrhhqnynkiawn.supabase.co`
+   - Environments: **Production, Preview, Development**
+4. Add another variable:
+   - Key: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - Value: `sb_publishable_YLywT4DEANbGGSYhD1zUZg_8tVHPNE4`
+   - Environments: **Production, Preview, Development**
+5. Trigger **Redeploy** for the latest preview deployment so new env vars are picked up.
+
+
+### Which GitHub workflow to re-run
+- Re-run the **CI** workflow (left sidebar in Actions shows only `CI`).
+- On Actions page, open the latest failed run for your branch/PR.
+- Click **Re-run jobs** (or **Re-run failed jobs**).
+- If multiple recent runs failed, re-run the newest one first (older failures can be ignored after a newer green run).
