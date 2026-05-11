@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { handleMessage } from "@/lib/agents/orchestrator";
 import { enforceChatRateLimit } from "@/lib/rate-limit/chat";
@@ -5,16 +6,19 @@ import { createClient } from "@/lib/supabase/server";
 
 const chatRequestSchema = z.object({
   text: z.string().trim().min(1).max(4000),
+  allergies: z.array(z.string()).optional(),
+  conditions: z.array(z.string()).optional(),
 });
 
 const FALLBACK_RESPONSE =
   "I had trouble processing that right now. Please try again in a moment, and I can still help log your meal.";
 
-function jsonError(status: number, code: string, message: string) {
-  return Response.json({ ok: false, error: { code, message } }, { status });
+function jsonError(status: number, code: string, message: string, requestId: string) {
+  return Response.json({ ok: false, error: { code, message }, requestId }, { status });
 }
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get("x-request-id") ?? randomUUID();
   const supabase = await createClient();
 
   const {
@@ -23,19 +27,19 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return jsonError(401, "UNAUTHORIZED", "You must be signed in to chat.");
+    return jsonError(401, "UNAUTHORIZED", "You must be signed in to chat.", requestId);
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return jsonError(400, "INVALID_JSON", "Request body must be valid JSON.");
+    return jsonError(400, "INVALID_JSON", "Request body must be valid JSON.", requestId);
   }
 
   const parsed = chatRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError(400, "VALIDATION_ERROR", "Please send a non-empty text message.");
+    return jsonError(400, "VALIDATION_ERROR", "Please send a non-empty text message.", requestId);
   }
 
   const rateLimit = await enforceChatRateLimit(supabase, user.id);
@@ -47,6 +51,7 @@ export async function POST(request: Request) {
           code: "RATE_LIMITED",
           message: "Too many messages. Please wait a bit and try again.",
         },
+        requestId,
       },
       {
         status: 429,
@@ -65,7 +70,7 @@ export async function POST(request: Request) {
       role: "user",
       kind: "text",
       content: parsed.data.text,
-      metadata: {},
+      metadata: { requestId },
     } as never)
     .select("id, role, kind, content, created_at")
     .single();
@@ -73,21 +78,28 @@ export async function POST(request: Request) {
   const userMessage = rawUserMessage as unknown as { id: string; role: string; kind: string; content: string; created_at: string };
 
   if (userInsertError || !userMessage) {
-    return jsonError(500, "MESSAGE_PERSIST_FAILED", "Could not save your message. Please try again.");
+    return jsonError(500, "MESSAGE_PERSIST_FAILED", "Could not save your message. Please try again.", requestId);
   }
 
   let assistantText = FALLBACK_RESPONSE;
   let intent = "general_fallback_guidance";
+  let usedFallback = false;
 
   try {
-    const orchestrated = await handleMessage(user.id, { text: parsed.data.text });
+    const orchestrated = await handleMessage(user.id, {
+      text: parsed.data.text,
+      allergies: parsed.data.allergies,
+      conditions: parsed.data.conditions,
+    });
     intent = orchestrated.intent;
     const firstTextBlock = orchestrated.blocks.find((block) => block.type === "text");
     if (firstTextBlock && firstTextBlock.text.trim()) {
       assistantText = firstTextBlock.text;
+    } else {
+      usedFallback = true;
     }
   } catch {
-    // deterministic fallback above
+    usedFallback = true;
   }
 
   const { data: rawAssistantMessage, error: assistantInsertError } = await messageTable
@@ -97,7 +109,7 @@ export async function POST(request: Request) {
       kind: "text",
       content: assistantText,
       in_reply_to: userMessage.id,
-      metadata: { intent },
+      metadata: { intent, requestId, usedFallback },
     } as never)
     .select("id, role, kind, content, created_at, in_reply_to")
     .single();
@@ -112,14 +124,17 @@ export async function POST(request: Request) {
   };
 
   if (assistantInsertError || !assistantMessage) {
-    return jsonError(500, "ASSISTANT_PERSIST_FAILED", "Message received, but reply could not be saved.");
+    return jsonError(500, "ASSISTANT_PERSIST_FAILED", "Message received, but reply could not be saved.", requestId);
   }
 
   return Response.json({
     ok: true,
+    requestId,
     data: {
       userMessage,
       assistantMessage,
+      intent,
+      usedFallback,
     },
   });
 }
