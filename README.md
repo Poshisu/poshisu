@@ -180,7 +180,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
 | `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
-| `/api/meals` | No (planned) | _Not implemented yet_ | Planned meals CRUD API route. |
+| `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | No (planned) | _Not implemented yet_ | Planned memory read/edit API route. |
 | `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
 | `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
