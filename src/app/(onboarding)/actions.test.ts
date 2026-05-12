@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 
 const createClientMock = vi.fn();
+const generateOnboardingProfileMock = vi.fn<(arg: unknown) => Promise<string>>(async () => "# Profile");
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
@@ -9,6 +10,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/onboarding/schema", () => ({
   parseOnboardingAnswers: vi.fn(() => ({
+    name: "Aarti",
     age: 30,
     gender: "prefer-not-to-say",
     height_cm: 170,
@@ -30,7 +32,7 @@ vi.mock("@/lib/onboarding/schema", () => ({
 }));
 
 vi.mock("@/lib/agents/onboarding-parser", () => ({
-  generateOnboardingProfile: vi.fn(async () => "# Profile"),
+  generateOnboardingProfile: (arg: unknown) => generateOnboardingProfileMock(arg),
   decideOnboardingParseMode: vi.fn(() => ({ mode: "extract", promptInput: "" })),
 }));
 
@@ -101,6 +103,7 @@ function makeSupabaseClient(overrides?: {
 describe("completeOnboardingAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    generateOnboardingProfileMock.mockResolvedValue("# Profile");
   });
 
   it("returns already_completed when user is already onboarded", async () => {
@@ -111,6 +114,28 @@ describe("completeOnboardingAction", () => {
 
     expect(result.status).toBe("already_completed");
     expect(supabase.__spies.upsert).not.toHaveBeenCalled();
+  });
+
+  it("continues onboarding with deterministic fallback profile when profile generation fails", async () => {
+    generateOnboardingProfileMock.mockRejectedValueOnce(new Error("anthropic unavailable"));
+    const supabase = makeSupabaseClient();
+    createClientMock.mockResolvedValue(supabase);
+
+    const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
+
+    expect(result.status).toBe("completed");
+    expect(result.profileMarkdown).toContain("# Profile");
+    expect(result.profileMarkdown).toContain("Name: Aarti");
+    expect(result.profileMarkdown).toContain("Goal: maintain");
+    expect(result.profileMarkdown).not.toContain("undefined");
+    expect(supabase.__spies.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "user-1", layer: "profile", key: "main", content: result.profileMarkdown }),
+      { onConflict: "user_id,layer,key" },
+    );
+    expect(supabase.__spies.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "user-1", layer: "patterns", key: "main" }),
+      { onConflict: "user_id,layer,key" },
+    );
   });
 
   it("rolls back memories and throws on final user update failure", async () => {
