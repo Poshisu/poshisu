@@ -28,6 +28,44 @@ const completeOnboardingMetaSchema = z.object({
 
 const patternsSeed = "# Patterns\n\n_No patterns yet. I'll learn from your first week of logs._";
 
+function sanitizeProfileText(value: string): string {
+  return value
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\\/g, "\\\\")
+    .replace(/([`*_{}\[\]()#+.!|-])/g, "\\$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildFallbackOnboardingProfile(input: ReturnType<typeof parseOnboardingAnswers>): string {
+  const mealTimes = [input.meal_times.breakfast, input.meal_times.lunch, input.meal_times.dinner]
+    .filter(Boolean)
+    .join(", ");
+
+  return [
+    "# Profile",
+    "",
+    `- Name: ${sanitizeProfileText(input.name)}`,
+    `- Age: ${input.age}`,
+    `- Goal: ${input.primary_goal}`,
+    `- Dietary pattern: ${input.dietary_pattern}`,
+    `- Conditions: ${input.conditions.length ? input.conditions.join(", ") : "none shared"}`,
+    `- Meal check-ins: ${mealTimes || "not set"}`,
+    `- Estimation preference: ${input.estimation_preference}`,
+  ].join("\n");
+}
+
+async function generateOnboardingProfileSafely(input: ReturnType<typeof parseOnboardingAnswers>): Promise<string> {
+  try {
+    return await generateOnboardingProfile(input);
+  } catch (error) {
+    const name = error instanceof Error ? error.name : "UnknownError";
+    const status = typeof (error as { status?: unknown } | null)?.status === "number" ? (error as { status: number }).status : undefined;
+    console.warn("[onboarding.complete] profile_generation_fallback", { name, status });
+    return buildFallbackOnboardingProfile(input);
+  }
+}
+
 function buildOnboardingOperationKey(userId: string, sessionToken: string | undefined, payload: unknown): string {
   const payloadHash = createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 16);
   const scopedSession = sessionToken ?? "missing-session-token";
@@ -67,7 +105,7 @@ export const parseOnboardingEventAction = withServerActionLogging("parseOnboardi
 
 export const previewProfileAction = withServerActionLogging("previewOnboardingProfile", async (rawInput: unknown) => {
   const parsed = parseOnboardingAnswers(rawInput);
-  const profileMarkdown = await generateOnboardingProfile(parsed);
+  const profileMarkdown = await generateOnboardingProfileSafely(parsed);
 
   return {
     ok: true as const,
@@ -78,7 +116,7 @@ export const previewProfileAction = withServerActionLogging("previewOnboardingPr
 export const completeOnboardingAction = withServerActionLogging("completeOnboarding", async (rawInput: unknown) => {
   const meta = completeOnboardingMetaSchema.parse(rawInput);
   const input = parseOnboardingAnswers(rawInput);
-  const profileMarkdown = await generateOnboardingProfile(input);
+  const profileMarkdown = await generateOnboardingProfileSafely(input);
 
   const supabase = await createClient();
   const {
