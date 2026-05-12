@@ -172,7 +172,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 5 | Stage 2 | S2-T02 | Validate confirm-save meal loop (`P2-003` hardening) | User can confirm estimate and see saved meal in Today with regression coverage | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | done |
 | 6 | Stage 2 | S2-T03 | Harden `/api/chat` beta contract | Safe envelopes, retry/fallback behavior, and trace logging verified | `pnpm run test -- src/app/api/chat` | done |
 | 7 | Stage 3 | S3-T01 | Implement `/api/meals` CRUD | Auth + RLS enforced on create/read/update/delete | `pnpm run test -- src/app/api/meals` | done |
-| 8 | Stage 3 | S3-T02 | Implement `/api/memory` read/write | Profile and pattern updates available with permission checks | `pnpm run test -- src/app/api/memory` | todo |
+| 8 | Stage 3 | S3-T02 | Implement `/api/memory` read/write | Profile and pattern updates available with permission checks | `pnpm run test -- src/app/api/memory` | done |
 | 9 | Stage 3 | S3-T03 | Implement `/api/push` subscription lifecycle | Subscribe/unsubscribe and delivery eligibility stored correctly | `pnpm run test -- src/app/api/push` | todo |
 | 10 | Stage 4 | S4-T01 | Productionize Today page | Daily totals/cards/edit flows stable on mobile + desktop | `pnpm run test -- src/app/(app)/today` | todo |
 | 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | todo |
@@ -189,15 +189,21 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S3-T02` (Implement `/api/memory` read/write).
+- **Next to execute:** `S3-T03` (Implement `/api/push` subscription lifecycle).
 - **Owner:** Engineering
-- **Dependencies:** `S3-T01` meals CRUD is implemented with authenticated route tests.
+- **Dependencies:** `S3-T02` memory read/write is implemented with authenticated route tests.
 
 
 ### S3-T01 closure status (2026-05-12)
 - `/api/meals` collection route is implemented with authenticated `GET` and `POST` handlers.
 - `/api/meals/[id]` item route is implemented with authenticated `PATCH` and `DELETE` handlers.
 - Route tests cover safe envelopes, request IDs, validation failure, user scoping, cross-user 404 behavior, and unauthenticated rejection.
+
+### S3-T02 closure status (2026-05-12)
+- `/api/memory` route is implemented with authenticated `GET` and `PUT` handlers.
+- Default `GET` returns the signed-in user's `profile/main` and `patterns/main`; filtered reads support valid memory layers and keys.
+- `PUT` writes are intentionally restricted to `profile/main` and `patterns/main`, with server-side `user_id` scoping and RLS-backed Supabase access.
+- Route tests cover safe envelopes, validation failures, user scoping, unauthorized rejection, disallowed write layers, and storage error sanitization.
 
 
 ### S1-T01 execution checklist
@@ -257,9 +263,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 4. Engineer resolves defects and reposts updated preview for re-check.
 
 ### Immediate next execution queue
-- **Current active:** `S3-T02` `/api/memory` read/write implementation
-- **Next:** `S3-T03` `/api/push` subscription lifecycle
-- **Then:** `S4-T01` productionize Today page
+- **Current active:** `S3-T03` `/api/push` subscription lifecycle
+- **Next:** `S4-T01` productionize Today page
+- **Then:** `S4-T02` productionize Trends page
 
 ### Dependencies requiring PM/founder action
 - Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.
