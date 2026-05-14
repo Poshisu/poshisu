@@ -110,6 +110,56 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getByRole("button", { name: "Start building" })).toBeDisabled();
   });
 
+  it("does not block final submit when conditions are answered as no instead of none", async () => {
+    completeOnboardingActionMock.mockResolvedValue(undefined);
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { assign },
+      writable: true,
+    });
+
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    const messages = ["AVBS", "22", "Maintain", "no", "None", "09:00 13:00 19:00"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
+
+    await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/I still need a few details/i)).not.toBeInTheDocument();
+  });
+
+  it("does not block final submit for natural no-conditions answers", async () => {
+    completeOnboardingActionMock.mockResolvedValue(undefined);
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    const messages = ["AVBS", "22", "Maintain", "no medical conditions", "None", "09:00 13:00 19:00"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
+
+    await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/I still need a few details/i)).not.toBeInTheDocument();
+  });
+
+  it("shows field-specific recovery guidance when final validation blocks submit", () => {
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    const messages = ["Aarti", "12", "Maintain", "None", "Vegetarian", "09:00 13:00 19:00"];
+    for (const msg of messages) {
+      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    }
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Age must be between 13 and 100.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Please correct this item");
+  });
+
   it("shows a clear server failure message and supports retry", async () => {
     completeOnboardingActionMock
       .mockRejectedValueOnce(new Error("boom"))

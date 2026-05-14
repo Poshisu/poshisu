@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
+import type { z } from "zod";
 
 type Props = { firstName: string };
 type ConfidenceLabel = "high" | "medium" | "low";
@@ -41,6 +42,26 @@ const STARTING_DRAFT: OnboardingAnswers = {
   eating_context: "mixed",
   estimation_preference: "midpoint",
 };
+
+const NO_ANSWER_PATTERN = /^(no|none|nope|nil|nothing|n\/a|na|skip|skip for now|not applicable)(?:[\s,.:;!-]+(?:conditions?|medical conditions?|health conditions?|issues?|problems?|that i know of|shared|to share))*$/i;
+
+type OnboardingValidationIssue = z.ZodError<OnboardingAnswers>["issues"][number];
+
+function formatValidationIssue(issue: OnboardingValidationIssue) {
+  const field = issue.path.join(".");
+  if (field === "age") return "Age must be between 13 and 100.";
+  if (field === "name") return "Name must be at least 2 characters.";
+  if (field === "meal_times" || field.startsWith("meal_times.")) return issue.message;
+  if (field === "goal_target_kg") return "Add a target weight for this goal, or choose maintain/wellness for now.";
+  if (field === "goal_timeline_weeks") return "Add a goal timeline, or choose maintain/wellness for now.";
+  if (field === "conditions_other") return "If you share another condition, mark it as Other; otherwise answer No/None.";
+  return issue.message;
+}
+
+function formatValidationError(error: z.ZodError<OnboardingAnswers>) {
+  const uniqueMessages = Array.from(new Set(error.issues.map(formatValidationIssue)));
+  return `Please correct ${uniqueMessages.length > 1 ? "these items" : "this item"}: ${uniqueMessages.join(" ")}`;
+}
 
 export function ChatOnboardingFlow({ firstName }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -130,11 +151,12 @@ export function ChatOnboardingFlow({ firstName }: Props) {
         if (lower.includes("pcos") || lower.includes("pcod")) conditions.push("pcos-pcod");
         if (lower.includes("hyper") || lower.includes("blood pressure")) conditions.push("hypertension");
         next.conditions = conditions;
-        next.conditions_other = !conditions.length && !lower.includes("none") ? text : "";
+        next.conditions_other = !conditions.length && !NO_ANSWER_PATTERN.test(text) ? text : "";
       }
       if (idx === 4) {
         const lower = text.toLowerCase();
-        if (lower.includes("jain")) next.dietary_pattern = "jain";
+        if (NO_ANSWER_PATTERN.test(text)) next.dietary_pattern = "none";
+        else if (lower.includes("jain")) next.dietary_pattern = "jain";
         else if (lower.includes("vegan")) next.dietary_pattern = "vegan";
         else if (lower.includes("egg")) next.dietary_pattern = "veg-egg";
         else if (lower.includes("non")) next.dietary_pattern = "non-veg";
@@ -194,7 +216,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
     const parsed = onboardingAnswersSchema.safeParse(draft);
     if (!parsed.success) {
-      setError("I still need a few details to be sure this is accurate. Please answer in a bit more detail.");
+      setError(formatValidationError(parsed.error));
       return;
     }
 

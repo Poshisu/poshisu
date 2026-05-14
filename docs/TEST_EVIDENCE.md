@@ -116,3 +116,13 @@
 - **Verification command:** `pnpm run test -- src/lib/db/migrations.test.ts src/app/\(onboarding\)/actions.test.ts --reporter=dot && pnpm run typecheck && pnpm run lint && pnpm run build`
 - **Verification result:** PASS — Vitest invocation reported 29 test files / 140 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
 - **Production action needed:** Apply the migration to the production Supabase database, then redeploy/smoke-test onboarding and `/trends`.
+
+## 2026-05-14 — Onboarding final-validation recovery hardening
+
+- **Issue:** The final onboarding confirmation step could block a valid profile when the conditions answer was typed as `no`/natural no-condition phrasing, and client-side schema failures used a generic non-actionable message.
+- **Fix:** `ChatOnboardingFlow` now normalizes common no-condition/no-diet answers before schema validation and formats Zod validation failures into field-specific recovery guidance instead of the generic “I still need a few details...” message.
+- **Regression coverage added:** `src/components/onboarding/ChatOnboardingFlow.test.tsx` covers exact `no`, natural `no medical conditions`, and field-specific age validation recovery.
+- **Verification command:** `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx --reporter=dot && pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Verification result:** PASS — Vitest invocation reported 29 test files / 143 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Review:** Subagent review found no blockers; follow-up hardening for natural no-condition variants and non-highlighted copy was applied before final verification.
+- **Not covered in this run:** live Vercel post-deploy onboarding smoke; to be run after push/deploy.
