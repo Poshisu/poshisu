@@ -14,6 +14,7 @@ Purpose: catch syntax, typing, and style issues before runtime.
 Purpose: validate pure logic and UI behavior in isolation.
 
 - Command: `pnpm run test`
+- Evidence ledger: `docs/TEST_EVIDENCE.md`
 - Targeted tests (example):
   - `pnpm run test -- src/lib/onboarding/schema.test.ts`
   - `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx`
@@ -50,6 +51,7 @@ Run checks in this order locally before every commit:
 
 ### Current fixture sources
 - Unit/component fixtures: colocated in test files or test helper modules under `src/**`.
+- Test-account credentials: keep dummy login credentials in local `.env.local` only using `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`; do not commit credentials to the repo, even if they are fake/dummy.
 - E2E fixtures: Playwright test data and seeded/local Supabase state.
 - Database baseline: `supabase/seed.sql` and append-only migration chain in `supabase/migrations/`.
 

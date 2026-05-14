@@ -173,9 +173,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 6 | Stage 2 | S2-T03 | Harden `/api/chat` beta contract | Safe envelopes, retry/fallback behavior, and trace logging verified | `pnpm run test -- src/app/api/chat` | done |
 | 7 | Stage 3 | S3-T01 | Implement `/api/meals` CRUD | Auth + RLS enforced on create/read/update/delete | `pnpm run test -- src/app/api/meals` | done |
 | 8 | Stage 3 | S3-T02 | Implement `/api/memory` read/write | Profile and pattern updates available with permission checks | `pnpm run test -- src/app/api/memory` | done |
-| 9 | Stage 3 | S3-T03 | Implement `/api/push` subscription lifecycle | Subscribe/unsubscribe and delivery eligibility stored correctly | `pnpm run test -- src/app/api/push` | todo |
-| 10 | Stage 4 | S4-T01 | Productionize Today page | Daily totals/cards/edit flows stable on mobile + desktop | `pnpm run test -- src/app/(app)/today` | todo |
-| 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | todo |
+| 9 | Stage 3 | S3-T03 | Implement `/api/push` subscription lifecycle | Subscribe/unsubscribe and delivery eligibility stored correctly | `pnpm run test -- src/app/api/push` | done |
+| 10 | Stage 4 | S4-T01 | Productionize Today page | Daily totals/cards/edit flows stable on mobile + desktop | `pnpm run test -- src/app/(app)/today` | done |
+| 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | done |
 | 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | todo |
 | 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | todo |
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | todo |
@@ -189,9 +189,26 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S3-T03` (Implement `/api/push` subscription lifecycle).
+- **Next to execute:** `S4-T03` (Build profile memory inspector).
 - **Owner:** Engineering
-- **Dependencies:** `S3-T02` memory read/write is implemented with authenticated route tests.
+- **Dependencies:** `S4-T02` Trends page is productionized with focused component and loader tests.
+
+### S4-T02 closure status (2026-05-14)
+- `/trends` now renders through `TrendsDashboard`, with Week / Month / 3-Month period tabs, summary cards, calorie trend chart, macro distribution chart, period radar, macro averages, streak card content, insight cards, and empty state.
+- `loadTrendsData` scopes confirmed meal rows to the authenticated user and selected IST period, then aggregates daily kcal/protein/carbs/fat/fiber, consistency %, averages, and current/longest streaks.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
+
+### S4-T01 closure status (2026-05-14)
+- `/today` now renders through `TodayDashboard`, with production summary cards, daily kcal range/lead totals, macro totals, meal cards, empty state, correction CTAs, assumptions, confidence, and safety flags.
+- `loadTodayMeals` now scopes the Supabase query to the authenticated user and current IST day bounds, selects nutrition/detail fields needed by the UI, orders by latest logged meal, and redirects unauthenticated users via the page.
+- `/today` uses the same IST calendar-date source for query bounds, date labels, and previous/next navigation, including UTC midnight boundary regression coverage.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
+
+### S3-T03 closure status (2026-05-14)
+- `/api/push` returns the configured public VAPID key and fails closed when push is not configured.
+- `/api/push/subscribe` validates HTTPS browser `PushSubscription` payloads, requires auth, cleans up same-endpoint ownership from other users, and upserts by `user_id + endpoint`.
+- `/api/push/unsubscribe` validates endpoints, requires auth, deletes only the signed-in user's matching endpoint, and is idempotent when absent.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 
 ### S3-T01 closure status (2026-05-12)
@@ -263,9 +280,9 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 4. Engineer resolves defects and reposts updated preview for re-check.
 
 ### Immediate next execution queue
-- **Current active:** `S3-T03` `/api/push` subscription lifecycle
-- **Next:** `S4-T01` productionize Today page
-- **Then:** `S4-T02` productionize Trends page
+- **Current active:** `S4-T03` build profile memory inspector
+- **Next:** `S5-T01` expand prompt eval coverage
+- **Then:** `S5-T02` add AI safety adversarial tests
 
 ### Dependencies requiring PM/founder action
 - Define Stage 2 meal-log MVP acceptance criteria before `S2-T01` sign-off.

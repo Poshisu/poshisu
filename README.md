@@ -78,9 +78,10 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `supabase/migrations/0006_schedules.sql` | pg_cron job schedules for all background tasks |
 | `supabase/migrations/0007_hybrid_pipeline_and_fixes.sql` | Adds hybrid nutrition pipeline schema and supporting data fixes |
 | `supabase/migrations/0008_security_definer_hardening.sql` | Hardens SECURITY DEFINER functions and privilege boundaries |
+| `supabase/migrations/0009_push_endpoint_uniqueness.sql` | Enforces global uniqueness for push subscription endpoints |
 | `supabase/seed.sql` | IFCT food data seed (~30 common Indian foods) |
 
-**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql`.
+**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql` → `0009_push_endpoint_uniqueness.sql`.
 
 **Important:** The migration list is append-only. Never edit committed migration files; always add a new migration and update this list whenever a new migration is added.
 
@@ -182,7 +183,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 | `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
 | `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | Yes | `src/app/api/memory/route.ts` | Authenticated memory read/write API with safe envelopes, Zod validation, user scoping, and writes restricted to `profile/main` and `patterns/main`. |
-| `/api/push` | No (planned) | _Not implemented yet_ | Planned push subscription API route. |
+| `/api/push` | Yes | `src/app/api/push/route.ts`, `src/app/api/push/subscribe/route.ts`, `src/app/api/push/unsubscribe/route.ts` | Authenticated push subscription lifecycle with VAPID public-key discovery, HTTPS endpoint validation, user-scoped subscribe/upsert, cross-user endpoint ownership cleanup, and idempotent unsubscribe. |
 | `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
 
 ## Feature Maturity
@@ -190,8 +191,8 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
 - **Chat:** Placeholder shell
-- **Today:** Placeholder shell
-- **Trends:** Placeholder shell
+- **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation
+- **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state
 - **Profile memory inspector:** Not implemented yet
 - **Auth and app shell:** Implemented baseline
 
