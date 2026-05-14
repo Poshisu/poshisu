@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
-import { evaluateMealSafety } from "@/lib/safety/check";
+import { evaluateMealSafety, type SafetyFlags } from "@/lib/safety/check";
 
 export type OrchestratorIntent = "meal_log_candidate" | "general_fallback_guidance";
 
@@ -17,7 +17,7 @@ export type AssistantResponseBlock =
       estimate: { kcalMin: number; kcalMax: number; protein: number; carbs: number; fat: number; fiber: number };
       rationale: string;
       clarificationQuestions: string[];
-      safetyFlags: { allergenFlags: string[]; conditionFlags: string[] };
+      safetyFlags: SafetyFlags;
     };
 
 export interface OrchestratorResponse {
@@ -59,7 +59,8 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
   if (mealLogPattern.test(text)) {
     const parsed = parseItemsFromText(text);
     const nutrition = await runPipeline(parsed.items);
-    const safetyFlags = evaluateMealSafety({ foods: parsed.items, allergies, conditions });
+    const safetyFoods = Array.from(new Set([...parsed.items, text]));
+    const safetyFlags = evaluateMealSafety({ foods: safetyFoods, allergies, conditions });
 
     const clarificationQuestions = parsed.isAmbiguous
       ? nutrition.clarificationQuestions.slice(0, 2)
@@ -88,9 +89,11 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
         {
           type: "text",
           text:
-            clarificationQuestions.length > 0
-              ? "I can estimate this, but I need up to two quick clarifications first."
-              : "I can log this meal. Please confirm if the estimate looks right.",
+            safetyFlags.blocked
+              ? "I found a safety conflict with your declared allergies or health conditions. Please review the warning before logging this meal."
+              : clarificationQuestions.length > 0
+                ? "I can estimate this, but I need up to two quick clarifications first."
+                : "I can log this meal. Please confirm if the estimate looks right.",
         },
       ],
     };

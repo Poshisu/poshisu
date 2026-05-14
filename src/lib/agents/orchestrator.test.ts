@@ -23,6 +23,27 @@ describe("handleMessage", () => {
     }
   });
 
+  it("preserves raw meal text for safety checks when parser misses unsafe allergen synonyms", async () => {
+    const response = await handleMessage("user-123", {
+      text: "I had peanut chutney for dinner",
+      allergies: ["groundnut"],
+    });
+
+    const candidate = response.blocks[0];
+    expect(candidate.type).toBe("meal_log_candidate");
+    if (candidate.type === "meal_log_candidate") {
+      expect(candidate.safetyFlags.blocked).toBe(true);
+      expect(candidate.safetyFlags.allergenFlags).toContain("allergen:groundnut");
+      expect(candidate.safetyFlags.blockingReasons[0]).toContain("groundnut");
+      expect(candidate.clarificationQuestions.length).toBeLessThanOrEqual(2);
+    }
+
+    expect(response.blocks[1]).toEqual({
+      type: "text",
+      text: expect.stringContaining("safety conflict"),
+    });
+  });
+
   it("returns up to two clarifying questions for ambiguous meals", async () => {
     const response = await handleMessage("user-123", {
       text: "I had some random food",

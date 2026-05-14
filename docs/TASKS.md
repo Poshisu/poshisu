@@ -179,7 +179,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | done |
 | 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | done |
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | done |
-| 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | todo |
+| 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | done |
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/build/scoped E2E/db-types gate reliably | `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build` | todo |
 | 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | todo |
 | 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | todo |
@@ -189,9 +189,17 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S5-T03` (Lock deterministic safety policy tests).
+- **Next to execute:** `S6-T01` (Finalize CI parity gates).
 - **Owner:** Engineering
-- **Dependencies:** `S5-T02` now adds deterministic adversarial prompt evals for prompt injection, hallucination boundaries, tool misuse/output constraints, and self-harm safety routing.
+- **Dependencies:** `S5-T03` now locks deterministic allergen/condition safety policy behavior with blocking reasons and safe alternatives.
+
+### S5-T03 closure status (2026-05-14)
+- `src/lib/safety/check.ts` now returns `blocked`, `blockingReasons`, and `safeAlternatives` in addition to existing allergen/condition flags.
+- `src/lib/agents/orchestrator.ts` now passes raw meal text into safety checks as a fallback, so parser-missed allergen synonyms like peanut/groundnut can still block the meal-log response.
+- `src/lib/safety/allergens.ts` now has deterministic synonym coverage for common allergy labels and ingredient names including dairy, egg, peanut/groundnut, tree nuts, gluten, fish, shellfish, and soy.
+- `src/lib/safety/conditions.ts` now covers common condition conflict patterns for diabetes/prediabetes/PCOS, hypertension, high cholesterol, fatty liver, kidney disease, pregnancy/breastfeeding, and IBS/GERD.
+- `src/lib/safety/check.test.ts` verifies blocking behavior, Indian-food trigger synonyms, safe alternative filtering, and non-conflict low-risk meals.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 ### S5-T02 closure status (2026-05-14)
 - `src/lib/evals/prompt-evals.ts` now includes a `safety-adversarial` suite with six deterministic guardrail checks.

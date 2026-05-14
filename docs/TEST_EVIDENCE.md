@@ -10,6 +10,33 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-14 — S5-T03 Deterministic safety policy tests
+
+- **Task:** `S5-T03` — Lock deterministic safety policy tests.
+- **Scope verified:** Deterministic safety policy behavior for:
+  - allergy conflict detection with ingredient synonyms, including groundnut/peanut, tree nuts, and dairy;
+  - condition conflict detection for common Indian high-risk foods like jaggery chai, fruit juice, papad, and pickle;
+  - hard `blocked` outcome and user-facing `blockingReasons` when declared allergies/conditions conflict with a meal/recommendation;
+  - orchestrator fallback safety checks against raw meal text when deterministic food parsing misses an allergen synonym;
+  - `safeAlternatives` that avoid the triggered allergen and condition conflict patterns;
+  - non-conflicting low-risk meals remain unblocked.
+- **Evidence:** TDD red run failed because `blocked`, `blockingReasons`, richer synonym triggers, and `safeAlternatives` did not exist; implementation then passed focused Vitest, prompt eval, static gates, and production build locally.
+- **Focused test command:** `pnpm run test -- src/lib/safety/check.test.ts src/lib/agents/orchestrator.test.ts --reporter=dot`
+- **Focused test result:** PASS — filtered Vitest invocation reported 32 test files / 158 tests passed; `src/lib/safety/check.test.ts` passed 6/6 and `src/lib/agents/orchestrator.test.ts` passed 6/6.
+- **Full local verification command:** `pnpm run test -- src/lib/safety/check.test.ts src/lib/agents/orchestrator.test.ts --reporter=dot && pnpm run eval:prompts && pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Prompt eval result:** PASS — onboarding-parser 3/3, router 3/3, nutrition-estimator 3/3, coach 3/3, safety-adversarial 6/6; overall 18/18 = 100%.
+- **Static/build result:** PASS — TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Relevant files updated:**
+  - `src/lib/safety/check.ts`
+  - `src/lib/safety/check.test.ts`
+  - `src/lib/safety/allergens.ts`
+  - `src/lib/safety/conditions.ts`
+  - `src/lib/agents/orchestrator.ts`
+  - `src/lib/agents/orchestrator.test.ts`
+  - `docs/TASKS.md`
+  - `docs/TEST_EVIDENCE.md`
+- **Not covered in this run:** live model diet-coaching behavior, clinician-grade dietary advice, and broad medical personalization; this is deterministic beta safety gating only.
+
 ## 2026-05-14 — S5-T02 AI safety adversarial evals
 
 - **Task:** `S5-T02` — Add AI safety adversarial tests.
