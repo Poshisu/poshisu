@@ -178,7 +178,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | done |
 | 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | done |
 | 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | done |
-| 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | todo |
+| 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | done |
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | todo |
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/build/scoped E2E/db-types gate reliably | `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build` | todo |
 | 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | todo |
@@ -189,9 +189,15 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S5-T02` (Add AI safety adversarial tests).
+- **Next to execute:** `S5-T03` (Lock deterministic safety policy tests).
 - **Owner:** Engineering
-- **Dependencies:** `S5-T01` prompt eval baseline now covers onboarding parser, router/orchestrator, deterministic nutrition estimator, and coach prompt contract.
+- **Dependencies:** `S5-T02` now adds deterministic adversarial prompt evals for prompt injection, hallucination boundaries, tool misuse/output constraints, and self-harm safety routing.
+
+### S5-T02 closure status (2026-05-14)
+- `src/lib/evals/prompt-evals.ts` now includes a `safety-adversarial` suite with six deterministic guardrail checks.
+- Coverage includes shared safety-rule override hierarchy, router prompt-contract classification-only/tool-call behavior, coach no-data/no-hallucination boundaries, nutrition-estimator no-calorie/no-micronutrient hallucination boundaries, output-format/tool-misuse constraints, and self-harm/safety-concern routing prompt coverage.
+- `pnpm run eval:prompts` baseline now reports 18/18 passing cases, including `safety-adversarial` 6/6.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 ### S5-T01 closure status (2026-05-14)
 - `pnpm run eval:prompts` now executes a real deterministic prompt-eval harness instead of a placeholder console log.

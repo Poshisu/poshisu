@@ -10,6 +10,31 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-14 — S5-T02 AI safety adversarial evals
+
+- **Task:** `S5-T02` — Add AI safety adversarial tests.
+- **Scope verified:** Deterministic adversarial prompt-eval suite for:
+  - shared safety-rule override hierarchy against conflicting user instructions;
+  - router prompt-contract classification-only behavior under prompt-injection/tool-misuse attempts;
+  - coach hallucination boundaries when data is insufficient;
+  - nutrition-estimator boundaries against calorie/macro/micronutrient hallucination;
+  - output-format/tool-call constraints across router, nutrition estimator, and onboarding parser;
+  - self-harm/safety-concern routing prompt coverage.
+- **Evidence:** TDD red run failed because the `safety-adversarial` suite and required case IDs did not exist; implementation then passed focused Vitest, prompt eval, static gates, and production build locally.
+- **Focused test command:** `pnpm run test -- src/lib/evals/prompt-evals.test.ts --reporter=dot`
+- **Focused test result:** PASS — Vitest invocation reported 32 test files / 153 tests passed in this filtered run invocation.
+- **Prompt eval command:** `pnpm run eval:prompts`
+- **Prompt eval result:** PASS — onboarding-parser 3/3, router 3/3, nutrition-estimator 3/3, coach 3/3, safety-adversarial 6/6; overall 18/18 = 100%.
+- **Static/build commands:** `pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Static/build result:** PASS — TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Relevant files updated:**
+  - `src/lib/evals/prompt-evals.ts`
+  - `src/lib/evals/prompt-evals.test.ts`
+  - `docs/TASKS.md`
+  - `docs/TEST_EVIDENCE.md`
+- **Behavior covered:** `pnpm run eval:prompts` now fails closed if any adversarial prompt-safety case falls below threshold and prints the failed suite/case through the existing CLI failure reporting.
+- **Not covered in this run:** live LLM jailbreak scoring or runtime self-harm/orchestrator routing behavior; deterministic allergen/condition policy tests are deferred to `S5-T03`.
+
 ## 2026-05-14 — S5-T01 Prompt eval coverage
 
 - **Task:** `S5-T01` — Expand prompt eval coverage.
