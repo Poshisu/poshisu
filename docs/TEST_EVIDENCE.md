@@ -125,4 +125,4 @@
 - **Verification command:** `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx --reporter=dot && pnpm run typecheck && pnpm run lint && pnpm run build`
 - **Verification result:** PASS — Vitest invocation reported 29 test files / 143 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
 - **Review:** Subagent review found no blockers; follow-up hardening for natural no-condition variants and non-highlighted copy was applied before final verification.
-- **Not covered in this run:** live Vercel post-deploy onboarding smoke; to be run after push/deploy.
+- **Production smoke:** PASS after push on `https://poshisu.vercel.app` using the local E2E account — login redirected to `/chat`, authenticated `/trends` loaded, visiting `/onboarding` as an onboarded user route-guarded back to `/chat`, no browser console/page errors were captured, and the generic validation error string was not present.
