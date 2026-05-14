@@ -36,25 +36,19 @@ describe("ChatOnboardingFlow conversational", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
     expect(screen.getByText("Nourish onboarding")).toBeInTheDocument();
     expect(screen.getByText("What should I call you?")).toBeInTheDocument();
-    expect(screen.getByLabelText("Upload photo")).toBeInTheDocument();
-    expect(screen.getByLabelText("Use camera")).toBeInTheDocument();
-    expect(screen.getByLabelText("Upload file")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Voice" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Photo upload coming soon" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Camera coming soon" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "File upload coming soon" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Voice coming soon" })).toBeDisabled();
+    expect(screen.getByText("Photos, files, and voice notes are not active yet — type the details for now.")).toBeInTheDocument();
   });
 
-  it("adds image, file, and audio messages with attachment metadata", async () => {
+  it("does not pretend unfinished media capture is active", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
-    const photo = new File(["img"], "meal.jpg", { type: "image/jpeg" });
-    const doc = new File(["pdf"], "report.pdf", { type: "application/pdf" });
-
-    fireEvent.change(screen.getByLabelText("Upload photo"), { target: { files: [photo] } });
-    fireEvent.change(screen.getByLabelText("Upload file"), { target: { files: [doc] } });
-    fireEvent.click(screen.getByRole("button", { name: "Voice" }));
-
-    expect(await screen.findByText("Shared photo: meal.jpg")).toBeInTheDocument();
-    expect(screen.getByText("Uploaded file: report.pdf")).toBeInTheDocument();
-    expect(screen.getByText("Voice note captured (placeholder)")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Upload photo")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Upload file")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Voice coming soon" })).toBeDisabled();
   });
 
   it("advances through conversational questions", () => {

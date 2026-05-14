@@ -93,11 +93,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           : ["Skip for now"];
 
 
-
-  function addAttachmentMessage(content: string) {
-    setMessages((current) => [...current, { role: "user", content }]);
-  }
-
   function inferConfidenceAndClarifier(idx: number, text: string): { confidence: ConfidenceLabel; clarifier?: string } {
     const lower = text.toLowerCase();
     if (lower.includes("skip for now") || lower === "skip") {
@@ -292,20 +287,22 @@ export function ChatOnboardingFlow({ firstName }: Props) {
                 </Button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <label className="cursor-pointer rounded-full border px-3 py-1">
-                Upload photo
-                <input aria-label="Upload photo" type="file" accept="image/*" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Shared photo: ${f.name}`);}} />
-              </label>
-              <label className="cursor-pointer rounded-full border px-3 py-1">
-                Use camera
-                <input aria-label="Use camera" type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Shared photo: ${f.name}`);}} />
-              </label>
-              <label className="cursor-pointer rounded-full border px-3 py-1">
-                Upload file
-                <input aria-label="Upload file" type="file" className="sr-only" onChange={(e)=>{const f=e.target.files?.[0]; if(f) addAttachmentMessage(`Uploaded file: ${f.name}`);}} />
-              </label>
-              <Button type="button" variant="outline" className="rounded-full" onClick={()=>addAttachmentMessage("Voice note captured (placeholder)")}>Voice</Button>
+            <div className="space-y-2 text-xs">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" className="rounded-full" disabled>
+                  Photo upload coming soon
+                </Button>
+                <Button type="button" variant="outline" className="rounded-full" disabled>
+                  Camera coming soon
+                </Button>
+                <Button type="button" variant="outline" className="rounded-full" disabled>
+                  File upload coming soon
+                </Button>
+                <Button type="button" variant="outline" className="rounded-full" disabled>
+                  Voice coming soon
+                </Button>
+              </div>
+              <p className="text-muted-foreground">Photos, files, and voice notes are not active yet — type the details for now.</p>
             </div>
             <div className="flex gap-2">
               <Input
