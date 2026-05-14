@@ -46,28 +46,38 @@ vi.mock("@/lib/onboarding/transcription", () => ({
 
 function makeSupabaseClient(overrides?: {
   onboardedAt?: string | null;
+  userRowMissing?: boolean;
+  userInsertError?: string | null;
   userUpdateError?: string | null;
   userUpdateRows?: Array<{ onboarded_at: string | null }> | null;
   latestOnboardedAfterRace?: string | null;
 }) {
   const upsert = vi.fn(async () => ({ error: null }));
+  const insertUser = vi.fn(async () => ({ error: overrides?.userInsertError ? { message: overrides.userInsertError } : null }));
   const del = vi.fn(async () => ({ error: null }));
 
   return {
     auth: {
       getUser: vi.fn(async () => ({
-        data: { user: { id: "user-1" } },
+        data: { user: { id: "user-1", email: "aarti@example.com", user_metadata: { name: "Aarti Rao" } } },
         error: null,
       })),
     },
     from: vi.fn((table: string) => {
       if (table === "users") {
         return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              single: vi.fn(async () => ({ data: { onboarded_at: overrides?.onboardedAt ?? null }, error: null })),
-            })),
-          })),
+          select: vi.fn(() => {
+            const readQuery = {
+              eq: vi.fn(() => readQuery),
+              single: vi.fn(async () => ({ data: { onboarded_at: overrides?.latestOnboardedAfterRace ?? overrides?.onboardedAt ?? null }, error: null })),
+              maybeSingle: vi.fn(async () => ({
+                data: overrides?.userRowMissing ? null : { onboarded_at: overrides?.onboardedAt ?? null },
+                error: null,
+              })),
+            };
+            return readQuery;
+          }),
+          insert: insertUser,
           update: vi.fn(() => ({
             eq: vi.fn(() => ({
               is: vi.fn(() => ({
@@ -96,7 +106,7 @@ function makeSupabaseClient(overrides?: {
 
       return { upsert };
     }),
-    __spies: { upsert, del },
+    __spies: { upsert, insertUser, del },
   };
 }
 
@@ -138,6 +148,22 @@ describe("completeOnboardingAction", () => {
     );
   });
 
+  it("creates the public users row before completing onboarding when auth trigger did not backfill it", async () => {
+    const supabase = makeSupabaseClient({ userRowMissing: true });
+    createClientMock.mockResolvedValue(supabase);
+
+    const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
+
+    expect(result.status).toBe("completed");
+    expect(supabase.__spies.insertUser).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "user-1", display_name: "Aarti Rao" }),
+    );
+    expect(supabase.__spies.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "user-1", layer: "profile", key: "main" }),
+      { onConflict: "user_id,layer,key" },
+    );
+  });
+
   it("rolls back memories and throws on final user update failure", async () => {
     const supabase = makeSupabaseClient({ userUpdateError: "failed update" });
     createClientMock.mockResolvedValue(supabase);
@@ -153,39 +179,6 @@ describe("completeOnboardingAction", () => {
       userUpdateRows: [],
       latestOnboardedAfterRace: "2026-05-11T00:00:00.000Z",
     });
-    supabase.from = vi.fn((table: string) => {
-      if (table === "users") {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              single: vi.fn(async () => ({ data: { onboarded_at: "2026-05-11T00:00:00.000Z" }, error: null })),
-            })),
-          })),
-          update: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              is: vi.fn(() => ({
-                select: vi.fn(async () => ({ data: [], error: null })),
-              })),
-            })),
-          })),
-        };
-      }
-
-      if (table === "memories") {
-        return {
-          upsert: vi.fn(async () => ({ error: null })),
-          delete: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(async () => ({ error: null })),
-              })),
-            })),
-          })),
-        };
-      }
-
-      return { upsert: vi.fn(async () => ({ error: null })) };
-    });
     createClientMock.mockResolvedValue(supabase);
 
     const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
@@ -193,53 +186,12 @@ describe("completeOnboardingAction", () => {
   });
 
   it("rolls back and throws when users update writes no rows and latest state is still not onboarded", async () => {
-    const memoryDeletes = vi.fn(async () => ({ error: null }));
-    const supabase = {
-      auth: {
-        getUser: vi.fn(async () => ({
-          data: { user: { id: "user-1" } },
-          error: null,
-        })),
-      },
-      from: vi.fn((table: string) => {
-        if (table === "users") {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                single: vi.fn(async () => ({ data: { onboarded_at: null }, error: null })),
-              })),
-            })),
-            update: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                is: vi.fn(() => ({
-                  select: vi.fn(async () => ({ data: [], error: null })),
-                })),
-              })),
-            })),
-          };
-        }
-
-        if (table === "memories") {
-          return {
-            upsert: vi.fn(async () => ({ error: null })),
-            delete: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  eq: memoryDeletes,
-                })),
-              })),
-            })),
-          };
-        }
-
-        return { upsert: vi.fn(async () => ({ error: null })) };
-      }),
-    };
+    const supabase = makeSupabaseClient({ userUpdateRows: [], latestOnboardedAfterRace: null });
     createClientMock.mockResolvedValue(supabase);
 
     await expect(completeOnboardingAction({ onboarding_session_token: "session-12345678" })).rejects.toThrow(
       /partially saved/i,
     );
-    expect(memoryDeletes).toHaveBeenCalled();
+    expect(supabase.__spies.del).toHaveBeenCalled();
   });
 });

@@ -94,3 +94,14 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - **Command:** `pnpm run test -- src/app/\(app\)/trends/TrendsDashboard.test.tsx src/lib/trends.test.ts src/lib/meals/today.test.ts src/app/api/push/subscribe/route.test.ts src/lib/meals/confirm-save.integration.test.ts && pnpm run typecheck && pnpm run lint && pnpm run build`
 - **Result:** PASS — Vitest invocation reported 28 test files / 138 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
 - **Production smoke status:** Login to `https://poshisu.vercel.app` with the local E2E account succeeds, but authenticated `/trends` redirects to `/onboarding`. Completing onboarding in production hits a server-side 500, so visual `/trends` smoke remains blocked until Vercel logs/access or an already-onboarded smoke account is available.
+
+## 2026-05-14 — Onboarding completion 500 regression
+
+- **Issue:** Live onboarding completion on `https://poshisu.vercel.app/onboarding` returned HTTP 500 on submit after the confirmation checkbox was checked.
+- **Likely root cause fixed:** `completeOnboardingAction` assumed a matching `public.users` row already existed for the authenticated Supabase user. If the auth trigger/backfill missed that row, the initial `.single()` lookup failed and onboarding could not complete.
+- **Fix:** Onboarding completion now uses `.maybeSingle()` for the public user row, creates the missing `users` row from authenticated user metadata/email when absent, then proceeds with `user_profiles`, `memories`, and `onboarded_at` writes.
+- **Regression coverage added:** `src/app/(onboarding)/actions.test.ts` now covers the missing public user-row path and verifies onboarding completes after creating the row.
+- **Verification command:** `pnpm run test -- src/app/\(onboarding\)/actions.test.ts --reporter=dot && pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Verification result:** PASS — Vitest invocation reported 28 test files / 139 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Live smoke status:** pending redeploy of this fix, then repeat onboarding completion and `/trends` smoke on the Vercel app.
+

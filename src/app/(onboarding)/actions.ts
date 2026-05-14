@@ -72,6 +72,12 @@ function buildOnboardingOperationKey(userId: string, sessionToken: string | unde
   return `onboarding:${userId}:${scopedSession}:${payloadHash}`;
 }
 
+function getDisplayNameFromUser(user: { email?: string; user_metadata?: { name?: unknown; full_name?: unknown } }): string | null {
+  const metadataName = typeof user.user_metadata?.name === "string" ? user.user_metadata.name : undefined;
+  const metadataFullName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
+  return metadataName?.trim() || metadataFullName?.trim() || user.email?.split("@")[0] || null;
+}
+
 function logOnboardingStep(step: string, metadata: Record<string, unknown>) {
   console.info(`[onboarding.complete] ${step}`, metadata);
 }
@@ -134,12 +140,23 @@ export const completeOnboardingAction = withServerActionLogging("completeOnboard
     .from("users" as never)
     .select("onboarded_at" as never)
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
   if (existingUserError) {
     throw new OnboardingPersistenceError(`Failed to load current onboarding state: ${existingUserError.message}`, "persistence", true);
   }
 
-  if ((existingUser as { onboarded_at: string | null }).onboarded_at) {
+  if (!existingUser) {
+    logOnboardingStep("create_missing_user_row", { userId: user.id, operationKey });
+    const { error: createUserError } = await supabase.from("users" as never).insert({
+      id: user.id,
+      display_name: getDisplayNameFromUser(user),
+    } as never);
+    if (createUserError) {
+      throw new OnboardingPersistenceError(`Failed to create onboarding user row: ${createUserError.message}`, "persistence", true);
+    }
+  }
+
+  if ((existingUser as { onboarded_at: string | null } | null)?.onboarded_at) {
     logOnboardingStep("already_complete", { userId: user.id, operationKey });
     return { ok: true as const, profileMarkdown, operationKey, status: "already_completed" as const };
   }
