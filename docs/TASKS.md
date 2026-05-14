@@ -199,6 +199,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 - `supabase/config.toml` disables local email confirmations so the CI signup/onboarding E2E path can proceed without SMTP.
 - `package.json` now exposes `pnpm run test:e2e:ci` for the Docker/Supabase-backed CI Playwright subset, `pnpm run test:e2e:smoke` for the no-DB auth redirect smoke, and `pnpm run ci:parity` as the local gate-set mirror.
 - `src/lib/devex/ci-parity.test.ts` locks the expected package scripts and GitHub Actions workflow gates so future workflow drift fails under Vitest.
+- `src/types/database.ts` was regenerated from the GitHub Actions local Supabase stack after the new DB-types gate exposed drift.
 - Local non-Docker gates passed: CI parity Vitest coverage, prompt eval 18/18, typecheck, lint, production build, and scoped Playwright smoke.
 - `pnpm run db:types:check` is intentionally part of CI parity but was locally blocked in this Hermes environment because Docker is not installed (`docker: command not found`); GitHub Actions provisions Supabase CLI/local stack before running the check.
 - Focused evidence is recorded in `docs/TEST_EVIDENCE.md`.

@@ -31,12 +31,13 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - **Docker-gated CI E2E command:** `pnpm run test:e2e:ci`
 - **Docker-gated CI E2E scope:** Chromium auth/onboarding subset, including the redirect smoke and onboarding-tagged journeys; expected to run in GitHub Actions after the local Supabase stack starts.
 - **Docker-gated command:** `pnpm run db:types:check`
-- **Docker-gated local result:** BLOCKED in this Hermes environment because Docker is not installed (`docker: command not found`). This remains in CI parity and is expected to run in GitHub Actions after `supabase/setup-cli` + `supabase start`.
+- **Docker-gated local result:** BLOCKED in this Hermes environment because Docker is not installed (`docker: command not found`). CI initially caught stale generated database types; `src/types/database.ts` was regenerated from the GitHub Actions local Supabase stack artifact and committed. The latest GitHub Actions run is the source of truth for this gate.
 - **Relevant files updated:**
   - `.github/workflows/ci.yml`
   - `package.json`
   - `src/lib/devex/ci-parity.test.ts`
   - `scripts/db-types-check.mjs`
+  - `src/types/database.ts`
   - `supabase/config.toml`
   - `TESTING.md`
   - `docs/DEPLOYMENT.md`
