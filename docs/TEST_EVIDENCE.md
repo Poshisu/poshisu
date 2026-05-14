@@ -32,7 +32,8 @@ This file is the repo-local audit trail for meaningful automated and manual veri
   - Loader returns `null` user with empty memory state for unauthenticated sessions so the page can redirect.
   - Loader scopes both memory and history queries by `user_id`.
   - Dashboard renders memory cards, version badges, read-only labels, expiry context, editable text areas for safe singleton layers, successful inline save status, and audit history.
-- **Not covered in this run:** live Vercel browser smoke test; destructive privacy/export/delete-account flows beyond this inspector slice.
+- **Not covered in this run:** destructive privacy/export/delete-account flows beyond this inspector slice.
+- **Production smoke:** PASS after push on `https://poshisu.vercel.app` using the local E2E account — login redirected to `/chat`, authenticated `/profile` loaded the new Memory inspector, memory/audit copy was visible, the old placeholder copy was absent, and no browser console/page errors were captured.
 
 ## 2026-05-14 — S3-T03 push subscription lifecycle
 
