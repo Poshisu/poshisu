@@ -176,7 +176,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 9 | Stage 3 | S3-T03 | Implement `/api/push` subscription lifecycle | Subscribe/unsubscribe and delivery eligibility stored correctly | `pnpm run test -- src/app/api/push` | done |
 | 10 | Stage 4 | S4-T01 | Productionize Today page | Daily totals/cards/edit flows stable on mobile + desktop | `pnpm run test -- src/app/(app)/today` | done |
 | 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | done |
-| 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | todo |
+| 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | done |
 | 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | todo |
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | todo |
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | todo |
@@ -189,9 +189,15 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S4-T03` (Build profile memory inspector).
+- **Next to execute:** `S5-T01` (Expand prompt eval coverage).
 - **Owner:** Engineering
-- **Dependencies:** `S4-T02` Trends page is productionized with focused component and loader tests.
+- **Dependencies:** `S4-T03` Profile memory inspector is productionized with focused component and loader tests.
+
+### S4-T03 closure status (2026-05-14)
+- `/profile` now renders through `ProfileMemoryDashboard`, with user-scoped memory layer cards, inline save for safe singleton layers, read-only treatment for temporal/semantic layers, empty state, and recent audit history.
+- `loadProfileMemoryInspector` scopes `memories` and `memories_history` queries to the authenticated user, maps database rows into a stable view model, and sorts layers in a predictable product order.
+- Inline saves are intentionally limited to `profile/main` and `patterns/main` via the existing authenticated `/api/memory` write contract.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 ### S4-T02 closure status (2026-05-14)
 - `/trends` now renders through `TrendsDashboard`, with Week / Month / 3-Month period tabs, summary cards, calorie trend chart, macro distribution chart, period radar, macro averages, streak card content, insight cards, and empty state.
