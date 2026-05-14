@@ -6,6 +6,7 @@ import { withServerActionLogging } from "@/lib/errors/serverAction";
 import { parseOnboardingAnswers } from "@/lib/onboarding/schema";
 import { decideOnboardingParseMode, generateOnboardingProfile } from "@/lib/agents/onboarding-parser";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { parseMultimodalMessageEvent } from "@/lib/onboarding/message-events";
 import { transcribeOnboardingAudio } from "@/lib/onboarding/transcription";
 
@@ -82,6 +83,24 @@ function logOnboardingStep(step: string, metadata: Record<string, unknown>) {
   console.info(`[onboarding.complete] ${step}`, metadata);
 }
 
+async function createMissingPublicUserRow(user: { id: string; email?: string; user_metadata?: { name?: unknown; full_name?: unknown } }) {
+  const payload = {
+    id: user.id,
+    display_name: getDisplayNameFromUser(user),
+  };
+
+  try {
+    const adminSupabase = createAdminClient();
+    return await adminSupabase.from("users").insert(payload);
+  } catch (error) {
+    console.warn("[onboarding.complete] admin_user_backfill_unavailable", {
+      userId: user.id,
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+    return { error };
+  }
+}
+
 
 export const parseOnboardingEventAction = withServerActionLogging("parseOnboardingEvent", async (rawInput: unknown) => {
   const event = parseMultimodalMessageEvent(rawInput);
@@ -147,12 +166,10 @@ export const completeOnboardingAction = withServerActionLogging("completeOnboard
 
   if (!existingUser) {
     logOnboardingStep("create_missing_user_row", { userId: user.id, operationKey });
-    const { error: createUserError } = await supabase.from("users" as never).insert({
-      id: user.id,
-      display_name: getDisplayNameFromUser(user),
-    } as never);
+    const { error: createUserError } = await createMissingPublicUserRow(user);
     if (createUserError) {
-      throw new OnboardingPersistenceError(`Failed to create onboarding user row: ${createUserError.message}`, "persistence", true);
+      const message = createUserError instanceof Error ? createUserError.message : "unknown error";
+      throw new OnboardingPersistenceError(`Failed to create onboarding user row: ${message}`, "persistence", true);
     }
   }
 

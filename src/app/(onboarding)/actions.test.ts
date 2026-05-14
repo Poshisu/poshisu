@@ -3,9 +3,16 @@ import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 
 const createClientMock = vi.fn();
 const generateOnboardingProfileMock = vi.fn<(arg: unknown) => Promise<string>>(async () => "# Profile");
+const adminInsertUserMock = vi.fn(async () => ({ error: null }));
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClientMock(...args),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => ({
+    from: vi.fn(() => ({ insert: adminInsertUserMock })),
+  })),
 }));
 
 vi.mock("@/lib/onboarding/schema", () => ({
@@ -155,7 +162,7 @@ describe("completeOnboardingAction", () => {
     const result = await completeOnboardingAction({ onboarding_session_token: "session-12345678" });
 
     expect(result.status).toBe("completed");
-    expect(supabase.__spies.insertUser).toHaveBeenCalledWith(
+    expect(adminInsertUserMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: "user-1", display_name: "Aarti Rao" }),
     );
     expect(supabase.__spies.upsert).toHaveBeenCalledWith(
