@@ -107,6 +107,14 @@ jobs:
       - name: Check generated DB types are current
         run: pnpm run db:types:check
 
+      - name: Upload generated DB types on drift
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-database-types
+          path: /tmp/poshisu-generated-database.ts
+          if-no-files-found: ignore
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
