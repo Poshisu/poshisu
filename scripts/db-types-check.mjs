@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const mode = process.argv[2] ?? 'write';
@@ -48,10 +48,18 @@ const current = readFileSync(targetFile, 'utf8');
 
 if (mode === 'check') {
   if (current !== nextOutput) {
+    writeFileSync('/tmp/poshisu-generated-database.ts', nextOutput);
+    const diff = spawnSync(
+      'git',
+      ['--no-pager', 'diff', '--no-index', '--', targetFile, '/tmp/poshisu-generated-database.ts'],
+      { encoding: 'utf8' },
+    );
     process.stderr.write(
       [
         'Generated database types are stale.',
         'Run `pnpm db:types` and commit the updated src/types/database.ts file.',
+        'Diff against generated output:',
+        (diff.stdout || diff.stderr || '').slice(0, 60000),
       ].join('\n') + '\n',
     );
     process.exit(1);

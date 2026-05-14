@@ -36,6 +36,7 @@ This file is the repo-local audit trail for meaningful automated and manual veri
   - `.github/workflows/ci.yml`
   - `package.json`
   - `src/lib/devex/ci-parity.test.ts`
+  - `scripts/db-types-check.mjs`
   - `supabase/config.toml`
   - `TESTING.md`
   - `docs/DEPLOYMENT.md`
