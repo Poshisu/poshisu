@@ -10,6 +10,20 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-14 — Production UI dogfood sweep
+
+- **Task:** Broad production UI dogfood pass after targeted route smokes.
+- **Target:** `https://poshisu.vercel.app`
+- **Scope:** Authenticated Playwright pass over `/login`, `/chat`, `/today`, `/trends`, `/profile`, plus `/onboarding` route-guard behavior; desktop 1440×1000 and mobile 390×844.
+- **Result:** PASS for authenticated login and route rendering; findings recorded for product/UI follow-up.
+- **Real findings:**
+  - High: `/chat` has no visible message composer/free-form input; current production chat page is a minimal meal-confirmation card.
+  - Medium: mobile `/trends` fixed bottom nav overlaps content and likely creates horizontal overflow in lower chart cards.
+  - Low: repeated Chromium Permissions-Policy warning for unsupported `web-share` directive.
+- **Noise de-scoped:** `_rsc` `net::ERR_ABORTED` prefetch/navigation cancellations and hidden Next server-action input label heuristics were not treated as product bugs without further manual/axe verification.
+- **Evidence:** `docs/dogfood/2026-05-14-production-ui/report.md`, `summary.json`, and screenshot artifacts under `docs/dogfood/2026-05-14-production-ui/screenshots/`.
+- **Not covered:** full human UX/a11y audit, live model quality, real photo/file/voice flows, or end-to-end free-form chat safety warning because the production chat UI lacks a composer.
+
 ## 2026-05-14 — S5-T03 Deterministic safety policy tests
 
 - **Task:** `S5-T03` — Lock deterministic safety policy tests.

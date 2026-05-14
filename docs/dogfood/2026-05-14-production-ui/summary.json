@@ -1,0 +1,1239 @@
+{
+  "timestamp": "2026-05-14T17:47:57.053Z",
+  "baseUrl": "https://poshisu.vercel.app",
+  "loginOk": true,
+  "afterLoginUrl": "https://poshisu.vercel.app/chat",
+  "routesChecked": [
+    "/chat",
+    "/today",
+    "/trends",
+    "/profile",
+    "/onboarding"
+  ],
+  "pagesChecked": 10,
+  "findingsCount": 30,
+  "findings": [
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/login",
+      "title": "login-desktop-before-auth: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/login-desktop-before-auth.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/login",
+      "title": "login-desktop-before-auth: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/signup?_rsc=to9i9 :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/login-desktop-before-auth.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/login",
+      "title": "login-desktop-before-auth: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/login-desktop-before-auth.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "desktop-chat: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-chat.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "desktop-chat: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/chat :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=3h94p :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=dt3qr :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=3h94p :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-chat.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "desktop-chat: unlabeled form controls",
+      "evidence": [
+        "3 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-chat.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "desktop-today: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-today.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "desktop-today: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-today.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "desktop-today: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-today.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "desktop-trends: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-trends.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "desktop-trends: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/trends?period=month&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=1p2qb :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-trends.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "desktop-trends: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-trends.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "desktop-profile: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-profile.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "desktop-profile: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-profile.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "desktop-profile: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-profile.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "desktop-onboarding: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-onboarding.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "desktop-onboarding: unlabeled form controls",
+      "evidence": [
+        "3 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-onboarding.png"
+    },
+    {
+      "severity": "High",
+      "category": "Functional",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "Chat input not found",
+      "evidence": [
+        "No textarea/text input/contenteditable control found on /chat."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-chat-before-message.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "mobile-chat: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-chat.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/chat",
+      "title": "mobile-chat: unlabeled form controls",
+      "evidence": [
+        "3 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-chat.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "mobile-today: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-today.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "mobile-today: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-today.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/today",
+      "title": "mobile-today: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-today.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "mobile-trends: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-trends.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "mobile-trends: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=1p2qb :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-trends.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Responsive",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "mobile-trends: horizontal overflow",
+      "evidence": [
+        "scrollWidth=420, clientWidth=390"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-trends.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/trends",
+      "title": "mobile-trends: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-trends.png"
+    },
+    {
+      "severity": "High",
+      "category": "Console",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "mobile-profile: console/page errors",
+      "evidence": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-profile.png"
+    },
+    {
+      "severity": "High",
+      "category": "Network",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "mobile-profile: failed network requests",
+      "evidence": [
+        "GET https://poshisu.vercel.app/today?_rsc=kbl2t :: net::ERR_ABORTED"
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-profile.png"
+    },
+    {
+      "severity": "Medium",
+      "category": "Accessibility",
+      "url": "https://poshisu.vercel.app/profile",
+      "title": "mobile-profile: unlabeled form controls",
+      "evidence": [
+        "2 input/select/textarea controls lack label/aria label."
+      ],
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-profile.png"
+    }
+  ],
+  "pages": [
+    {
+      "label": "login-desktop-before-auth",
+      "requestedUrl": "https://poshisu.vercel.app/login",
+      "finalUrl": "https://poshisu.vercel.app/login",
+      "status": 200,
+      "title": "Sign in — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/login-desktop-before-auth.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/signup?_rsc=to9i9 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=3h94p :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=dt3qr :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=3h94p :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=month&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Continue with Google",
+          "disabled": false
+        },
+        {
+          "text": "Sign in",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/login#main-content"
+        },
+        {
+          "text": "Sign up",
+          "href": "https://poshisu.vercel.app/signup"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nWelcome back\n\nSign in to continue your health journey.\n\nContinue with Google\nOR\nEmail\nPassword\nSign in\n\nDon't have an account? Sign up"
+    },
+    {
+      "label": "desktop-chat",
+      "requestedUrl": "https://poshisu.vercel.app/chat",
+      "finalUrl": "https://poshisu.vercel.app/chat",
+      "status": 200,
+      "title": "Chat — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-chat.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/chat :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=3h94p :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=dt3qr :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=3h94p :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=month&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 3
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Looks right — save meal",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/chat#main-content"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nChat\nToday\nTrends\nMe\nSign out\nChat\n\nReview this meal estimate and confirm to save.\n\nEstimated meal: 2 rotis and dal\n\n420–520 kcal · confidence 83%\n\nThis is a minimal confirm-save flow for the first end-to-end logging loop.\n\nLooks right — save meal"
+    },
+    {
+      "label": "desktop-today",
+      "requestedUrl": "https://poshisu.vercel.app/today",
+      "finalUrl": "https://poshisu.vercel.app/today",
+      "status": 200,
+      "title": "Today — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-today.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=month&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/today#main-content"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Previous",
+          "href": "https://poshisu.vercel.app/today?date=2026-05-13"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Next",
+          "href": "https://poshisu.vercel.app/today?date=2026-05-15"
+        },
+        {
+          "text": "Correct estimate",
+          "href": "https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nChat\nToday\nTrends\nMe\nSign out\n\n14 May 2026\n\nToday\n\nDaily totals, meal cards, and quick corrections.\n\nPrevious\nToday\nNext\n\n1 meal logged\n\n470 kcal\n420–520 kcal range\n\nProtein\n\n0.0 g protein\n\nCarbs\n\n0.0 g carbs\n\nFat\n\n0.0 g fat\n\nFiber\n\n0.0 g fiber\nLunch\n\n470 kcal lead · 420–520 range\n\n83% confidence\n\n2 rotis and a bowl of dal\n\nP 0.0 g\nC 0.0 g\nF 0.0 g\nFiber 0.0 g\nCorrect estimate"
+    },
+    {
+      "label": "desktop-trends",
+      "requestedUrl": "https://poshisu.vercel.app/trends",
+      "finalUrl": "https://poshisu.vercel.app/trends",
+      "status": 200,
+      "title": "Trends — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-trends.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/trends?period=month&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/trends#main-content"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Week",
+          "href": "https://poshisu.vercel.app/trends?period=week&date=2026-05-14"
+        },
+        {
+          "text": "Month",
+          "href": "https://poshisu.vercel.app/trends?period=month&date=2026-05-14"
+        },
+        {
+          "text": "3-Month",
+          "href": "https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nChat\nToday\nTrends\nMe\nSign out\n\n14 May 2026\n\nTrends\n\nWeekly and monthly patterns for confirmed meal logs.\n\nWeek\nMonth\n3-Month\nRange\n8 May–14 May\n\n1/7 days logged\n\nConsistency\n14% consistency\n\nAt least one confirmed meal per day\n\nAverage calories\n470 kcal avg\n\nAcross logged days only\n\nStreak\n1 day current streak\n\n1 day longest streak\n\nCalories over time\n\nDaily kcal lead totals from confirmed meals.\n\n—\n8 May\n—\n9 May\n—\n10 May\n—\n11 May\n—\n12 May\n—\n13 May\n470\n14 May\nMacro distribution\n\nProtein, carbs, and fat grams by day.\n\n8 May\n9 May\n10 May\n11 May\n12 May\n13 May\n14 May\nProtein\nCarbs\nFat\nPeriod radar\n\nAverage completion against starter targets.\n\nProtein\n0%\nFiber\n0%\nCalories\n21%\nMacro averages\n\nUseful daily baselines on logged days.\n\nProtein\n\n0.0 g protein avg\n\nFiber"
+    },
+    {
+      "label": "desktop-profile",
+      "requestedUrl": "https://poshisu.vercel.app/profile",
+      "finalUrl": "https://poshisu.vercel.app/profile",
+      "status": 200,
+      "title": "Me — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-profile.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/profile?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=cfcua :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?_rsc=cfcua :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Save Profile",
+          "disabled": false
+        },
+        {
+          "text": "Save Patterns",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/profile#main-content"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nChat\nToday\nTrends\nMe\nSign out\n\nHey, atreya.1996+mainlaptoptest\n\nMemory inspector\n\nSee what Nourish remembers, where it came from, and what you can safely change.\n\nSigned in as atreya.1996+mainlaptoptest@gmail.com\n\n2 memory layers\n1 audit snapshot\nUser-scoped\n\nThis view only reads rows owned by the signed-in Supabase user.\n\nEditable safely\n\nOnly profile and patterns/main can be saved inline; every update goes through the authenticated memory API.\n\nAudit visible\n\nRecent memory snapshots are shown so changes are not invisible black boxes.\n\nProfile\n\nStable profile, goals, preferences, and safety-relevant onboarding facts.\n\nVersion 2\nEditable\nKey\nmain\nUpdated\n14 May 2026, 5:28 pm\n\nSave Profile\nPatterns\n\nRecurring eating, logging, timing, and behavior patterns Nour"
+    },
+    {
+      "label": "desktop-onboarding",
+      "requestedUrl": "https://poshisu.vercel.app/onboarding",
+      "finalUrl": "https://poshisu.vercel.app/chat",
+      "status": 200,
+      "title": "Chat — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/desktop-onboarding.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [],
+      "metrics": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "h1Count": 1,
+        "inputsWithoutLabel": 3
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Looks right — save meal",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/chat#main-content"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nChat\nToday\nTrends\nMe\nSign out\nChat\n\nReview this meal estimate and confirm to save.\n\nEstimated meal: 2 rotis and dal\n\n420–520 kcal · confidence 83%\n\nThis is a minimal confirm-save flow for the first end-to-end logging loop.\n\nLooks right — save meal"
+    },
+    {
+      "label": "mobile-chat",
+      "requestedUrl": "https://poshisu.vercel.app/chat",
+      "finalUrl": "https://poshisu.vercel.app/chat",
+      "status": 200,
+      "title": "Chat — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-chat.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=kbl2t :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "h1Count": 1,
+        "inputsWithoutLabel": 3
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Looks right — save meal",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/chat#main-content"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nSign out\nChat\n\nReview this meal estimate and confirm to save.\n\nEstimated meal: 2 rotis and dal\n\n420–520 kcal · confidence 83%\n\nThis is a minimal confirm-save flow for the first end-to-end logging loop.\n\nLooks right — save meal\nChat\nToday\nTrends\nMe"
+    },
+    {
+      "label": "mobile-today",
+      "requestedUrl": "https://poshisu.vercel.app/today",
+      "finalUrl": "https://poshisu.vercel.app/today",
+      "status": 200,
+      "title": "Today — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-today.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/today?_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?date=2026-05-15&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct&_rsc=ttws2 :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=kbl2t :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/today#main-content"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Previous",
+          "href": "https://poshisu.vercel.app/today?date=2026-05-13"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Next",
+          "href": "https://poshisu.vercel.app/today?date=2026-05-15"
+        },
+        {
+          "text": "Correct estimate",
+          "href": "https://poshisu.vercel.app/chat?mealId=cd2bfcc3-35e9-4a0b-a85b-89cd84dae790&mode=correct"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nSign out\n\n14 May 2026\n\nToday\n\nDaily totals, meal cards, and quick corrections.\n\nPrevious\nToday\nNext\n\n1 meal logged\n\n470 kcal\n420–520 kcal range\n\nProtein\n\n0.0 g protein\n\nCarbs\n\n0.0 g carbs\n\nFat\n\n0.0 g fat\n\nFiber\n\n0.0 g fiber\nLunch\n\n470 kcal lead · 420–520 range\n\n83% confidence\n\n2 rotis and a bowl of dal\n\nP 0.0 g\nC 0.0 g\nF 0.0 g\nFiber 0.0 g\nCorrect estimate\nChat\nToday\nTrends\nMe"
+    },
+    {
+      "label": "mobile-trends",
+      "requestedUrl": "https://poshisu.vercel.app/trends",
+      "finalUrl": "https://poshisu.vercel.app/trends",
+      "status": 200,
+      "title": "Trends — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-trends.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'.",
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?period=week&date=2026-05-14&_rsc=zhhgp :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/profile?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/trends?_rsc=1p2qb :: net::ERR_ABORTED",
+        "GET https://poshisu.vercel.app/today?_rsc=kbl2t :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 420,
+        "clientWidth": 390,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/trends#main-content"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Week",
+          "href": "https://poshisu.vercel.app/trends?period=week&date=2026-05-14"
+        },
+        {
+          "text": "Month",
+          "href": "https://poshisu.vercel.app/trends?period=month&date=2026-05-14"
+        },
+        {
+          "text": "3-Month",
+          "href": "https://poshisu.vercel.app/trends?period=quarter&date=2026-05-14"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nSign out\n\n14 May 2026\n\nTrends\n\nWeekly and monthly patterns for confirmed meal logs.\n\nWeek\nMonth\n3-Month\nRange\n8 May–14 May\n\n1/7 days logged\n\nConsistency\n14% consistency\n\nAt least one confirmed meal per day\n\nAverage calories\n470 kcal avg\n\nAcross logged days only\n\nStreak\n1 day current streak\n\n1 day longest streak\n\nCalories over time\n\nDaily kcal lead totals from confirmed meals.\n\n—\n8 May\n—\n9 May\n—\n10 May\n—\n11 May\n—\n12 May\n—\n13 May\n470\n14 May\nMacro distribution\n\nProtein, carbs, and fat grams by day.\n\n8 May\n9 May\n10 May\n11 May\n12 May\n13 May\n14 May\nProtein\nCarbs\nFat\nPeriod radar\n\nAverage completion against starter targets.\n\nProtein\n0%\nFiber\n0%\nCalories\n21%\nMacro averages\n\nUseful daily baselines on logged days.\n\nProtein\n\n0.0 g protein avg\n\nFiber\n\n0.0 g fiber avg\n\nwa"
+    },
+    {
+      "label": "mobile-profile",
+      "requestedUrl": "https://poshisu.vercel.app/profile",
+      "finalUrl": "https://poshisu.vercel.app/profile",
+      "status": 200,
+      "title": "Me — Nourish",
+      "screenshotPath": "/Users/Apple/.hermes/openclaw-workspace/agents/forge/repos/poshisu/docs/dogfood/2026-05-14-production-ui/screenshots/mobile-profile.png",
+      "consoleMessages": [
+        "warning: Error with Permissions-Policy header: Unrecognized feature: 'web-share'."
+      ],
+      "failedRequests": [
+        "GET https://poshisu.vercel.app/today?_rsc=kbl2t :: net::ERR_ABORTED"
+      ],
+      "metrics": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "h1Count": 1,
+        "inputsWithoutLabel": 2
+      },
+      "buttons": [
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Sign out",
+          "disabled": false
+        },
+        {
+          "text": "Save Profile",
+          "disabled": false
+        },
+        {
+          "text": "Save Patterns",
+          "disabled": false
+        }
+      ],
+      "links": [
+        {
+          "text": "Skip to main content",
+          "href": "https://poshisu.vercel.app/profile#main-content"
+        },
+        {
+          "text": "nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        },
+        {
+          "text": "n\nNourish",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Chat",
+          "href": "https://poshisu.vercel.app/chat"
+        },
+        {
+          "text": "Today",
+          "href": "https://poshisu.vercel.app/today"
+        },
+        {
+          "text": "Trends",
+          "href": "https://poshisu.vercel.app/trends"
+        },
+        {
+          "text": "Me",
+          "href": "https://poshisu.vercel.app/profile"
+        }
+      ],
+      "bodyPreview": "Skip to main content\nn\nNourish\nSign out\n\nHey, atreya.1996+mainlaptoptest\n\nMemory inspector\n\nSee what Nourish remembers, where it came from, and what you can safely change.\n\nSigned in as atreya.1996+mainlaptoptest@gmail.com\n\n2 memory layers\n1 audit snapshot\nUser-scoped\n\nThis view only reads rows owned by the signed-in Supabase user.\n\nEditable safely\n\nOnly profile and patterns/main can be saved inline; every update goes through the authenticated memory API.\n\nAudit visible\n\nRecent memory snapshots are shown so changes are not invisible black boxes.\n\nProfile\n\nStable profile, goals, preferences, and safety-relevant onboarding facts.\n\nVersion 2\nEditable\nKey\nmain\nUpdated\n14 May 2026, 5:28 pm\n\nSave Profile\nPatterns\n\nRecurring eating, logging, timing, and behavior patterns Nourish has inferred.\n\nVe"
+    }
+  ]
+}
