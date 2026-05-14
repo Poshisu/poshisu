@@ -177,7 +177,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 10 | Stage 4 | S4-T01 | Productionize Today page | Daily totals/cards/edit flows stable on mobile + desktop | `pnpm run test -- src/app/(app)/today` | done |
 | 11 | Stage 4 | S4-T02 | Productionize Trends page | Weekly/monthly charts and insight cards render with empty/error states | `pnpm run test -- src/app/(app)/trends` | done |
 | 12 | Stage 4 | S4-T03 | Build profile memory inspector | User can inspect/edit memory layers safely with audit context | `pnpm run test -- src/app/(app)/profile` | done |
-| 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | todo |
+| 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | done |
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | todo |
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | todo |
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/build/scoped E2E/db-types gate reliably | `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build` | todo |
@@ -189,9 +189,16 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S5-T01` (Expand prompt eval coverage).
+- **Next to execute:** `S5-T02` (Add AI safety adversarial tests).
 - **Owner:** Engineering
-- **Dependencies:** `S4-T03` Profile memory inspector is productionized with focused component and loader tests.
+- **Dependencies:** `S5-T01` prompt eval baseline now covers onboarding parser, router/orchestrator, deterministic nutrition estimator, and coach prompt contract.
+
+### S5-T01 closure status (2026-05-14)
+- `pnpm run eval:prompts` now executes a real deterministic prompt-eval harness instead of a placeholder console log.
+- `src/lib/evals/prompt-evals.ts` defines baseline suites for onboarding parser, router/orchestrator, nutrition estimator, and coach prompt contract, with per-suite thresholds and copy-pasteable summary output.
+- `scripts/eval-prompts.ts` exits non-zero when any suite falls below threshold and prints failed case IDs/descriptions.
+- Focused Vitest coverage is recorded in `src/lib/evals/prompt-evals.test.ts`; `tsx` is added as the script runner so the package script works reproducibly.
+- Focused test evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 ### S4-T03 closure status (2026-05-14)
 - `/profile` now renders through `ProfileMemoryDashboard`, with user-scoped memory layer cards, inline save for safe singleton layers, read-only treatment for temporal/semantic layers, empty state, and recent audit history.

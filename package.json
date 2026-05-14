@@ -66,6 +66,7 @@
     "prettier-plugin-tailwindcss": "^0.7.2",
     "supabase": "^2.92.1",
     "tailwindcss": "^4",
+    "tsx": "^4.22.0",
     "typescript": "^5",
     "vitest": "^4.1.4"
   }
