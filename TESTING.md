@@ -39,8 +39,9 @@ Run checks in this order locally before every commit:
 2. `pnpm run typecheck`
 3. `pnpm run lint`
 4. `pnpm run test`
-5. `pnpm run test:e2e` (or a scoped subset for in-progress feature work)
-6. `pnpm run eval:prompts` (required for prompt changes)
+5. `pnpm run eval:prompts` (required for prompt changes; CI runs it on every PR/push)
+6. `pnpm run test:e2e` (or `pnpm run test:e2e:smoke` for the no-DB CI-smoke subset; `pnpm run test:e2e:ci` when Docker/Supabase local stack is available)
+7. `pnpm run build`
 
 ## 3) Fixtures and test data
 
@@ -108,11 +109,17 @@ When a check fails, triage in this order:
 ## 6) CI parity expectation
 
 Local checks should mirror CI expectations:
-- `pnpm run lint`
-- `pnpm run typecheck`
-- `pnpm run test`
-- `pnpm run build`
-- Playwright workflow for E2E
+- `pnpm run ci:parity` for the full mirror when Docker/Supabase local stack is available.
+- Non-Docker fallback while iterating:
+  - `pnpm run lint`
+  - `pnpm run typecheck`
+  - `pnpm run test`
+  - `pnpm run eval:prompts`
+  - `pnpm run build`
+  - `pnpm run test:e2e:smoke`
+- Docker-gated parity checks: `pnpm run db:types:check` and `pnpm run test:e2e:ci`.
+
+CI runs the full gate sequence on every PR/push across two jobs: app gates (lint, typecheck, unit/component tests, prompt evals, production build) and Docker/Supabase gates (generated DB types plus scoped auth/onboarding Playwright Chromium subset).
 
 If CI fails while local passes, capture:
 - failing command

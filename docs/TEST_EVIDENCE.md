@@ -10,6 +10,39 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-14 — S6-T01 CI parity gates
+
+- **Task:** `S6-T01` — Finalize CI parity gates.
+- **Scope verified:** CI/local parity for lint, typecheck, generated database types, unit/component tests, prompt eval baseline, production build, and a scoped Chromium Playwright smoke.
+- **TDD evidence:** Added `src/lib/devex/ci-parity.test.ts`; red run failed because `test:e2e:ci` / `ci:parity` scripts were missing and GitHub Actions did not run the scoped E2E gate through the parity script. Implementation then passed focused/all Vitest and static/build gates.
+- **Changed gates:**
+  - `.github/workflows/ci.yml` now separates app gates from Docker/Supabase gates so Supabase startup issues do not hide lint/typecheck/test/build signal.
+  - The Docker/Supabase job starts the local Supabase stack, exports the runtime local anon key via `supabase status -o env`, runs `pnpm run db:types:check`, installs Chromium, and runs `pnpm run test:e2e:ci`.
+  - CI app gates run `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run eval:prompts`, and `pnpm run build`.
+  - `supabase/config.toml` disables local email confirmations so signup/onboarding E2E can exercise the intended route without SMTP.
+  - `package.json` now exposes `pnpm run ci:parity` as the local gate-set mirror, `pnpm run test:e2e:ci` as the Docker/Supabase-backed CI Playwright subset, and `pnpm run test:e2e:smoke` as a no-DB redirect smoke useful in this Hermes environment.
+- **Focused test command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused/all Vitest result:** PASS — Vitest invocation reported 33 test files / 160 tests passed; `src/lib/devex/ci-parity.test.ts` passed 2/2.
+- **Prompt eval result:** PASS — onboarding-parser 3/3, router 3/3, nutrition-estimator 3/3, coach 3/3, safety-adversarial 6/6; overall 18/18 = 100%.
+- **Static/build command:** `pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Static/build result:** PASS — TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Scoped no-DB E2E smoke command:** `pnpm run test:e2e:smoke`
+- **Scoped no-DB E2E smoke result:** PASS — Chromium ran 1 test: protected `/chat` redirects unauthenticated users to `/login`.
+- **Docker-gated CI E2E command:** `pnpm run test:e2e:ci`
+- **Docker-gated CI E2E scope:** Chromium auth/onboarding subset, including the redirect smoke and onboarding-tagged journeys; expected to run in GitHub Actions after the local Supabase stack starts.
+- **Docker-gated command:** `pnpm run db:types:check`
+- **Docker-gated local result:** BLOCKED in this Hermes environment because Docker is not installed (`docker: command not found`). This remains in CI parity and is expected to run in GitHub Actions after `supabase/setup-cli` + `supabase start`.
+- **Relevant files updated:**
+  - `.github/workflows/ci.yml`
+  - `package.json`
+  - `src/lib/devex/ci-parity.test.ts`
+  - `supabase/config.toml`
+  - `TESTING.md`
+  - `docs/DEPLOYMENT.md`
+  - `docs/TASKS.md`
+  - `docs/TEST_EVIDENCE.md`
+- **Not covered in this run:** full Playwright journey suite and production Vercel smoke; S6-T01 only closes parity gates, not the later env/runbook parity task.
+
 ## 2026-05-14 — Production UI dogfood sweep
 
 - **Task:** Broad production UI dogfood pass after targeted route smokes.

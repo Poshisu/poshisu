@@ -180,7 +180,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 13 | Stage 5 | S5-T01 | Expand prompt eval coverage | Eval set covers onboarding/router/nutrition/coach with baseline tracking | `pnpm run eval:prompts` | done |
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | done |
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | done |
-| 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/build/scoped E2E/db-types gate reliably | `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build` | todo |
+| 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/prompt-eval/build/scoped E2E/db-types gate reliably | `pnpm run ci:parity` | done |
 | 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | todo |
 | 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | todo |
 | 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | todo |
@@ -189,9 +189,19 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S6-T01` (Finalize CI parity gates).
+- **Next to execute:** `S6-T02` (Vercel env + runbook parity).
 - **Owner:** Engineering
-- **Dependencies:** `S5-T03` now locks deterministic allergen/condition safety policy behavior with blocking reasons and safe alternatives.
+- **Dependencies:** `S6-T01` now locks local/CI parity for lint, typecheck, generated DB types, unit/component tests, prompt evals, production build, and scoped Playwright smoke.
+
+### S6-T01 closure status (2026-05-14)
+- `.github/workflows/ci.yml` now runs the required gates as two signal-preserving jobs: app gates (`lint`, `typecheck`, Vitest, prompt evals, production build) and Docker/Supabase gates (`supabase start`, generated DB types, scoped auth/onboarding E2E).
+- The Docker/Supabase job exports the local anon key from `supabase status -o env` after `supabase start` instead of hardcoding a possibly stale JWT.
+- `supabase/config.toml` disables local email confirmations so the CI signup/onboarding E2E path can proceed without SMTP.
+- `package.json` now exposes `pnpm run test:e2e:ci` for the Docker/Supabase-backed CI Playwright subset, `pnpm run test:e2e:smoke` for the no-DB auth redirect smoke, and `pnpm run ci:parity` as the local gate-set mirror.
+- `src/lib/devex/ci-parity.test.ts` locks the expected package scripts and GitHub Actions workflow gates so future workflow drift fails under Vitest.
+- Local non-Docker gates passed: CI parity Vitest coverage, prompt eval 18/18, typecheck, lint, production build, and scoped Playwright smoke.
+- `pnpm run db:types:check` is intentionally part of CI parity but was locally blocked in this Hermes environment because Docker is not installed (`docker: command not found`); GitHub Actions provisions Supabase CLI/local stack before running the check.
+- Focused evidence is recorded in `docs/TEST_EVIDENCE.md`.
 
 ### S5-T03 closure status (2026-05-14)
 - `src/lib/safety/check.ts` now returns `blocked`, `blockingReasons`, and `safeAlternatives` in addition to existing allergen/condition flags.

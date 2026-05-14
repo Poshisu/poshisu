@@ -12,21 +12,21 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # pnpm picks this up automatically; pin once, reuse across jobs.
   NODE_VERSION: "22"
   PNPM_VERSION: "10"
 
 jobs:
-  verify:
-    name: Lint, typecheck, test, build
+  app-gates:
+    name: App gates
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy-publishable-key-for-ci
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -41,63 +41,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Detect DB-related changes
-        id: changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=""
-
-          safe_diff_names() {
-            local base_ref="$1"
-            local head_ref="$2"
-
-            if ! git cat-file -e "${base_ref}^{commit}" 2>/dev/null; then
-              echo ""
-              return 0
-            fi
-
-            git diff --name-only "$base_ref" "$head_ref"
-          }
-
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base="${{ github.event.pull_request.base.sha }}"
-            head="${{ github.sha }}"
-            files=$(safe_diff_names "$base" "$head")
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            base="${{ github.event.before }}"
-            head="${{ github.sha }}"
-            files=$(safe_diff_names "$base" "$head")
-          else
-            # workflow_dispatch fallback: avoid DB-gated checks unless DB files changed in branch
-            echo "db_related=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if echo "$files" | grep -Eq '^(supabase/|src/types/database.ts|scripts/db-types-check.mjs|src/lib/supabase/)'; then
-            echo "db_related=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "db_related=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Supabase CLI
-        if: ${{ steps.changes.outputs.db_related == 'true' }}
-        uses: supabase/setup-cli@v1
-        with:
-          version: 2.92.1
-
-      - name: Start Supabase local stack
-        if: ${{ steps.changes.outputs.db_related == 'true' }}
-        run: supabase start
-
-      - name: Check generated DB types are current
-        if: ${{ steps.changes.outputs.db_related == 'true' }}
-        run: pnpm run db:types:check
-
-      - name: Warn if DB types check failed
-        if: ${{ steps.changes.outputs.db_related == 'true' && failure() }}
-        run: echo "::warning::DB types freshness check failed. Continue for velocity; fix before DB-related merge."
 
       - name: Lint
         run: pnpm run lint
@@ -105,27 +48,23 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Unit tests
+      - name: Unit and component tests
         run: pnpm run test
 
-      - name: Build
-        # Build without real secrets — the code is designed to boot with
-        # env vars absent. This is the fastest way to catch regressions
-        # like a Server Action that references a missing env var at module
-        # scope, or a Sentry config that throws on missing DSN.
-        run: pnpm run build
-        env:
-          # Dummy values keep any typed "env.VAR!" non-null assertions
-          # from tripping runtime URL parsers during build-time collection.
-          # The real values live in Vercel per-environment.
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy-publishable-key-for-ci
+      - name: Prompt eval baseline
+        run: pnpm run eval:prompts
 
-  onboarding-e2e:
-    name: Onboarding E2E gate
+      - name: Build
+        run: pnpm run build
+
+  docker-gates:
+    name: DB types and scoped E2E
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: verify
+    needs: app-gates
+    env:
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
 
     steps:
       - name: Checkout
@@ -153,13 +92,23 @@ jobs:
       - name: Start Supabase local stack
         run: supabase start
 
+      - name: Export Supabase local env
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase status -o env > /tmp/supabase.env
+          api_url=$(grep '^API_URL=' /tmp/supabase.env | cut -d= -f2-)
+          anon_key=$(grep '^ANON_KEY=' /tmp/supabase.env | cut -d= -f2-)
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$api_url"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key"
+          } >> "$GITHUB_ENV"
+
+      - name: Check generated DB types are current
+        run: pnpm run db:types:check
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run onboarding E2E
-        run: pnpm run test:e2e -g onboarding
-        env:
-          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: >-
-            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTMwMDAwMDAsImV4cCI6MjAyODYwMDAwMH0.uY9BfY7a6m9n2YB6dD9kJm96f7K4wY8i8A2h5I6L7m8
+      - name: Scoped auth/onboarding E2E
+        run: pnpm run test:e2e:ci

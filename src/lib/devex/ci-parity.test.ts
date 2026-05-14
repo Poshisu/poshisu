@@ -1,0 +1,80 @@
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const repoRoot = process.cwd();
+const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")) as {
+  scripts: Record<string, string>;
+};
+const ciWorkflowPath = join(repoRoot, ".github/workflows/ci.yml");
+
+function workflow(): string {
+  expect(existsSync(ciWorkflowPath), ".github/workflows/ci.yml should exist").toBe(true);
+  return readFileSync(ciWorkflowPath, "utf8");
+}
+
+describe("CI parity gates", () => {
+  it("exposes local scripts for every CI quality gate", () => {
+    expect(packageJson.scripts).toMatchObject({
+      lint: "eslint src",
+      typecheck: "tsc --noEmit",
+      test: "vitest run",
+      build: "next build",
+      "db:types:check": "node scripts/db-types-check.mjs check",
+      "test:e2e:ci": expect.stringContaining("playwright test"),
+      "test:e2e:smoke": expect.stringContaining("playwright test"),
+      "ci:parity": expect.any(String),
+    });
+
+    expect(packageJson.scripts["test:e2e:ci"]).toContain("--project=chromium");
+    expect(packageJson.scripts["test:e2e:smoke"]).toContain("--project=chromium");
+    expect(packageJson.scripts["test:e2e:smoke"]).toContain("protected /chat redirects");
+
+    const parity = packageJson.scripts["ci:parity"];
+    for (const gate of [
+      "supabase start",
+      "supabase status -o env",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "pnpm run db:types:check",
+      "pnpm run lint",
+      "pnpm run typecheck",
+      "pnpm run test",
+      "pnpm run eval:prompts",
+      "pnpm run build",
+      "pnpm run test:e2e:ci",
+    ]) {
+      expect(parity).toContain(gate);
+    }
+  });
+
+  it("runs the same required gates in GitHub Actions CI", () => {
+    const yml = workflow();
+
+    expect(yml).toContain("name: CI");
+    expect(yml).toContain("pull_request:");
+    expect(yml).toContain("push:");
+    expect(yml).toContain("pnpm/action-setup");
+    expect(yml).toContain("actions/setup-node");
+    expect(yml).toContain("supabase/setup-cli");
+    expect(yml).toContain("supabase start");
+    expect(yml).toContain("supabase status -o env");
+    expect(yml).toContain("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key");
+    expect(yml).toContain("pnpm exec playwright install --with-deps chromium");
+
+    for (const gate of [
+      "pnpm run lint",
+      "pnpm run typecheck",
+      "pnpm run db:types:check",
+      "pnpm run test",
+      "pnpm run eval:prompts",
+      "pnpm run build",
+      "pnpm run test:e2e:ci",
+    ]) {
+      expect(yml).toContain(gate);
+    }
+
+    expect(yml).toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(yml).toContain("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+    expect(yml).toContain("PLAYWRIGHT_BASE_URL");
+  });
+});

@@ -92,17 +92,12 @@ Forgetting the wildcard is the most common preview-OAuth failure.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every push and PR to `main`:
+`.github/workflows/ci.yml` runs on every push and PR to `main` in two jobs:
 
-1. `pnpm lint`
-2. `pnpm typecheck`
-3. `pnpm test` (unit, Vitest)
-4. `pnpm build` (with dummy Supabase URL + key — see the workflow for why)
+1. **App gates:** install dependencies with frozen lockfile, then run `pnpm run lint`, `pnpm run typecheck`, `pnpm run test`, `pnpm run eval:prompts`, and `pnpm run build` with dummy public Supabase build env.
+2. **Docker/Supabase gates:** provision Supabase CLI, run `supabase start`, export the runtime local anon key with `supabase status -o env`, run `pnpm run db:types:check`, install Chromium, then run `pnpm run test:e2e:ci` for the scoped auth/onboarding Playwright subset.
 
-Playwright e2e is not yet in CI. It runs locally with `pnpm test:e2e`.
-When we add it to CI, it will run against the deployed Vercel preview URL
-rather than localhost — that way it catches env-scoping issues like the
-one this runbook was written for.
+Local parity command: `pnpm run ci:parity`. It requires Docker/Supabase for the DB-types and local-Supabase E2E gates; if Docker is unavailable locally, run the non-Docker gates in `TESTING.md` and rely on GitHub Actions for the Docker-gated checks.
 
 ---
 
