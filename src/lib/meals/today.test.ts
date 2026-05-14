@@ -70,6 +70,7 @@ describe("loadTodayMeals", () => {
     expect(query.select).toHaveBeenCalledWith(expect.stringContaining("protein_g_low"));
     expect(query.select).toHaveBeenCalledWith(expect.stringContaining("safety_flags"));
     expect(query.eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(query.eq).toHaveBeenCalledWith("user_confirmed", true);
     expect(query.order).toHaveBeenCalledWith("logged_at", { ascending: false });
     expect(state.requested).toEqual([
       { column: "logged_at", value: "2026-05-13T18:30:00.000Z" },

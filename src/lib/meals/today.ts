@@ -99,6 +99,7 @@ export async function loadTodayMeals(date: Date | string = new Date()) {
     .from("meals" as never)
     .select(todayMealColumns as never)
     .eq("user_id", user.id)
+    .eq("user_confirmed", true)
     .gte("logged_at", start)
     .lte("logged_at", end)
     .order("logged_at", { ascending: false });

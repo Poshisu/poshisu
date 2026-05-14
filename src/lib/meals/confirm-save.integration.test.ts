@@ -20,18 +20,21 @@ const supabaseMock = {
             }),
           })),
         })),
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            gte: vi.fn(() => ({
-              lte: vi.fn(() => ({
-                order: vi.fn(async () => ({ data: state.meals, error: null })),
-              })),
-              order: vi.fn(() => ({
-                limit: vi.fn(async () => ({ data: state.meals, error: null })),
-              })),
-            })),
-          })),
-        })),
+        select: vi.fn(() => {
+          const query = {
+            eq: vi.fn(() => query),
+            gte: vi.fn(() => query),
+            lte: vi.fn(() => query),
+            order: vi.fn((column: string) => {
+              if (column === "created_at") {
+                return { limit: vi.fn(async () => ({ data: state.meals, error: null })) };
+              }
+              return Promise.resolve({ data: state.meals.filter((meal) => meal.user_confirmed === true), error: null });
+            }),
+            limit: vi.fn(async () => ({ data: state.meals, error: null })),
+          };
+          return query;
+        }),
       };
     }
     throw new Error(`unexpected table: ${table}`);

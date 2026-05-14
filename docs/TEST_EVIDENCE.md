@@ -85,3 +85,12 @@ This file is the repo-local audit trail for meaningful automated and manual veri
   - Loader queries confirmed meals by `user_id`, `user_confirmed`, selected IST `logged_at` bounds, and ascending `logged_at` order.
   - Invalid period/date params fall back to Week and current IST calendar date.
 - **Not covered in this run:** live Vercel browser smoke test with a real Supabase session; visual regression screenshots; Coach-agent generated narrative insights; materialized analytics-view refresh behavior.
+
+## 2026-05-14 — Post-review hardening after S4-T02
+
+- **Scope verified:** Review-follow-up fixes before final deploy:
+  - Today loader now filters to `user_confirmed = true`, matching Trends and confirmed-meal analytics semantics.
+  - Push subscribe now returns the standard safe error envelope if the admin cleanup client cannot be configured, instead of throwing an uncaught server error.
+- **Command:** `pnpm run test -- src/app/\(app\)/trends/TrendsDashboard.test.tsx src/lib/trends.test.ts src/lib/meals/today.test.ts src/app/api/push/subscribe/route.test.ts src/lib/meals/confirm-save.integration.test.ts && pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Result:** PASS — Vitest invocation reported 28 test files / 138 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Production smoke status:** Login to `https://poshisu.vercel.app` with the local E2E account succeeds, but authenticated `/trends` redirects to `/onboarding`. Completing onboarding in production hits a server-side 500, so visual `/trends` smoke remains blocked until Vercel logs/access or an already-onboarded smoke account is available.

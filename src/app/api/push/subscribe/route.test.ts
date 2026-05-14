@@ -15,6 +15,7 @@ const state = {
   upserts: [] as Array<Record<string, unknown>>,
   upsertOptions: [] as Array<Record<string, unknown>>,
   cleanupErrors: [] as Array<Error | null>,
+  adminError: null as Error | null,
   upsertError: null as Error | null,
 };
 
@@ -70,7 +71,10 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => adminSupabaseMock),
+  createAdminClient: vi.fn(() => {
+    if (state.adminError) throw state.adminError;
+    return adminSupabaseMock;
+  }),
 }));
 
 describe("POST /api/push/subscribe", () => {
@@ -83,6 +87,7 @@ describe("POST /api/push/subscribe", () => {
     state.upserts = [];
     state.upsertOptions = [];
     state.cleanupErrors = [];
+    state.adminError = null;
     state.upsertError = null;
   });
 
@@ -234,6 +239,23 @@ describe("POST /api/push/subscribe", () => {
     const json = await response.json();
     expect(json.error.code).toBe("PUSH_SUBSCRIBE_FAILED");
     expect(JSON.stringify(json)).not.toContain("raw cleanup failure");
+    expect(state.upserts).toHaveLength(0);
+  });
+
+  it("returns a safe envelope when admin cleanup cannot be configured", async () => {
+    state.adminError = new Error("missing service role key");
+    const { POST } = await import("./route");
+
+    const response = await POST(new Request("http://localhost/api/push/subscribe", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ subscription: validSubscription }),
+    }));
+
+    expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error.code).toBe("PUSH_SUBSCRIBE_FAILED");
+    expect(JSON.stringify(json)).not.toContain("service role");
     expect(state.upserts).toHaveLength(0);
   });
 

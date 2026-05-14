@@ -40,7 +40,13 @@ export async function POST(request: Request) {
   const { subscription } = parsed.data;
   const userAgent = request.headers.get("user-agent");
 
-  const adminSupabase = createAdminClient();
+  let adminSupabase;
+  try {
+    adminSupabase = createAdminClient();
+  } catch {
+    return jsonError(500, "PUSH_SUBSCRIBE_FAILED", "Could not save push subscription. Please try again.", requestId);
+  }
+
   const { error: cleanupError } = await adminSupabase
     .from("push_subscriptions")
     .delete()
