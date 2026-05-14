@@ -106,3 +106,13 @@
    106|- **Live smoke status:** pending redeploy of this fix, then repeat onboarding completion and `/trends` smoke on the Vercel app.
    107|
    108|
+
+## 2026-05-14 — Onboarding memory audit RLS production fix
+
+- **Issue:** Vercel production logs for `POST /onboarding` showed `OnboardingPersistenceError: Failed to save profile memory: new row violates row-level security policy for table "memories_history"` with digest `3643993725`.
+- **Root cause:** `public.memories` has an audit trigger that snapshots previous memory versions into `public.memories_history` on update/delete. `memories_history` had RLS enabled with only a SELECT policy, so onboarding retries that upserted an existing `profile/main` memory attempted to insert an audit row and were rejected by RLS.
+- **Fix:** Added migration `supabase/migrations/0010_memories_history_insert_policy.sql` creating `memories_history_insert_own` so authenticated users can insert audit snapshots for their own `user_id`.
+- **Regression coverage added:** `src/lib/db/migrations.test.ts` asserts the migration grants `for insert` on `public.memories_history` with `with check (auth.uid() = user_id)`.
+- **Verification command:** `pnpm run test -- src/lib/db/migrations.test.ts src/app/\(onboarding\)/actions.test.ts --reporter=dot && pnpm run typecheck && pnpm run lint && pnpm run build`
+- **Verification result:** PASS — Vitest invocation reported 29 test files / 140 tests passed; TypeScript, ESLint, and Next.js production build completed with exit code 0.
+- **Production action needed:** Apply the migration to the production Supabase database, then redeploy/smoke-test onboarding and `/trends`.
