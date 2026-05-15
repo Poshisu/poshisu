@@ -10,6 +10,23 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S7-T01 Vercel UAT checklist execution
+
+- **Task:** `S7-T01` — Execute full UAT checklist.
+- **Target:** `https://poshisu.vercel.app`.
+- **Build/merge SHA:** `42d36814c211746e59b60232b4d8fcf41508ae37`.
+- **Scope verified:** Production UAT pass/fail evidence for text, image, audio, file, and chips per `docs/UAT_VERCEL.md`.
+- **Manual browser evidence:** Hermes Browserbase Chromium with disposable UAT account; raw email redacted from committed evidence.
+- **PASS:** `/login` rendered with no browser JS errors; unauthenticated `/chat` redirected to `/login`; disposable signup entered onboarding; onboarding completed and redirected to `/chat`; default confirm-save wrote a meal visible on `/today`.
+- **PASS:** onboarding quick-action chips (`None`, `Vegetarian`, `09:00 13:00 19:00`) populated the answer composer and advanced setup after Send.
+- **FAIL/blocker:** authenticated `/chat` has no text composer/message input, so the text meal UAT case could not be executed.
+- **FAIL/major:** image/camera, audio/voice, file, and chat-surface chip controls are unavailable in production UI; onboarding explicitly shows `Photo upload coming soon`, `Camera coming soon`, `File upload coming soon`, and `Voice coming soon`; `/chat` shows none of these controls beyond the default confirm-save CTA.
+- **Screenshot evidence:** `docs/uat/2026-05-15-s7-t01/screenshots/01-onboarding-disabled-modalities.png`, `02-chat-no-composer.png`, `03-today-saved-meal.png`.
+- **Unauthenticated probe:** `curl`/Python confirmed `/`, `/login`, and `/chat`; `/chat` final URL was `/login` with HTTP 200 after redirect and Vercel request IDs captured locally.
+- **Verification command:** `rg -n "Pass|Fail|PASS|FAIL|build_id" docs/UAT_VERCEL.md && test -f docs/uat/2026-05-15-s7-t01/screenshots/01-onboarding-disabled-modalities.png && test -f docs/uat/2026-05-15-s7-t01/screenshots/02-chat-no-composer.png && test -f docs/uat/2026-05-15-s7-t01/screenshots/03-today-saved-meal.png && git diff --check`.
+- **Result:** PASS — UAT execution is complete under the checklist exit rule because each failed modality has triage fields and linked evidence.
+- **Relevant files updated:** `docs/UAT_VERCEL.md`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`, `docs/uat/2026-05-15-s7-t01/screenshots/*`.
+
 ## 2026-05-15 — S6-T03 Release rollback + incident checklist
 
 - **Task:** `S6-T03` — Release rollback + incident checklist.
