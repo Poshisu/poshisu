@@ -67,7 +67,7 @@ test.describe("auth flow", () => {
     const answers = [
       { value: "Aarti", next: /how old are you/i },
       { value: "31", next: /primary health goal/i },
-      { value: "Lose weight", next: /any conditions/i },
+      { value: "Maintain wellness", next: /any conditions/i },
       { value: "none", next: /diet pattern or allergies/i },
       { value: "vegetarian", next: /usual meal times/i },
       { value: "08:30 13:00 19:30", next: /what i understood/i },
