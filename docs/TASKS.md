@@ -183,15 +183,24 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/prompt-eval/build/scoped E2E/db-types gate reliably | `pnpm run ci:parity` | done |
 | 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | done |
 | 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | done |
-| 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | todo |
+| 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | done |
 | 20 | Stage 7 | S7-T02 | Accessibility gate closure | Keyboard/labels/live regions/contrast critical issues resolved | `pnpm run test:e2e -g accessibility` | todo |
 | 21 | Stage 7 | S7-T03 | Privacy/export/delete-account closure | Data export and account deletion flows implemented + documented | `pnpm run test -- src/app/(app)/profile` | todo |
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S7-T01` (Execute full UAT checklist).
+- **Next to execute:** `S7-T02` (Accessibility gate closure).
 - **Owner:** Engineering
-- **Dependencies:** `S6-T03` now documents testable release rollback and incident checklists for app rollback, env rollback, database forward-fix, prompt/agent rollback, incident command, and post-incident evidence.
+- **Dependencies:** `S7-T01` recorded production UAT pass/fail evidence for text/image/audio/file/chips in `docs/UAT_VERCEL.md`, including screenshot evidence and defect follow-up candidates for the blocked modalities.
+
+### S7-T01 closure status (2026-05-15)
+- Production target: `https://poshisu.vercel.app`, build/merge SHA `42d36814c211746e59b60232b4d8fcf41508ae37`.
+- PASS: `/login` rendered without browser JS errors; unauthenticated `/chat` redirected to `/login`; disposable signup reached onboarding; onboarding completed and redirected to `/chat`; default confirm-save persisted and appeared on `/today`.
+- PASS: onboarding quick-action chips populated values and advanced the setup flow.
+- FAIL/blocker: authenticated `/chat` has no text composer, so free-form meal text UAT could not be executed.
+- FAIL/major: image, audio, and file meal logging controls are unavailable in the production UI; onboarding labels them as coming soon and `/chat` exposes no upload/mic/file controls.
+- Evidence: `docs/UAT_VERCEL.md` and screenshot artifacts under `docs/uat/2026-05-15-s7-t01/screenshots/`.
+- Defect follow-up candidates are recorded in `docs/UAT_VERCEL.md` as `S7-UAT-D01` through `S7-UAT-D05`.
 
 ### S6-T03 closure status (2026-05-15)
 - `RUNBOOK.md` now has a dedicated release rollback and incident checklist with severity/decision gates and explicit fields for incident commander, rollback owner, customer impact, decision timestamp, rollback target, and post-incident follow-up.
