@@ -190,12 +190,21 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md docs/BETA_LAUNCH_CHECKLIST.md` | in_progress |
 | 22.1 | Stage 7 | S7-T04A | Closed beta launch checklist is documented | `docs/BETA_LAUNCH_CHECKLIST.md` defines beta scope, feedback triage, launch gates, owner-blocked signoffs, and go/no-go template | `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot` | done |
 | 22.2 | Stage 7 | S7-T04B | Run closed beta and record go/no-go | 10-user beta cohort onboarded, feedback triaged, launch gates either PASS or owner-blocked with named owner/date | `rg -n "Candidate|GO|NO-GO|owner-blocked" docs/BETA_LAUNCH_CHECKLIST.md docs/TEST_EVIDENCE.md` | owner-blocked |
+| 22.3 | Stage 7 | S7-T04B-prep | Deployed beta candidate UAT evidence | Production signup → onboarding → text meal → confirm-save → Today → Profile privacy controls pass; remaining non-engineering gates owner-blocked | `rg -n "S7-T04B-prep|Candidate 2026-05-15" docs/BETA_LAUNCH_CHECKLIST.md docs/TEST_EVIDENCE.md` | done |
 
 ### Current active task
-- **Next to execute:** `S7-T04B` (Run closed beta and record go/no-go), after the `S7-T04A` checklist/runbook PR is merged.
+- **Next to execute:** `S7-T04B` (Run real 10-user closed beta and record final go/no-go), after product/founder resolves cohort, feedback channel, support owner, policy/link, observability, and backup owner-blocked gates.
 - **Owner:** Product/founder for cohort + go/no-go; Engineering for defect fixes and release evidence.
 - **Dependencies:** `S7-T04A` provides `docs/BETA_LAUNCH_CHECKLIST.md`; `S7-T03` provides user-facing privacy export and delete-account controls from Profile, with server-side auth checks and sensitive push-subscription redaction.
 
+
+
+### S7-T04B-prep closure status (2026-05-15)
+- Production UAT on `https://poshisu.vercel.app` passed for alias `internal-uat-001`: signup → onboarding → `/chat` text meal logging → structured estimate → confirm-save → `/today` saved meal visibility → `/profile` privacy/export/delete controls.
+- Production `/chat` exposed no usable image/camera, mic/audio, or file upload controls, so deferred modalities were not accidentally included in closed beta scope.
+- Chat quick-action chips were not visible and remain outside the beta candidate scope.
+- No blocker/major text-path defects were found in this internal candidate sweep; only repeated non-blocking browser Permissions-Policy `web-share` warnings were observed.
+- `S7-T04B` remains owner-blocked for the real 10-user cohort, support/feedback channel, support owner, policy/link approval, observability/backup confirmations, and final go/no-go signoff.
 
 ### S7-T04A closure status (2026-05-15)
 - Created `docs/BETA_LAUNCH_CHECKLIST.md` as the closed beta operating packet.
