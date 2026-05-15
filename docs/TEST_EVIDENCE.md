@@ -10,6 +10,21 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S7-T02 Accessibility gate closure
+
+- **Task:** `S7-T02` — Accessibility gate closure.
+- **Baseline failure:** `pnpm run test:e2e -g accessibility` previously exited `1` with `Error: No tests found`, so the documented accessibility gate did not actually exercise the product.
+- **Scope verified:** Playwright accessibility release gate now covers public auth error states, signed-out protected onboarding behavior, and the authenticated onboarding → chat → meal estimate → `/today`/`/trends`/`/profile` route set when the Supabase E2E stack is available.
+- **UX/a11y checks:** Tests assert headings/landmarks, explicit form/input labels, inline auth alerts, visible keyboard focus, protected-route redirect UX, disabled “coming soon” media controls, chat transcript/quick-prompt/composer labels, live `role="status"` estimating state, confirm-save CTA visibility, and primary navigation presence.
+- **Proof artifacts:** Accessibility tests force Playwright trace/video on and attach full-page screenshots named for each state (`login-accessible-error-state`, `signup-accessible-error-state`, `onboarding-protected-login-state`, `onboarding-authenticated-accessible-state`, `chat-keyboard-ready-state`, `chat-estimate-confirm-save-state`, `today-accessible-route-state`, `trends-accessible-route-state`, `profile-accessible-route-state`). CI uploads `playwright-report/` and `test-results/` as `playwright-e2e-proof-<run_id>` for reviewable recordings and traces.
+- **Implementation:** Added `tests/e2e/accessibility.spec.ts`, labeled the onboarding answer input, configured Playwright's local web server with `NEXT_PUBLIC_APP_URL`, and expanded `test:e2e:ci` plus GitHub Actions artifact upload so the gate runs with the Supabase-backed CI environment.
+- **Local focused command:** `pnpm run test:e2e -g accessibility`
+- **Local focused result:** PASS — 6 tests discovered across Chromium and Mobile Chrome; 4 passed and 2 authenticated Supabase-backed journeys skipped locally because Docker/Supabase is unavailable in this Hermes environment.
+- **Full local verification command:** `pnpm run lint && pnpm run test -- --reporter=dot && pnpm run build && pnpm run test:e2e -g accessibility && pnpm run test:e2e:ci && git diff --check`
+- **Full local verification result:** PASS — ESLint passed, Vitest reported 35 files / 171 tests passed, production build passed, accessibility grep discovered and ran 6 desktop/mobile tests with 4 pass + 2 local Supabase skips, and `test:e2e:ci` ran 5 Chromium tests with 3 pass + 2 local Supabase skips. GitHub Actions remains authoritative for the authenticated proof path because local Docker/Supabase is unavailable in this Hermes environment.
+- **Docker-gated CI expectation:** `pnpm run test:e2e:ci` runs Chromium auth/onboarding plus accessibility coverage after `supabase start`; authenticated tests are skipped only when the local Supabase health endpoint is unavailable.
+- **Relevant files updated:** `.github/workflows/ci.yml`, `package.json`, `playwright.config.ts`, `tests/e2e/auth.spec.ts`, `tests/e2e/accessibility.spec.ts`, `src/components/onboarding/ChatOnboardingFlow.tsx`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+
 ## 2026-05-15 — S7-UAT-D01 Authenticated chat text meal composer
 
 - **Task:** `S7-UAT-D01` — Restore/build authenticated `/chat` text meal composer.

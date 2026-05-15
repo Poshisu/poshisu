@@ -1,4 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type APIRequestContext } from "@playwright/test";
+
+async function skipWhenSupabaseUnavailable(request: APIRequestContext) {
+  const ready = await request.get("http://127.0.0.1:54321/auth/v1/health").then(
+    (response) => response.ok(),
+    () => false,
+  );
+  test.skip(!ready, "Local Supabase is not running; signup/onboarding E2E runs in CI with the e2e DB.");
+}
 
 /**
  * Full auth flow: signup → implicit login → /chat → logout → /.
@@ -16,7 +24,9 @@ test.describe("auth flow", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("signup → chat → logout → landing", async ({ page }) => {
+  test("signup → chat → logout → landing", async ({ page, request }) => {
+    await skipWhenSupabaseUnavailable(request);
+
     const unique = `e2e+${Date.now()}@example.test`;
     const password = "Test-Password-1234";
 
@@ -41,7 +51,9 @@ test.describe("auth flow", () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test("login with wrong password shows an inline error", async ({ page }) => {
+  test("login with wrong password shows an inline error", async ({ page, request }) => {
+    await skipWhenSupabaseUnavailable(request);
+
     await page.goto("/login");
     await page.getByLabel("Email").fill("nobody@example.test");
     await page.getByLabel("Password").fill("not-the-right-one");
@@ -49,7 +61,9 @@ test.describe("auth flow", () => {
     await expect(page.getByRole("alert")).toBeVisible();
   });
 
-  test("signup → onboarding → log meal → confirm → appears in Today", async ({ page }) => {
+  test("signup → onboarding → log meal → confirm → appears in Today", async ({ page, request }) => {
+    await skipWhenSupabaseUnavailable(request);
+
     const unique = `e2e-meal+${Date.now()}@example.test`;
     const password = "Test-Password-1234";
 

@@ -118,5 +118,15 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Scoped auth/onboarding E2E
+      - name: Scoped auth/onboarding/accessibility E2E
         run: pnpm run test:e2e:ci
+
+      - name: Upload Playwright proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-proof-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
