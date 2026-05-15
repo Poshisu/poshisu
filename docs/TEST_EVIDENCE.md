@@ -10,6 +10,21 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+
+## 2026-05-15 — S7-T04B-prep Production closed-beta candidate UAT
+
+- **Task:** `S7-T04B-prep` — Deployed beta candidate UAT and evidence capture before real 10-user cohort.
+- **Environment:** production `https://poshisu.vercel.app`.
+- **Build/SHA:** `dc23344` from merged PR #93 baseline.
+- **Tester alias:** `internal-uat-001` using a disposable test account; no raw email committed.
+- **Command:** `node /tmp/poshisu_prod_uat.mjs` (one-off Playwright production sweep).
+- **Result:** PASS at `2026-05-15T16:32:36Z`.
+- **Covered flow:** signup created an immediate session and landed on onboarding; onboarding advanced through name, age, goal, conditions, diet, and meal-time prompts; profile save redirected to `/chat`; `/chat` accepted text meal input; assistant returned a structured meal estimate; confirm-save redirected to `/today`; Today displayed the saved breakfast; `/profile` displayed Privacy & data controls, data export download control, and guarded permanent delete-account area.
+- **Scoped modality result:** production `/chat` exposed no usable image/camera, mic/audio, or file upload controls (`image=0`, `mic=0`, `file=0`), so deferred modalities are not accidentally in closed-beta scope. Chat quick-action chips were not visible and remain explicitly outside this beta candidate scope.
+- **Console/browser notes:** no page errors; repeated non-blocking browser warning: Permissions-Policy header has unrecognized feature `web-share`.
+- **Artifacts:** local screenshots and JSON result captured under `/tmp/poshisu-s7-t04b-uat-2026-05-15T16-32-36-102Z/`; screenshots are intentionally not committed because they include a disposable test account identifier.
+- **Remaining owner-blocked gates:** real 10-user beta cohort, support/feedback channel, support owner, privacy/terms/policy approval, Sentry/PostHog/Web Push/backup confirmation, and final go/no-go signoff.
+
 ## 2026-05-15 — S7-T04A Closed beta launch checklist
 
 - **Task:** `S7-T04A` — Closed beta launch checklist is documented.
