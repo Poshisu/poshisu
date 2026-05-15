@@ -10,6 +10,21 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S7-T04A Closed beta launch checklist
+
+- **Task:** `S7-T04A` — Closed beta launch checklist is documented.
+- **Scope verified:** Added `docs/BETA_LAUNCH_CHECKLIST.md` as the beta operating packet with text-first scope, deferred modality handling, cohort plan, feedback triage schema, blocker/major/minor severity rubric, engineering/product/ops launch gates, owner-blocked exception handling, and go/no-go decision template.
+- **Honest launch status:** The real 10-user closed beta run is not claimed complete in this PR. `S7-T04B` remains owner-blocked until product/founder recruits/onboards the beta cohort, activates the feedback channel, and records go/no-go evidence.
+- **TDD evidence:** Added a docs parity assertion to `src/lib/devex/ci-parity.test.ts`; RED run failed because `docs/BETA_LAUNCH_CHECKLIST.md` did not exist.
+- **Focused red command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused red result:** FAIL as expected — `docs/BETA_LAUNCH_CHECKLIST.md should exist`.
+- **Focused green command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused green result:** PASS — `src/lib/devex/ci-parity.test.ts` now passes 6/6 docs parity assertions and the filtered Vitest invocation reported 37 files / 182 tests passed.
+- **Reviewer follow-up:** Independent staged-diff review caught a docs contradiction between the new text-first closed beta scope and `docs/MEAL_LOG_MVP_ACCEPTANCE.md`; this PR now marks that file as the future/full multimodal MVP gate and points Stage 7 closed beta scope back to `docs/BETA_LAUNCH_CHECKLIST.md`.
+- **Post-review verification command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot && pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test:e2e:smoke && git diff --check`
+- **Post-review verification result:** PASS — filtered Vitest invocation reported 37 files / 182 tests passed including the expanded beta-scope parity assertion, ESLint passed, TypeScript passed, Next.js production build passed, Chromium unauthenticated `/chat` redirect smoke passed, and whitespace check passed.
+- **Relevant files updated:** `docs/BETA_LAUNCH_CHECKLIST.md`, `docs/MEAL_LOG_MVP_ACCEPTANCE.md`, `docs/TASKS.md`, `docs/BUILD_PLAN.md`, `README.md`, `docs/TEST_EVIDENCE.md`, `src/lib/devex/ci-parity.test.ts`.
+
 ## 2026-05-15 — S7-T03 Privacy/export/delete-account closure
 
 - **Task:** `S7-T03` — Privacy/export/delete-account closure.

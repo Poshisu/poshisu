@@ -154,3 +154,49 @@ describe("release rollback and incident checklist", () => {
     }
   });
 });
+
+describe("closed beta launch readiness checklist", () => {
+  it("documents beta scope, launch gates, feedback triage, and owner-blocked signoffs", () => {
+    const checklist = repoFile("docs/BETA_LAUNCH_CHECKLIST.md");
+    const tasks = repoFile("docs/TASKS.md");
+    const buildPlan = repoFile("docs/BUILD_PLAN.md");
+    const readme = repoFile("README.md");
+    const mealLogAcceptance = repoFile("docs/MEAL_LOG_MVP_ACCEPTANCE.md");
+
+    for (const required of [
+      "# Closed Beta and Launch Checklist",
+      "## Beta scope decision",
+      "## Closed beta cohort plan",
+      "## Feedback intake and triage",
+      "## Launch gates",
+      "## Go/no-go decision log",
+      "## Deferred or explicitly out-of-scope for closed beta",
+      "text meal logging",
+      "image/camera meal logging",
+      "audio/voice meal logging",
+      "file-based meal logging",
+      "chat quick-action chips",
+      "blocker | major | minor",
+      "owner-blocked",
+      "go/no-go owner",
+    ]) {
+      expect(checklist).toContain(required);
+    }
+
+    for (const required of [
+      "docs/BETA_LAUNCH_CHECKLIST.md",
+      "Closed beta launch checklist is documented",
+      "S7-T04A",
+      "S7-T04B",
+    ]) {
+      expect(tasks).toContain(required);
+    }
+
+    expect(buildPlan).toContain("docs/BETA_LAUNCH_CHECKLIST.md");
+    expect(readme).toContain("docs/BETA_LAUNCH_CHECKLIST.md");
+    expect(mealLogAcceptance).toContain("## Closed beta scope override");
+    expect(mealLogAcceptance).toContain("docs/BETA_LAUNCH_CHECKLIST.md");
+    expect(mealLogAcceptance).toContain("text-first");
+    expect(mealLogAcceptance).toContain("photo/image and voice/audio remain deferred");
+  });
+});
