@@ -10,6 +10,20 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S7-T03 Privacy/export/delete-account closure
+
+- **Task:** `S7-T03` — Privacy/export/delete-account closure.
+- **Scope verified:** Profile now exposes a user-facing “Privacy & data controls” section with a JSON export link and an explicit `DELETE`-guarded account deletion flow.
+- **Server implementation:** Added authenticated `/api/privacy/export` and `/api/privacy/delete-account` routes. Export reads only the signed-in Supabase user’s rows across app-owned user data tables, uses schema-safe ordering columns, includes schema/version/timestamp metadata, and redacts push-subscription endpoint/key/auth material. Delete-account requires exact `DELETE` and calls a service-role-only `delete_account_cascade` RPC that transactionally deletes memory rows, clears non-cascading memory audit history created by memory-delete triggers, and deletes the Supabase auth user so FK cascades remove remaining app data.
+- **Safety/UX checks:** UI disables destructive deletion until the exact confirmation is typed, uses visible status/error copy with `aria-live`, and returns safe API envelopes without raw backend details or service-role exposure.
+- **Focused TDD command:** `pnpm run test -- src/app/api/privacy/export/route.test.ts src/app/api/privacy/delete-account/route.test.ts src/app/\(app\)/profile/ProfileMemoryDashboard.test.tsx --reporter=dot`
+- **Focused TDD result:** PASS — privacy export route passed 3/3, delete-account route passed 5/5, Profile privacy controls passed 2 new UI tests, and the filtered Vitest invocation reported 37 files / 181 tests passed.
+- **Typecheck command:** `pnpm run typecheck`
+- **Typecheck result:** PASS — `tsc --noEmit` completed with exit code 0 after adding the privacy routes and Profile controls.
+- **Full local verification command:** `pnpm run lint && pnpm run typecheck && pnpm run test -- --reporter=dot && pnpm run build && pnpm run test:e2e:smoke && git diff --check`
+- **Full local verification result:** PASS — ESLint passed, TypeScript passed, Vitest reported 37 files / 181 tests passed, Next.js production build exposed the new `/api/privacy/delete-account` and `/api/privacy/export` routes, Chromium unauthenticated `/chat` redirect smoke passed, and whitespace check passed.
+- **Relevant files updated:** `src/app/api/privacy/export/route.ts`, `src/app/api/privacy/export/route.test.ts`, `src/app/api/privacy/delete-account/route.ts`, `src/app/api/privacy/delete-account/route.test.ts`, `src/app/(app)/profile/ProfileMemoryDashboard.tsx`, `src/app/(app)/profile/ProfileMemoryDashboard.test.tsx`, `src/lib/supabase/admin.ts`, `supabase/migrations/0011_privacy_account_delete_rpc.sql`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+
 ## 2026-05-15 — S7-T02 Accessibility gate closure
 
 - **Task:** `S7-T02` — Accessibility gate closure.

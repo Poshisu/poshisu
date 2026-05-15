@@ -186,13 +186,13 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | done |
 | 19.1 | Stage 7 | S7-UAT-D01 | Restore authenticated `/chat` text meal composer | Authenticated chat renders transcript, text input, Send button, loading/error states, and server-validated confirm-save estimate from `/api/chat` blocks | `pnpm run test -- src/app/\(app\)/chat/ChatMealLogger.test.tsx src/app/api/chat/route.test.ts src/app/chat/confirm/route.test.ts src/lib/agents/orchestrator.test.ts && pnpm run test:e2e:smoke` | done |
 | 20 | Stage 7 | S7-T02 | Accessibility gate closure | Keyboard/labels/live regions/contrast critical issues resolved; Playwright screenshots/videos/traces uploaded as proof artifacts in CI | `pnpm run test:e2e -g accessibility` | done |
-| 21 | Stage 7 | S7-T03 | Privacy/export/delete-account closure | Data export and account deletion flows implemented + documented | `pnpm run test -- src/app/(app)/profile` | todo |
+| 21 | Stage 7 | S7-T03 | Privacy/export/delete-account closure | Authenticated user-scoped JSON export, guarded account deletion, redacted push secrets, and Profile privacy controls implemented + documented | `pnpm run test -- src/app/api/privacy/export/route.test.ts src/app/api/privacy/delete-account/route.test.ts src/app/\(app\)/profile/ProfileMemoryDashboard.test.tsx --reporter=dot` | done |
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S7-T03` (Privacy/export/delete-account closure).
-- **Owner:** Engineering
-- **Dependencies:** `S7-T02` now provides a real Playwright accessibility gate with screenshots/videos/traces for auth forms, protected onboarding, authenticated onboarding/chat, and core app routes.
+- **Next to execute:** `S7-T04` (Closed beta and launch checklist).
+- **Owner:** Engineering / Product
+- **Dependencies:** `S7-T03` now provides user-facing privacy export and delete-account controls from Profile, with server-side auth checks and sensitive push-subscription redaction.
 
 ### S7-UAT-D01 closure status (2026-05-15)
 - `/chat` now renders an authenticated text meal composer instead of the prior static hardcoded confirm-save card.
