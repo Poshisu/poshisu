@@ -213,7 +213,7 @@ Use these fields for every failed step:
 | Image | FAIL | No image upload control on `/chat`; onboarding shows `Photo upload coming soon` and `Camera coming soon` disabled. | Image ingestion path not exercised from UI. | `screenshots/01-onboarding-disabled-modalities.png`, `screenshots/02-chat-no-composer.png` |
 | Audio | FAIL | No audio/mic control on `/chat`; onboarding shows `Voice coming soon` disabled. | Audio ingest/transcription path not exercised from UI. | `screenshots/01-onboarding-disabled-modalities.png`, `screenshots/02-chat-no-composer.png` |
 | File | FAIL | No file attachment control on `/chat`; onboarding shows `File upload coming soon` disabled. | File validation/processing path not exercised from UI. | `screenshots/01-onboarding-disabled-modalities.png`, `screenshots/02-chat-no-composer.png` |
-| Chips | PASS | Onboarding quick-action chips worked for `None`, `Vegetarian`, and `09:00 13:00 19:00`; chip-clicked values populated the composer and advanced the conversational setup after Send. `/chat` itself has no visible quick-action chips beyond the default confirm-save CTA. | Chip-origin onboarding inputs persisted into the completed profile path; post-onboarding redirect to `/chat` succeeded. | `screenshots/01-onboarding-disabled-modalities.png`, browser transcript observation |
+| Chips | FAIL | Onboarding quick-action chips worked for `None`, `Vegetarian`, and `09:00 13:00 19:00`, but the S7 chat-surface chip modality failed because `/chat` itself has no visible quick-action chips beyond the default confirm-save CTA. | Chip-origin chat meal logging was not exercised from UI; only onboarding chip-origin inputs persisted into completed profile setup. | `screenshots/01-onboarding-disabled-modalities.png`, browser transcript observation |
 
 ### Additional production smoke results
 
@@ -222,7 +222,7 @@ Use these fields for every failed step:
 - PASS: disposable signup reached onboarding immediately; onboarding completion redirected to authenticated `/chat`.
 - PASS: default meal confirmation saved and appeared on `/today` as Lunch (`2 rotis and a bowl of dal`, 470 kcal, 83% confidence).
 - PASS: browser console reported no JS errors during the manual signup/onboarding/chat/save path in Hermes Browserbase.
-- FAIL: modal UAT for text/image/audio/file remains blocked by product surface gaps rather than backend/runtime crashes.
+- FAIL: modality UAT for text/image/audio/file/chips remains blocked by product surface gaps rather than backend/runtime crashes.
 
 ### Failure details
 
@@ -290,13 +290,29 @@ Use these fields for every failed step:
 - reproducible: yes.
 - notes: This blocks file-based meal logging acceptance until the UI is implemented or the modality is explicitly descoped.
 
+#### Failure 5 — Chat quick-action chips unavailable
+- environment: `https://poshisu.vercel.app`
+- build_id: `42d36814c211746e59b60232b4d8fcf41508ae37`
+- timestamp_utc: `2026-05-15T08:57:00Z`
+- modality: chips
+- test_step: Complete onboarding, open authenticated `/chat`, and look for meal-logging quick-action chips.
+- expected_result: Chat-surface chips can trigger a meal logging path or suggested next action without requiring free-form typing.
+- actual_result: Onboarding chips worked during setup, but authenticated `/chat` showed no meal-logging quick-action chips beyond the default confirm-save CTA on the seeded meal card.
+- screenshot_path_or_url: `docs/uat/2026-05-15-s7-t01/screenshots/02-chat-no-composer.png`
+- console_errors: none captured in Hermes Browserbase console.
+- request_id: none generated for the blocked chip-origin chat path; no chip-triggered chat request could be issued because no chat chips exist.
+- user_id_hash: `f9d95788accde89f` (SHA-256 prefix of disposable UAT email; raw email redacted).
+- severity: major
+- reproducible: yes.
+- notes: Onboarding chips remain a separate PASS observation; they do not satisfy the Stage 7 chat meal-logging chip modality.
+
 ### Defect follow-up candidates
 
 - S7-UAT-D01 / blocker: build or restore an authenticated `/chat` meal logging composer with text input, Send button, transcript/assistant response, loading/error states, and confirm-save handoff.
 - S7-UAT-D02 / major: expose or formally descope image/camera upload for meal logging; if exposed, add upload preview, validation, and production-safe smoke evidence.
 - S7-UAT-D03 / major: expose or formally descope audio/voice meal logging; if exposed, add recording/upload state, transcription progress, and production-safe smoke evidence.
 - S7-UAT-D04 / major: expose or formally descope file-based meal logging; if exposed, add file validation and safe error states.
-- S7-UAT-D05 / minor: clarify whether onboarding chips count as the Stage 7 chip modality or whether `/chat` needs its own meal logging quick-action chips.
+- S7-UAT-D05 / major: clarify and implement the Stage 7 chip modality on `/chat`, or formally document onboarding-only chips as the intended scope.
 
 ## 8) Exit criteria
 
