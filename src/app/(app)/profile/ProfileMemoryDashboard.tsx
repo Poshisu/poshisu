@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Clock3, History, MessageCircle, Save, ShieldCheck } from "lucide-react";
+import { Clock3, Download, History, MessageCircle, Save, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProfileMemoryInspectorViewModel, ProfileMemoryRow } from "@/lib/memory/inspector";
 
@@ -60,6 +62,8 @@ export function ProfileMemoryDashboard({ data }: { data: ProfileMemoryInspectorV
         />
       </section>
 
+      <PrivacyControls />
+
       {data.memories.length === 0 ? <EmptyMemoryState /> : (
         <section aria-label="Saved memory layers" className="grid gap-4 xl:grid-cols-2">
           {data.memories.map((memory) => (
@@ -110,6 +114,96 @@ function SafetyCard({ icon, title, body }: { icon: React.ReactNode; title: strin
         <CardDescription>{body}</CardDescription>
       </CardHeader>
     </Card>
+  );
+}
+
+function PrivacyControls() {
+  const [confirmation, setConfirmation] = useState("");
+  const [status, setStatus] = useState<"idle" | "deleting" | "deleted" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const canDelete = confirmation === "DELETE" && status !== "deleting";
+
+  async function deleteAccount() {
+    if (!canDelete) return;
+    setStatus("deleting");
+    setMessage("");
+    try {
+      const response = await fetch("/api/privacy/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation }),
+      });
+      const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      if (!response.ok) throw new Error(payload?.error?.message ?? "Could not delete your account. Please try again.");
+      setStatus("deleted");
+      setMessage("Account deletion started. You will be signed out once it completes.");
+      window.setTimeout(() => {
+        window.location.assign("/");
+      }, 1200);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Could not delete your account. Please try again.");
+    }
+  }
+
+  return (
+    <section aria-label="Privacy and data controls" className="grid gap-4 lg:grid-cols-2">
+      <Card className="surface-card rounded-2xl">
+        <CardHeader>
+          <CardTitle as="h2" className="flex items-center gap-2"><ShieldCheck aria-hidden="true" /> Privacy & data controls</CardTitle>
+          <CardDescription>
+            Export your app data as JSON. Push notification endpoint and key material are redacted from exports.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button asChild>
+            <a href="/api/privacy/export" download>
+              <Download aria-hidden="true" />
+              Download my data export
+            </a>
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Includes profile, meals, messages, memory layers, water logs, nudges, and redacted push-subscription metadata for the signed-in user only.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="surface-card rounded-2xl border-destructive/40">
+        <CardHeader>
+          <CardTitle as="h2" className="flex items-center gap-2 text-destructive"><ShieldAlert aria-hidden="true" /> Danger zone</CardTitle>
+          <CardDescription>
+            Permanently deletes your account and app data. This cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="delete-account-confirmation">Type DELETE to confirm account deletion</Label>
+            <Input
+              id="delete-account-confirmation"
+              value={confirmation}
+              onChange={(event) => {
+                setConfirmation(event.target.value);
+                if (status !== "idle") {
+                  setStatus("idle");
+                  setMessage("");
+                }
+              }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="min-h-5 text-sm text-muted-foreground" role="status" aria-live="polite">
+              {status === "deleting" ? "Deleting account…" : message}
+            </p>
+            <Button type="button" variant="destructive" onClick={deleteAccount} disabled={!canDelete}>
+              <Trash2 aria-hidden="true" />
+              Permanently delete my account
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 

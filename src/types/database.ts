@@ -1061,6 +1061,10 @@ export type Database = {
     }
     Functions: {
       cleanup_rate_limits: { Args: never; Returns: undefined }
+      delete_account_cascade: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       get_daily_totals: {
         Args: { p_end: string; p_start: string }
         Returns: {

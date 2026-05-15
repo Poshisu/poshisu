@@ -103,4 +103,40 @@ describe("ProfileMemoryDashboard", () => {
     expect(screen.getByText("No memory saved yet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Chat" })).toHaveAttribute("href", "/chat");
   });
+
+  it("renders privacy export and guarded account deletion controls", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+    render(<ProfileMemoryDashboard data={viewModel} />);
+
+    expect(screen.getByRole("heading", { name: "Privacy & data controls" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Download my data export/i })).toHaveAttribute("href", "/api/privacy/export");
+
+    const deleteButton = screen.getByRole("button", { name: "Permanently delete my account" });
+    expect(deleteButton).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Type DELETE to confirm account deletion"), { target: { value: "DELETE" } });
+    expect(deleteButton).toBeEnabled();
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/privacy/delete-account", expect.objectContaining({ method: "POST" })));
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ confirmation: "DELETE" });
+    expect(await screen.findByText("Account deletion started. You will be signed out once it completes.")).toBeInTheDocument();
+
+    fetchMock.mockRestore();
+  });
+
+  it("surfaces account deletion failure without exposing backend details", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: false, error: { code: "ACCOUNT_DELETE_FAILED", message: "Could not delete your account. Please try again." } }), { status: 500 }));
+
+    render(<ProfileMemoryDashboard data={viewModel} />);
+
+    fireEvent.change(screen.getByLabelText("Type DELETE to confirm account deletion"), { target: { value: "DELETE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Permanently delete my account" }));
+
+    expect(await screen.findByText("Could not delete your account. Please try again.")).toBeInTheDocument();
+    expect(screen.queryByText(/service role|raw/i)).not.toBeInTheDocument();
+
+    fetchMock.mockRestore();
+  });
 });
