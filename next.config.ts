@@ -4,6 +4,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import { SECURITY_HEADERS } from "./src/lib/http/securityHeaders";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["127.0.0.1"],
   turbopack: {
     root: path.resolve(__dirname),
   },

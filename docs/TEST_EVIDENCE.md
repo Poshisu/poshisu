@@ -25,9 +25,9 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - **Full local non-Docker result:** PASS — lint, typecheck, Vitest 33 files / 161 tests, prompt eval 18/18, Next.js production build, and Chromium smoke 1/1 all passed.
 - **Docker-gated local result:** BLOCKED locally because Docker is not installed; GitHub Actions remains authoritative for Supabase-local `db:types:check` and onboarding E2E.
 - **CI follow-up:** PR #86 run `25901338178` proved quote stripping worked (`NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321`) but exposed a scoped E2E race: the onboarding test submitted all chat answers without waiting for each next prompt, then timed out waiting for the confirmation checkbox.
-- **E2E stabilization fix:** `tests/e2e/auth.spec.ts` now waits for the next onboarding prompt/review summary after every answer before proceeding, matching actual user-visible state transitions.
-- **E2E stabilization verification:** `pnpm run lint && pnpm run typecheck && pnpm run test -- src/lib/devex/ci-parity.test.ts && pnpm run test:e2e:smoke` PASS locally.
-- **Relevant files updated:** `.github/workflows/ci.yml`, `package.json`, `src/lib/devex/ci-parity.test.ts`, `tests/e2e/auth.spec.ts`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+- **E2E stabilization fix:** `tests/e2e/auth.spec.ts` now waits for the next onboarding prompt/review summary after every answer before proceeding, matching actual user-visible state transitions. `next.config.ts` also allows the CI browser origin `127.0.0.1` for Next dev resources while the Playwright web server listens on `localhost`, removing the dev-origin block seen in CI.
+- **E2E stabilization verification:** `pnpm run lint && pnpm run typecheck && pnpm run test -- src/lib/devex/ci-parity.test.ts && pnpm run test:e2e:smoke` PASS locally; after adding `allowedDevOrigins`, `pnpm run typecheck && pnpm run build && pnpm run test:e2e:smoke` PASS locally.
+- **Relevant files updated:** `.github/workflows/ci.yml`, `package.json`, `src/lib/devex/ci-parity.test.ts`, `tests/e2e/auth.spec.ts`, `next.config.ts`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
 
 ## 2026-05-14 — S6-T01 CI parity gates
 
