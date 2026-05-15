@@ -182,16 +182,24 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | done |
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/prompt-eval/build/scoped E2E/db-types gate reliably | `pnpm run ci:parity` | done |
 | 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | done |
-| 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | todo |
+| 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | done |
 | 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | todo |
 | 20 | Stage 7 | S7-T02 | Accessibility gate closure | Keyboard/labels/live regions/contrast critical issues resolved | `pnpm run test:e2e -g accessibility` | todo |
 | 21 | Stage 7 | S7-T03 | Privacy/export/delete-account closure | Data export and account deletion flows implemented + documented | `pnpm run test -- src/app/(app)/profile` | todo |
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S6-T03` (Release rollback + incident checklist).
+- **Next to execute:** `S7-T01` (Execute full UAT checklist).
 - **Owner:** Engineering
-- **Dependencies:** `S6-T02` now documents Vercel Preview/Production env parity, smoke checks, and rollback notes in `RUNBOOK.md` and links them from `README.md`.
+- **Dependencies:** `S6-T03` now documents testable release rollback and incident checklists for app rollback, env rollback, database forward-fix, prompt/agent rollback, incident command, and post-incident evidence.
+
+### S6-T03 closure status (2026-05-15)
+- `RUNBOOK.md` now has a dedicated release rollback and incident checklist with severity/decision gates and explicit fields for incident commander, rollback owner, customer impact, decision timestamp, rollback target, and post-incident follow-up.
+- App rollback steps now require known-good Vercel target validation, production smoke checks, mitigation communication, and evidence capture.
+- Environment rollback steps now cover Vercel/GitHub/Supabase secret scopes, secret hygiene, redeploy requirements, and auth-origin checks.
+- Database rollback guidance now explicitly uses append-only forward-fix migrations and records local-vs-CI validation limitations.
+- Prompt/agent rollback now requires eval/safety verification and personal-data-safe examples.
+- `src/lib/devex/ci-parity.test.ts` now locks the S6-T03 runbook contract so future rollback/incident checklist regressions fail under Vitest.
 
 ### S6-T02 closure status (2026-05-15)
 - `RUNBOOK.md` now has a Vercel environment parity section with required Preview/Production public env vars, server-only secrets, build/observability values, Vercel-provided variables, and Supabase Edge Function secret placement.

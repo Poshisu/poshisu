@@ -10,6 +10,22 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S6-T03 Release rollback + incident checklist
+
+- **Task:** `S6-T03` — Release rollback + incident checklist.
+- **Scope verified:** Non-trivial release rollback and incident response steps in `RUNBOOK.md`.
+- **TDD evidence:** Added a docs parity assertion in `src/lib/devex/ci-parity.test.ts`; red run failed because `RUNBOOK.md` did not yet contain a dedicated `## Release rollback and incident checklist` section with severity gates, app/env/database/prompt rollback paths, incident command, and post-incident evidence fields.
+- **Focused red command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused red result:** FAIL as expected — `release rollback and incident checklist > documents testable rollback paths, incident command, and post-incident evidence` failed on missing `## Release rollback and incident checklist`.
+- **Fix:** `RUNBOOK.md` now contains testable checklists for severity/decision gates, app rollback, environment rollback/redeploy, database forward-fix, prompt/agent rollback, incident command, and post-incident evidence.
+- **Task ledger:** `docs/TASKS.md` marks `S6-T03` done and moves the active task pointer to `S7-T01`.
+- **Focused green command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused green result:** PASS after docs update.
+- **Full local verification command:** `pnpm run lint && pnpm run typecheck && pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot && pnpm run build && pnpm run test:e2e:smoke && git diff --check && rg -n "rollback|incident" RUNBOOK.md`
+- **Full local verification result:** PASS — exact command completed locally before commit.
+- **Not covered in this run:** live rollback execution in Vercel/Supabase; this is the documented rollback/incident checklist task, not an incident simulation.
+- **Relevant files updated:** `RUNBOOK.md`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`, `src/lib/devex/ci-parity.test.ts`.
+
 ## 2026-05-15 — S6-T02 Vercel env + runbook parity
 
 - **Task:** `S6-T02` — Vercel env + runbook parity.

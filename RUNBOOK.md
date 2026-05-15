@@ -34,7 +34,7 @@ Documentation checks:
 
 ## 3) Rollback steps
 
-Use fastest safe rollback for user-impacting incidents.
+Use fastest safe rollback for user-impacting incidents. For release incidents, use the testable checklists in [Release rollback and incident checklist](#release-rollback-and-incident-checklist) rather than ad-hoc recovery.
 
 ### App rollback
 1. Roll back to previous known-good deployment in Vercel.
@@ -122,6 +122,103 @@ When incident is active, track:
 - Next update ETA
 
 After resolution, file follow-up tasks in `docs/TASKS.md` and decision notes in `docs/DECISIONS.md` when architectural changes are needed.
+
+## Release rollback and incident checklist
+
+S6-T03 makes rollback and incident response testable. Use this section whenever a release, migration, env edit, or prompt/agent change is suspected of causing user impact.
+
+### Severity and decision gates
+
+Classify impact before deciding whether to roll back, forward-fix, or monitor:
+
+- **SEV-0 / privacy or safety:** possible cross-user data exposure, secret exposure, unsafe health guidance, or destructive data mutation. Immediate containment; rollback owner and incident commander must be assigned before further deploys.
+- **SEV-1 / core flow down:** login, onboarding, chat, meal save, Today, or profile access is unavailable for a meaningful user segment. Prefer rollback if a known-good target exists and no irreversible migration blocks it.
+- **SEV-2 / degraded but usable:** latency, non-critical page failure, analytics/observability loss, push/voice/photo failure, or limited cohort issue. Prefer forward fix unless rollback is lower risk.
+- **SEV-3 / cosmetic/docs/no user impact:** record and schedule; no emergency rollback unless it blocks release confidence.
+
+Before rollback, record:
+- incident commander: person coordinating the response and updates;
+- rollback owner: person executing Vercel/Supabase/GitHub actions;
+- customer impact: affected users, routes, APIs, and data classes;
+- decision timestamp: UTC time when rollback/forward-fix decision was made;
+- rollback target: previous deployment URL/SHA, migration boundary, or prompt/config version;
+- first failing smoke step and any affected screenshots/log links with secrets redacted.
+
+### App rollback checklist
+
+Use for broken UI/API behavior when the previous Vercel deployment is known-good and no blocking database migration was introduced.
+
+1. Confirm the bad deployment SHA/URL and the last known-good deployment SHA/URL in Vercel.
+2. Confirm the rollback target predates the suspected app change but still matches currently valid database schema and env requirements.
+3. In Vercel → Project → Deployments, use **Promote to Production** / rollback to restore the known-good deployment.
+4. Run [Production smoke checks](#production-smoke-checks): `/login`, unauthenticated `/chat` redirect, authenticated `/chat`, `/today`, `/trends`, and `/profile` with a production-safe test account.
+5. If smoke passes, post status update with mitigation time and remaining risk.
+6. If smoke fails, stop and reassess database/env/prompt rollback paths instead of repeatedly promoting deployments.
+7. Preserve evidence in `docs/TEST_EVIDENCE.md` or the incident tracker: bad SHA, rollback target, commands/checks run, and pass/fail result.
+
+### Environment rollback checklist
+
+Use when a Vercel env variable, GitHub Actions variable/secret, or Supabase Edge Function secret is suspected.
+
+1. Identify changed key names and affected scopes: Preview, Production, GitHub Actions, or Supabase Edge Function secrets.
+2. Never paste secret values into PRs, chats, screenshots, or logs; refer to key names only.
+3. Restore the prior known-good value in the owning system.
+4. Trigger **Redeploy** for the affected Vercel deployment; env edits do not affect already-built deployments by themselves.
+5. Re-run the smallest smoke path that exercises that env key.
+6. If auth redirects are involved, confirm `NEXT_PUBLIC_APP_URL` is Production-only and Preview uses Vercel-injected branch/deploy URLs.
+7. Record the decision timestamp, changed key names, redeploy URL/SHA, smoke result, and owner.
+
+### Database forward-fix checklist
+
+Use when an applied migration, RLS policy, trigger, generated type mismatch, or data-shape change contributes to the incident.
+
+1. Do **not** edit, reorder, or delete applied migrations.
+2. Stop or gate the affected feature if data integrity or privacy risk exists.
+3. Identify the migration boundary and affected tables/policies/functions.
+4. Write an append-only forward-fix migration that restores safe behavior.
+5. Run local checks when available: `pnpm run db:types:check`, targeted route tests, and relevant RLS tests.
+6. If local Docker/Supabase is unavailable, rely on GitHub Actions DB-types/scoped E2E and record that limitation.
+7. Regenerate and commit `src/types/database.ts` if schema changes affect generated types.
+8. Run app smoke after deploy and inspect affected rows only with least-privilege tooling.
+9. Record forward-fix migration file, validation command, affected data class, and post-incident follow-up.
+
+### Prompt/agent rollback checklist
+
+Use when a prompt, eval, model route, parser, safety, or orchestrator change degrades behavior.
+
+1. Identify the exact prompt/agent/model-routing commit and affected user flow.
+2. Revert the prompt/agent change or disable the route behind the safest existing fallback.
+3. Run `pnpm run eval:prompts` and any targeted safety tests.
+4. For meal or health guidance changes, verify deterministic safety checks before relying on live LLM output.
+5. Smoke the smallest affected product path, for example chat text estimate or onboarding profile generation fallback.
+6. Preserve examples of bad model outputs only after removing personal health data.
+7. File a post-incident follow-up if eval coverage missed the failure.
+
+### Incident command checklist
+
+Maintain a single source of truth while the incident is active:
+
+1. Assign incident commander and rollback owner.
+2. Open an incident note with start time UTC, severity, suspected layer, customer impact, current hypothesis, and next update ETA.
+3. Freeze unrelated deploys until mitigation is complete or explicitly approved by the incident commander.
+4. Choose one path at a time: app rollback, env rollback/redeploy, database forward-fix, prompt/agent rollback, or monitor.
+5. For every action, record decision timestamp, owner, command/UI action, observed result, and next step.
+6. Communicate externally only with confirmed facts: impact, current mitigation, next update ETA, and whether data/privacy is implicated.
+7. End the incident only after the relevant smoke checklist passes and monitoring has no new burst of errors.
+
+### Post-incident evidence checklist
+
+Within the same day, capture enough evidence for future agents to trust the recovery:
+
+- timeline: detection, triage, rollback/forward-fix decision timestamp, mitigation, verification, close;
+- customer impact: affected routes/accounts/cohorts and whether privacy/data integrity was implicated;
+- root cause summary: fact vs assumption vs unresolved unknown;
+- rollback target or forward-fix migration details;
+- exact verification commands and smoke results;
+- screenshots/log links only if they contain no secrets or real user health data;
+- follow-up tasks in `docs/TASKS.md` for any remaining risk;
+- decision notes in `docs/DECISIONS.md` if the incident changes architecture or operating policy;
+- post-incident follow-up owner and due date.
 
 ## Supabase public env setup (for onboarding E2E + local preview)
 
