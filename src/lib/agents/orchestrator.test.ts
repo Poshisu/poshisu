@@ -19,6 +19,16 @@ describe("handleMessage", () => {
 
     if (candidate.type === "meal_log_candidate") {
       expect(candidate.estimate.kcalMax).toBeGreaterThan(candidate.estimate.kcalMin);
+      expect(candidate.confirmPayload).toBeDefined();
+      expect(candidate.confirmPayload).toMatchObject({
+        mealSlot: "dinner",
+        sourceText: "I had paneer and roti for dinner",
+        confidence: 0.9,
+      });
+      expect(candidate.confirmPayload?.items).toEqual([
+        { name: "roti", quantity_g: 100, household_unit: "estimated serving" },
+        { name: "paneer", quantity_g: 100, household_unit: "estimated serving" },
+      ]);
       expect(candidate.safetyFlags.allergenFlags).toContain("allergen:dairy");
     }
   });
@@ -42,6 +52,19 @@ describe("handleMessage", () => {
       type: "text",
       text: expect.stringContaining("safety conflict"),
     });
+  });
+
+  it("preserves full source text in the confirm payload while truncating only the UI summary", async () => {
+    const longText = "I had roti and dal for dinner with a long note about quantities, cooking style, second serving, chutney, curd, salad, and extra ghee that should remain intact in the saved source text.";
+
+    const response = await handleMessage("user-123", { text: longText });
+    const candidate = response.blocks[0];
+
+    expect(candidate.type).toBe("meal_log_candidate");
+    if (candidate.type === "meal_log_candidate") {
+      expect(candidate.summary.length).toBeLessThanOrEqual(160);
+      expect(candidate.confirmPayload?.sourceText).toBe(longText);
+    }
   });
 
   it("returns up to two clarifying questions for ambiguous meals", async () => {

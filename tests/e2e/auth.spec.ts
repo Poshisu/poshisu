@@ -84,9 +84,12 @@ test.describe("auth flow", () => {
 
     await expect(page).toHaveURL(/\/chat/);
 
+    await page.getByLabel("Meal message").fill("I had idli and sambar for breakfast");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByRole("heading", { name: /estimated meal: i had idli and sambar for breakfast/i })).toBeVisible();
     await page.getByRole("button", { name: /looks right — save meal/i }).click();
     await expect(page).toHaveURL(/\/today/);
-    await expect(page.getByRole("heading", { name: /lunch/i })).toBeVisible();
-    await expect(page.getByText(/2 rotis and a bowl of dal/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /breakfast/i })).toBeVisible();
+    await expect(page.getByText(/i had idli and sambar for breakfast/i)).toBeVisible();
   });
 });

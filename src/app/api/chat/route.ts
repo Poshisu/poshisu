@@ -84,6 +84,7 @@ export async function POST(request: Request) {
   let assistantText = FALLBACK_RESPONSE;
   let intent = "general_fallback_guidance";
   let usedFallback = false;
+  let blocks: Awaited<ReturnType<typeof handleMessage>>["blocks"] = [];
 
   try {
     const orchestrated = await handleMessage(user.id, {
@@ -92,7 +93,8 @@ export async function POST(request: Request) {
       conditions: parsed.data.conditions,
     });
     intent = orchestrated.intent;
-    const firstTextBlock = orchestrated.blocks.find((block) => block.type === "text");
+    blocks = orchestrated.blocks;
+    const firstTextBlock = blocks.find((block) => block.type === "text");
     if (firstTextBlock && firstTextBlock.text.trim()) {
       assistantText = firstTextBlock.text;
     } else {
@@ -102,6 +104,19 @@ export async function POST(request: Request) {
     usedFallback = true;
   }
 
+  const mealCandidate = blocks.find((block) => block.type === "meal_log_candidate");
+  const assistantMetadata = {
+    intent,
+    requestId,
+    usedFallback,
+    mealCandidate: mealCandidate
+      ? {
+          confirmPayload: mealCandidate.confirmPayload,
+          safetyFlags: mealCandidate.safetyFlags,
+        }
+      : undefined,
+  };
+
   const { data: rawAssistantMessage, error: assistantInsertError } = await messageTable
     .insert({
       user_id: user.id,
@@ -109,7 +124,7 @@ export async function POST(request: Request) {
       kind: "text",
       content: assistantText,
       in_reply_to: userMessage.id,
-      metadata: { intent, requestId, usedFallback },
+      metadata: assistantMetadata,
     } as never)
     .select("id, role, kind, content, created_at, in_reply_to")
     .single();
@@ -133,6 +148,7 @@ export async function POST(request: Request) {
     data: {
       userMessage,
       assistantMessage,
+      blocks,
       intent,
       usedFallback,
     },

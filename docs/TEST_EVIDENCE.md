@@ -10,6 +10,25 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S7-UAT-D01 Authenticated chat text meal composer
+
+- **Task:** `S7-UAT-D01` — Restore/build authenticated `/chat` text meal composer.
+- **Scope verified:** Core text meal logging flow from authenticated `/chat` through `/api/chat` structured blocks to server-validated confirm-save.
+- **TDD evidence:** Added `src/app/(app)/chat/ChatMealLogger.test.tsx`, expanded orchestrator/API route expectations, and added `src/app/chat/confirm/route.test.ts` before replacing the static `/chat` card and hardening confirm-save.
+- **Implementation:**
+  - `/chat` now renders `ChatMealLogger`, an accessible client composer with transcript, meal message textarea, Send button, loading and retry/error states, quick prompt chips, and a confirm-save card.
+  - `/api/chat` now returns orchestrator `blocks` in the response envelope and stores the confirm payload/safety flags in assistant-message metadata.
+  - `handleMessage` meal candidates now include `confirmPayload`; `/chat/confirm` reads that server-stored candidate by authenticated `candidateId` instead of trusting a client-supplied JSON payload.
+  - The auth/onboarding E2E flow now sends a real meal text through `/chat`, saves the returned estimate, and validates `/today` shows the breakfast entry.
+- **Focused test command:** `pnpm run test -- src/app/\(app\)/chat/ChatMealLogger.test.tsx src/lib/agents/orchestrator.test.ts src/app/api/chat/route.test.ts src/app/chat/confirm/route.test.ts --reporter=dot`
+- **Focused test result:** PASS — Vitest reported 35 test files / 171 tests passed in this filtered invocation; the new chat composer test passed 3/3, `/chat/confirm` route test passed 4/4, and the orchestrator preserves full confirm source text while truncating only the UI summary.
+- **Static/build command:** `pnpm run lint && pnpm run typecheck && pnpm run build`
+- **Static/build result:** PASS — ESLint, TypeScript, and Next.js production build completed with exit code 0 after confirm-save hardening.
+- **Scoped E2E smoke command:** `pnpm run test:e2e:smoke`
+- **Scoped E2E smoke result:** PASS — Chromium protected `/chat` unauthenticated redirect smoke passed (`1 passed`).
+- **Not covered in this run:** live Vercel authenticated browser UAT after deployment, chat quick-action chips beyond local prompt chips, image/photo, audio/voice, and file upload modalities.
+- **Relevant files updated:** `src/app/(app)/chat/page.tsx`, `src/app/(app)/chat/ChatMealLogger.tsx`, `src/app/(app)/chat/ChatMealLogger.test.tsx`, `src/app/api/chat/route.ts`, `src/app/api/chat/route.test.ts`, `src/app/chat/confirm/route.ts`, `src/app/chat/confirm/route.test.ts`, `src/lib/agents/orchestrator.ts`, `src/lib/agents/orchestrator.test.ts`, `tests/e2e/auth.spec.ts`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+
 ## 2026-05-15 — S7-T01 Vercel UAT checklist execution
 
 - **Task:** `S7-T01` — Execute full UAT checklist.
