@@ -22,7 +22,7 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - **Typecheck result:** PASS — `tsc --noEmit` completed with exit code 0 after adding the privacy routes and Profile controls.
 - **Full local verification command:** `pnpm run lint && pnpm run typecheck && pnpm run test -- --reporter=dot && pnpm run build && pnpm run test:e2e:smoke && git diff --check`
 - **Full local verification result:** PASS — ESLint passed, TypeScript passed, Vitest reported 37 files / 181 tests passed, Next.js production build exposed the new `/api/privacy/delete-account` and `/api/privacy/export` routes, Chromium unauthenticated `/chat` redirect smoke passed, and whitespace check passed.
-- **Relevant files updated:** `src/app/api/privacy/export/route.ts`, `src/app/api/privacy/export/route.test.ts`, `src/app/api/privacy/delete-account/route.ts`, `src/app/api/privacy/delete-account/route.test.ts`, `src/app/(app)/profile/ProfileMemoryDashboard.tsx`, `src/app/(app)/profile/ProfileMemoryDashboard.test.tsx`, `src/lib/supabase/admin.ts`, `supabase/migrations/0011_privacy_account_delete_rpc.sql`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+- **Relevant files updated:** `src/app/api/privacy/export/route.ts`, `src/app/api/privacy/export/route.test.ts`, `src/app/api/privacy/delete-account/route.ts`, `src/app/api/privacy/delete-account/route.test.ts`, `src/app/(app)/profile/ProfileMemoryDashboard.tsx`, `src/app/(app)/profile/ProfileMemoryDashboard.test.tsx`, `src/lib/supabase/admin.ts`, `src/types/database.ts`, `supabase/migrations/0011_privacy_account_delete_rpc.sql`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
 
 ## 2026-05-15 — S7-T02 Accessibility gate closure
 
