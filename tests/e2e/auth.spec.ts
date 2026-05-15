@@ -65,17 +65,18 @@ test.describe("auth flow", () => {
     }
 
     const answers = [
-      "Aarti",
-      "31",
-      "Lose weight",
-      "none",
-      "vegetarian",
-      "08:30 13:00 19:30",
+      { value: "Aarti", next: /how old are you/i },
+      { value: "31", next: /primary health goal/i },
+      { value: "Lose weight", next: /any conditions/i },
+      { value: "none", next: /diet pattern or allergies/i },
+      { value: "vegetarian", next: /usual meal times/i },
+      { value: "08:30 13:00 19:30", next: /what i understood/i },
     ];
 
-    for (const answer of answers) {
-      await page.getByPlaceholder("Type your answer naturally...").fill(answer);
+    for (const { value, next } of answers) {
+      await page.getByPlaceholder("Type your answer naturally...").fill(value);
       await page.getByRole("button", { name: "Send" }).click();
+      await expect(page.getByText(next)).toBeVisible();
     }
 
     await page.getByRole("checkbox", { name: /this looks right/i }).check();
