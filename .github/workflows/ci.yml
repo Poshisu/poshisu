@@ -63,8 +63,8 @@ jobs:
     timeout-minutes: 25
     needs: app-gates
     env:
-      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
-      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
 
     steps:
       - name: Checkout
