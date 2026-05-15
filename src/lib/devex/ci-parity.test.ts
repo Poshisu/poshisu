@@ -128,3 +128,29 @@ describe("Vercel runbook parity", () => {
     expect(readme).toContain("RUNBOOK.md#vercel-environment-parity");
   });
 });
+
+describe("release rollback and incident checklist", () => {
+  it("documents testable rollback paths, incident command, and post-incident evidence", () => {
+    const runbook = repoFile("RUNBOOK.md");
+
+    for (const required of [
+      "## Release rollback and incident checklist",
+      "### Severity and decision gates",
+      "### App rollback checklist",
+      "### Environment rollback checklist",
+      "### Database forward-fix checklist",
+      "### Prompt/agent rollback checklist",
+      "### Incident command checklist",
+      "### Post-incident evidence checklist",
+      "rollback owner",
+      "incident commander",
+      "customer impact",
+      "decision timestamp",
+      "rollback target",
+      "forward-fix migration",
+      "post-incident follow-up",
+    ]) {
+      expect(runbook).toContain(required);
+    }
+  });
+});
