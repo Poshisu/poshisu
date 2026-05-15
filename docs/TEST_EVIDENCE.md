@@ -10,6 +10,23 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S6-T02 Vercel env + runbook parity
+
+- **Task:** `S6-T02` — Vercel env + runbook parity.
+- **Scope verified:** Preview/Production env docs, smoke checks, and Vercel rollback notes.
+- **TDD evidence:** Added a docs parity assertion in `src/lib/devex/ci-parity.test.ts`; red run failed because `RUNBOOK.md` did not yet contain the required Vercel parity sections and `README.md` did not link the parity contract.
+- **Focused red command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused red result:** FAIL as expected — `Vercel runbook parity > documents preview and production env setup, smoke checks, and rollback notes` failed on missing `## Vercel environment parity`.
+- **Fix:** `RUNBOOK.md` now documents required Vercel Preview/Production public vars, server-only secrets, build/observability values, Vercel-provided vars, Supabase Edge Function secret placement, Preview smoke checks, Production smoke checks, and rollback notes. Real project-specific env values were replaced with placeholders/generic setup guidance.
+- **README parity:** `README.md` now links to `RUNBOOK.md#vercel-environment-parity` and records minimum release discipline for env edits, redeploys, smoke evidence, and secret hygiene.
+- **Task ledger:** `docs/TASKS.md` marks `S6-T02` done and moves the active task pointer to `S6-T03`.
+- **Focused green command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot`
+- **Focused green result:** PASS after docs update.
+- **Full local verification command:** `pnpm run lint && pnpm run typecheck && pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot && pnpm run build && pnpm run test:e2e:smoke && git diff --check && rg -n "env|smoke|rollback" RUNBOOK.md README.md`
+- **Full local verification result:** PASS — exact command completed locally before commit.
+- **Not covered in this run:** authenticated live Vercel Preview/Production browser smoke, because S6-T02 is the runbook/docs parity task rather than a deployed behavior change.
+- **Relevant files updated:** `RUNBOOK.md`, `README.md`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`, `src/lib/devex/ci-parity.test.ts`.
+
 ## 2026-05-15 — S6-T01 Supabase env quote-stripping follow-up
 
 - **Task:** `S6-T01` follow-up — fix CI E2E startup failure caused by quoted `supabase status -o env` values.

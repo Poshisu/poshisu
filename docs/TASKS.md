@@ -181,7 +181,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 14 | Stage 5 | S5-T02 | Add AI safety adversarial tests | Prompt injection/hallucination/tool misuse checks pass thresholds | `pnpm run eval:prompts` | done |
 | 15 | Stage 5 | S5-T03 | Lock deterministic safety policy tests | Allergen/condition safeguards block unsafe outputs | `pnpm run test -- src/lib/safety` | done |
 | 16 | Stage 6 | S6-T01 | Finalize CI parity gates | CI runs lint/typecheck/unit/prompt-eval/build/scoped E2E/db-types gate reliably | `pnpm run ci:parity` | done |
-| 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | todo |
+| 17 | Stage 6 | S6-T02 | Vercel env + runbook parity | Preview/prod env docs complete with smoke checks and rollback notes | `rg -n "env|smoke|rollback" RUNBOOK.md README.md` | done |
 | 18 | Stage 6 | S6-T03 | Release rollback + incident checklist | Non-trivial deploy rollback steps documented and testable | `rg -n "rollback|incident" RUNBOOK.md` | todo |
 | 19 | Stage 7 | S7-T01 | Execute full UAT checklist | Text/image/audio/file/chips pass criteria recorded with defects | `rg -n "Pass|Fail|build_id" docs/UAT_VERCEL.md` | todo |
 | 20 | Stage 7 | S7-T02 | Accessibility gate closure | Keyboard/labels/live regions/contrast critical issues resolved | `pnpm run test:e2e -g accessibility` | todo |
@@ -189,9 +189,16 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
 
 ### Current active task
-- **Next to execute:** `S6-T02` (Vercel env + runbook parity).
+- **Next to execute:** `S6-T03` (Release rollback + incident checklist).
 - **Owner:** Engineering
-- **Dependencies:** `S6-T01` now locks local/CI parity for lint, typecheck, generated DB types, unit/component tests, prompt evals, production build, and scoped Playwright smoke.
+- **Dependencies:** `S6-T02` now documents Vercel Preview/Production env parity, smoke checks, and rollback notes in `RUNBOOK.md` and links them from `README.md`.
+
+### S6-T02 closure status (2026-05-15)
+- `RUNBOOK.md` now has a Vercel environment parity section with required Preview/Production public env vars, server-only secrets, build/observability values, Vercel-provided variables, and Supabase Edge Function secret placement.
+- The runbook now separates Preview smoke checks from Production smoke checks and records what each proves and must not expose.
+- Vercel rollback notes now cover restoring a known-good deployment, redeploying after env edits, migration caveats, and evidence to preserve.
+- `README.md` links to the parity section and captures the minimum Stage 6 release discipline.
+- `src/lib/devex/ci-parity.test.ts` now locks the docs/runbook parity contract so future regressions fail under Vitest.
 
 ### S6-T01 closure status (2026-05-14)
 - `.github/workflows/ci.yml` now runs the required gates as two signal-preserving jobs: app gates (`lint`, `typecheck`, Vitest, prompt evals, production build) and Docker/Supabase gates (`supabase start`, generated DB types, scoped auth/onboarding E2E).

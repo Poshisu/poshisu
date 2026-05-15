@@ -13,6 +13,12 @@ function workflow(): string {
   return readFileSync(ciWorkflowPath, "utf8");
 }
 
+function repoFile(path: string): string {
+  const filePath = join(repoRoot, path);
+  expect(existsSync(filePath), `${path} should exist`).toBe(true);
+  return readFileSync(filePath, "utf8");
+}
+
 describe("CI parity gates", () => {
   it("exposes local scripts for every CI quality gate", () => {
     expect(packageJson.scripts).toMatchObject({
@@ -87,5 +93,38 @@ describe("CI parity gates", () => {
     expect(yml).toContain("NEXT_PUBLIC_SUPABASE_URL");
     expect(yml).toContain("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
     expect(yml).toContain("PLAYWRIGHT_BASE_URL");
+  });
+});
+
+describe("Vercel runbook parity", () => {
+  it("documents preview and production env setup, smoke checks, and rollback notes", () => {
+    const runbook = repoFile("RUNBOOK.md");
+    const readme = repoFile("README.md");
+
+    for (const required of [
+      "## Vercel environment parity",
+      "### Required Vercel environment matrix",
+      "### Preview smoke checks",
+      "### Production smoke checks",
+      "### Vercel rollback notes",
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "ANTHROPIC_API_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "NEXT_PUBLIC_APP_URL",
+      "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
+      "NEXT_PUBLIC_POSTHOG_KEY",
+      "NEXT_PUBLIC_SENTRY_DSN",
+    ]) {
+      expect(runbook).toContain(required);
+    }
+
+    expect(runbook).toContain("Preview");
+    expect(runbook).toContain("Production");
+    expect(runbook).toContain("Redeploy");
+    expect(runbook).toContain("rollback");
+    expect(readme).toContain("Vercel env + runbook parity");
+    expect(readme).toContain("RUNBOOK.md#vercel-environment-parity");
   });
 });

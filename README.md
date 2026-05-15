@@ -171,6 +171,17 @@ Any edits to the Forge startup prompt must be versioned like code and accompanie
 
 CI enforces this with the same `db:types:check` command and fails when committed types are stale.
 
+### Vercel env + runbook parity
+
+Preview and Production deploys must follow the committed environment matrix, smoke checks, and rollback notes in [RUNBOOK.md#vercel-environment-parity](RUNBOOK.md#vercel-environment-parity).
+
+Minimum release discipline:
+
+1. Keep Vercel Preview and Production env vars aligned with the matrix before redeploying.
+2. Never commit or paste real secret values; use Vercel encrypted env vars and placeholders in docs.
+3. Redeploy after env changes because existing Vercel deployments do not pick up edits automatically.
+4. Record preview/production smoke results and any rollback notes in PR evidence for Stage 6 work.
+
 ## Tech stack
 
 Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
