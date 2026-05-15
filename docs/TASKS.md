@@ -195,7 +195,7 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 
 ### S6-T01 closure status (2026-05-14)
 - `.github/workflows/ci.yml` now runs the required gates as two signal-preserving jobs: app gates (`lint`, `typecheck`, Vitest, prompt evals, production build) and Docker/Supabase gates (`supabase start`, generated DB types, scoped auth/onboarding E2E).
-- The Docker/Supabase job exports the local anon key from `supabase status -o env` after `supabase start` instead of hardcoding a possibly stale JWT.
+- The Docker/Supabase job exports the local URL and anon key from `supabase status -o env` after `supabase start`, strips surrounding quotes from both values, and avoids hardcoding a possibly stale JWT.
 - `supabase/config.toml` disables local email confirmations so the CI signup/onboarding E2E path can proceed without SMTP.
 - `package.json` now exposes `pnpm run test:e2e:ci` for the Docker/Supabase-backed CI Playwright subset, `pnpm run test:e2e:smoke` for the no-DB auth redirect smoke, and `pnpm run ci:parity` as the local gate-set mirror.
 - `src/lib/devex/ci-parity.test.ts` locks the expected package scripts and GitHub Actions workflow gates so future workflow drift fails under Vitest.

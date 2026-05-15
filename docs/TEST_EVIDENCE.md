@@ -10,6 +10,22 @@ This file is the repo-local audit trail for meaningful automated and manual veri
 - For large Playwright artifacts, commit only the summary here and keep raw reports in ignored `playwright-report/` or CI artifacts.
 - If a failure is accepted temporarily, link the follow-up task in `docs/TASKS.md`.
 
+## 2026-05-15 — S6-T01 Supabase env quote-stripping follow-up
+
+- **Task:** `S6-T01` follow-up — fix CI E2E startup failure caused by quoted `supabase status -o env` values.
+- **Failure reproduced from CI:** GitHub Actions run `25878547690` failed in `DB types and scoped E2E` at `Scoped auth/onboarding E2E` with `Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL` because `NEXT_PUBLIC_SUPABASE_URL` was receiving a literal quoted URL.
+- **TDD evidence:** Added quote-stripping coverage in `src/lib/devex/ci-parity.test.ts`; red run failed because neither `.github/workflows/ci.yml` nor `ci:parity` stripped surrounding quotes from Supabase env values.
+- **Fix:** CI and local parity now strip surrounding quotes from `API_URL` and `ANON_KEY` before exporting `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- **Non-Docker fallback verification:** Docker remains unavailable locally (`docker: command not found`), so a sample `/tmp/poshisu-supabase.env` with quoted values was parsed through the same `grep | cut | sed` pipeline; result PASS (`quote_strip_fallback_ok`, URL unquoted, key length only recorded).
+- **Focused red command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts`
+- **Focused red result:** FAIL as expected — `strips quoted values emitted by Supabase env export before setting app env vars` failed before implementation.
+- **Focused green command:** `pnpm run test -- src/lib/devex/ci-parity.test.ts`
+- **Focused green result:** PASS — 33 test files / 161 tests passed; `src/lib/devex/ci-parity.test.ts` passed 3/3.
+- **Full local non-Docker command:** `pnpm install --frozen-lockfile && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run eval:prompts && pnpm run build && pnpm run test:e2e:smoke`
+- **Full local non-Docker result:** PASS — lint, typecheck, Vitest 33 files / 161 tests, prompt eval 18/18, Next.js production build, and Chromium smoke 1/1 all passed.
+- **Docker-gated local result:** BLOCKED locally because Docker is not installed; GitHub Actions remains authoritative for Supabase-local `db:types:check` and onboarding E2E.
+- **Relevant files updated:** `.github/workflows/ci.yml`, `package.json`, `src/lib/devex/ci-parity.test.ts`, `docs/TASKS.md`, `docs/TEST_EVIDENCE.md`.
+
 ## 2026-05-14 — S6-T01 CI parity gates
 
 - **Task:** `S6-T01` — Finalize CI parity gates.

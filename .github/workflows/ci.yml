@@ -97,8 +97,8 @@ jobs:
         run: |
           set -euo pipefail
           supabase status -o env > /tmp/supabase.env
-          api_url=$(grep '^API_URL=' /tmp/supabase.env | cut -d= -f2-)
-          anon_key=$(grep '^ANON_KEY=' /tmp/supabase.env | cut -d= -f2-)
+          api_url=$(grep '^API_URL=' /tmp/supabase.env | cut -d= -f2- | sed 's/^"//; s/"$//')
+          anon_key=$(grep '^ANON_KEY=' /tmp/supabase.env | cut -d= -f2- | sed 's/^"//; s/"$//')
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=$api_url"
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key"
