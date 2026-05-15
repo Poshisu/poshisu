@@ -304,27 +304,38 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               </div>
               <p className="text-muted-foreground">Photos, files, and voice notes are not active yet — type the details for now.</p>
             </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type your answer naturally..."
-                value={input}
-                disabled={loading}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void submitMessage();
-                  }
-                }}
-                className="rounded-full border-[color:var(--border-soft)] bg-[color:var(--surface-raised)]"
-              />
-              <Button
-                onClick={() => void submitMessage()}
-                disabled={loading}
-                className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
-              >
-                Send
-              </Button>
+            <div className="space-y-2">
+              <label htmlFor="onboarding-answer" className="text-sm font-medium text-foreground">
+                Onboarding answer
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="onboarding-answer"
+                  name="onboarding-answer"
+                  aria-describedby="onboarding-answer-help"
+                  placeholder="Type your answer naturally..."
+                  value={input}
+                  disabled={loading}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void submitMessage();
+                    }
+                  }}
+                  className="rounded-full border-[color:var(--border-soft)] bg-[color:var(--surface-raised)]"
+                />
+                <Button
+                  onClick={() => void submitMessage()}
+                  disabled={loading}
+                  className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
+                >
+                  Send
+                </Button>
+              </div>
+              <p id="onboarding-answer-help" className="text-xs text-muted-foreground">
+                Type naturally, then press Send or Enter.
+              </p>
             </div>
             </>
           )}
