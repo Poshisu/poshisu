@@ -18,7 +18,7 @@
     "db:types": "node scripts/db-types-check.mjs stdout > src/types/database.ts",
     "db:types:check": "node scripts/db-types-check.mjs check",
     "test:e2e:ci": "playwright test --project=chromium --grep \"protected /chat redirects|onboarding\"",
-    "ci:parity": "bash -lc 'set -euo pipefail; supabase start; supabase status -o env > /tmp/poshisu-supabase.env; export NEXT_PUBLIC_SUPABASE_URL=\"$(grep ^API_URL= /tmp/poshisu-supabase.env | cut -d= -f2-)\"; export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\"$(grep ^ANON_KEY= /tmp/poshisu-supabase.env | cut -d= -f2-)\"; export NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000; export PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000; pnpm run db:types:check; pnpm run lint; pnpm run typecheck; pnpm run test; pnpm run eval:prompts; pnpm run build; pnpm exec playwright install chromium; pnpm run test:e2e:ci'",
+    "ci:parity": "bash -lc 'set -euo pipefail; supabase start; supabase status -o env > /tmp/poshisu-supabase.env; api_url=$(grep ^API_URL= /tmp/poshisu-supabase.env | cut -d= -f2- | sed '\"'\"'s/^\"//; s/\"$//'\"'\"'); anon_key=$(grep ^ANON_KEY= /tmp/poshisu-supabase.env | cut -d= -f2- | sed '\"'\"'s/^\"//; s/\"$//'\"'\"'); export NEXT_PUBLIC_SUPABASE_URL=$api_url; export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key; export NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000; export PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000; pnpm run db:types:check; pnpm run lint; pnpm run typecheck; pnpm run test; pnpm run eval:prompts; pnpm run build; pnpm exec playwright install chromium; pnpm run test:e2e:ci'",
     "test:e2e:smoke": "playwright test --project=chromium --grep \"protected /chat redirects\""
   },
   "dependencies": {

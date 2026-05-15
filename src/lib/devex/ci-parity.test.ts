@@ -47,6 +47,17 @@ describe("CI parity gates", () => {
     }
   });
 
+  it("strips quoted values emitted by Supabase env export before setting app env vars", () => {
+    const yml = workflow();
+    const parity = packageJson.scripts["ci:parity"];
+
+    for (const source of [yml, parity]) {
+      expect(source).toContain('s/^"//; s/"$//');
+      expect(source).toContain("NEXT_PUBLIC_SUPABASE_URL=$api_url");
+      expect(source).toContain("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key");
+    }
+  });
+
   it("runs the same required gates in GitHub Actions CI", () => {
     const yml = workflow();
 
