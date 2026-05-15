@@ -187,12 +187,22 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 | 19.1 | Stage 7 | S7-UAT-D01 | Restore authenticated `/chat` text meal composer | Authenticated chat renders transcript, text input, Send button, loading/error states, and server-validated confirm-save estimate from `/api/chat` blocks | `pnpm run test -- src/app/\(app\)/chat/ChatMealLogger.test.tsx src/app/api/chat/route.test.ts src/app/chat/confirm/route.test.ts src/lib/agents/orchestrator.test.ts && pnpm run test:e2e:smoke` | done |
 | 20 | Stage 7 | S7-T02 | Accessibility gate closure | Keyboard/labels/live regions/contrast critical issues resolved; Playwright screenshots/videos/traces uploaded as proof artifacts in CI | `pnpm run test:e2e -g accessibility` | done |
 | 21 | Stage 7 | S7-T03 | Privacy/export/delete-account closure | Authenticated user-scoped JSON export, guarded account deletion, redacted push secrets, and Profile privacy controls implemented + documented | `pnpm run test -- src/app/api/privacy/export/route.test.ts src/app/api/privacy/delete-account/route.test.ts src/app/\(app\)/profile/ProfileMemoryDashboard.test.tsx --reporter=dot` | done |
-| 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md` | todo |
+| 22 | Stage 7 | S7-T04 | Closed beta and launch checklist | Beta feedback triaged and launch checklist fully green | `rg -n "launch checklist|beta" docs/BUILD_PLAN.md docs/TASKS.md docs/BETA_LAUNCH_CHECKLIST.md` | in_progress |
+| 22.1 | Stage 7 | S7-T04A | Closed beta launch checklist is documented | `docs/BETA_LAUNCH_CHECKLIST.md` defines beta scope, feedback triage, launch gates, owner-blocked signoffs, and go/no-go template | `pnpm run test -- src/lib/devex/ci-parity.test.ts --reporter=dot` | done |
+| 22.2 | Stage 7 | S7-T04B | Run closed beta and record go/no-go | 10-user beta cohort onboarded, feedback triaged, launch gates either PASS or owner-blocked with named owner/date | `rg -n "Candidate|GO|NO-GO|owner-blocked" docs/BETA_LAUNCH_CHECKLIST.md docs/TEST_EVIDENCE.md` | owner-blocked |
 
 ### Current active task
-- **Next to execute:** `S7-T04` (Closed beta and launch checklist).
-- **Owner:** Engineering / Product
-- **Dependencies:** `S7-T03` now provides user-facing privacy export and delete-account controls from Profile, with server-side auth checks and sensitive push-subscription redaction.
+- **Next to execute:** `S7-T04B` (Run closed beta and record go/no-go), after the `S7-T04A` checklist/runbook PR is merged.
+- **Owner:** Product/founder for cohort + go/no-go; Engineering for defect fixes and release evidence.
+- **Dependencies:** `S7-T04A` provides `docs/BETA_LAUNCH_CHECKLIST.md`; `S7-T03` provides user-facing privacy export and delete-account controls from Profile, with server-side auth checks and sensitive push-subscription redaction.
+
+
+### S7-T04A closure status (2026-05-15)
+- Created `docs/BETA_LAUNCH_CHECKLIST.md` as the closed beta operating packet.
+- The checklist explicitly scopes beta as text-first meal logging plus existing trust/readiness surfaces, with image/camera, audio/voice, and file-based meal logging deferred unless separately implemented and evidenced.
+- Added a feedback intake/triage schema, blocker/major/minor severity rubric, launch gates, owner-blocked exception handling, and go/no-go decision template.
+- Added a docs parity assertion in `src/lib/devex/ci-parity.test.ts` so future edits cannot silently remove the beta launch contract.
+- `S7-T04B` remains owner-blocked until the real beta cohort is recruited/onboarded and go/no-go evidence is recorded.
 
 ### S7-UAT-D01 closure status (2026-05-15)
 - `/chat` now renders an authenticated text meal composer instead of the prior static hardcoded confirm-save card.

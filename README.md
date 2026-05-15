@@ -22,11 +22,10 @@ This is a **working codebase with the foundation implemented** plus the complete
 
 ### 🚧 In progress
 
-- End-to-end onboarding UX and progressive profiling flows
-- Production-grade chat orchestration and multi-agent routing integration
-- Meal logging UX polish (text/photo/voice) and estimator quality tuning
-- Trends/insights product surfaces and personalized coaching logic
-- Nudge UX refinement, reliability hardening, and beta-readiness QA
+- Multimodal meal logging polish beyond text (photo/voice/file) and estimator quality tuning
+- Closed beta cohort operations, feedback triage, and launch gate evidence
+- Observability/funnel validation for beta usage
+- Nudge UX refinement and production device coverage
 
 ### Documents
 
@@ -42,6 +41,7 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `docs/PROMPTS_GUIDE.md` | How to write, test, and iterate on agent prompts. |
 | `TESTING.md` | Testing layers, exact commands, fixtures, and failure triage playbook. |
 | `docs/UAT_VERCEL.md` | Vercel manual UAT checklist for text/image/audio/file/chips with pass/fail and triage templates. |
+| `docs/BETA_LAUNCH_CHECKLIST.md` | Closed beta launch packet: beta scope, feedback triage, launch gates, owner-blocked signoffs, and go/no-go template. |
 | `docs/MEAL_LOG_MVP_ACCEPTANCE.md` | Go/no-go acceptance gate for meal logging (latency, clarification policy, safety, and test scenarios). |
 | `SECURITY.md` | Auth/RLS model, validation boundaries, LLM risk controls, and security checklist. |
 | `RUNBOOK.md` | Deploy checks, rollback procedures, and incident diagnostics. |
@@ -79,9 +79,11 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `supabase/migrations/0007_hybrid_pipeline_and_fixes.sql` | Adds hybrid nutrition pipeline schema and supporting data fixes |
 | `supabase/migrations/0008_security_definer_hardening.sql` | Hardens SECURITY DEFINER functions and privilege boundaries |
 | `supabase/migrations/0009_push_endpoint_uniqueness.sql` | Enforces global uniqueness for push subscription endpoints |
+| `supabase/migrations/0010_memories_history_insert_policy.sql` | Allows audited memory history inserts through the intended policy path |
+| `supabase/migrations/0011_privacy_account_delete_rpc.sql` | Adds service-role-only transactional account deletion RPC for privacy controls |
 | `supabase/seed.sql` | IFCT food data seed (~30 common Indian foods) |
 
-**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql` → `0009_push_endpoint_uniqueness.sql`.
+**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql` → `0009_push_endpoint_uniqueness.sql` → `0010_memories_history_insert_policy.sql` → `0011_privacy_account_delete_rpc.sql`.
 
 **Important:** The migration list is append-only. Never edit committed migration files; always add a new migration and update this list whenever a new migration is added.
 
@@ -195,17 +197,20 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 | `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | Yes | `src/app/api/memory/route.ts` | Authenticated memory read/write API with safe envelopes, Zod validation, user scoping, and writes restricted to `profile/main` and `patterns/main`. |
 | `/api/push` | Yes | `src/app/api/push/route.ts`, `src/app/api/push/subscribe/route.ts`, `src/app/api/push/unsubscribe/route.ts` | Authenticated push subscription lifecycle with VAPID public-key discovery, HTTPS endpoint validation, user-scoped subscribe/upsert, cross-user endpoint ownership cleanup, and idempotent unsubscribe. |
+| `/api/privacy/export` | Yes | `src/app/api/privacy/export/route.ts` | Authenticated user-scoped JSON export with sensitive push subscription material redacted. |
+| `/api/privacy/delete-account` | Yes | `src/app/api/privacy/delete-account/route.ts` | Authenticated exact-confirmation delete path using a service-role-only transactional account deletion RPC. |
 | `/(auth)/callback` | Yes | `src/app/(auth)/callback/route.ts` | Implemented auth callback route handler. |
 
 ## Feature Maturity
 
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
-- **Chat:** Placeholder shell
-- **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation
-- **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state
-- **Profile memory inspector:** Not implemented yet
-- **Auth and app shell:** Implemented baseline
+- **Chat:** Authenticated text meal logging MVP with transcript, composer, structured estimate blocks, and confirm-save handoff; image/audio/file modalities remain deferred/coming soon unless separately implemented.
+- **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation.
+- **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state.
+- **Profile memory inspector:** Implemented with memory edit affordances, audit context, privacy export, and guarded delete-account controls.
+- **Auth and app shell:** Implemented baseline with route protection and scoped E2E smoke coverage.
+- **Closed beta launch:** Operating packet lives at `docs/BETA_LAUNCH_CHECKLIST.md`; real cohort run remains product/founder gated.
 
 ## Tech stack
 

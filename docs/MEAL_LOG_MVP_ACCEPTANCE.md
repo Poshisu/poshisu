@@ -1,9 +1,15 @@
 # Meal Log MVP Acceptance Criteria
 
-_Last updated: 2026-05-11_
+_Last updated: 2026-05-15_
 
 ## Purpose
-This document defines the **go/no-go acceptance gate** for the first beta-ready meal logging loop (text/photo/voice → estimate → confirm/correct → save → visible in Today).
+This document defines the **full meal-log MVP acceptance gate** for the eventual multimodal meal logging loop (text/photo/voice → estimate → confirm/correct → save → visible in Today).
+
+## Closed beta scope override
+
+For the Stage 7 closed beta launch gate, `docs/BETA_LAUNCH_CHECKLIST.md` is the source of truth. The closed beta is intentionally **text-first**: text meal logging is in scope, while photo/image and voice/audio remain deferred unless a later PR exposes those controls with UAT, accessibility, and safe-error evidence.
+
+Do not use this full multimodal MVP gate to claim that photo/image or voice/audio are required for the first closed beta cohort. Use it as the future acceptance target when those modalities are promoted into beta scope.
 
 ## Problem statement
 Users need fast, trustworthy, safe meal estimates with low friction and clear correction controls.

@@ -738,16 +738,18 @@ Tasks:
 
 ## After Phase 6: launch checklist
 
-- [ ] All tests passing (unit, e2e, prompts)
-- [ ] Lighthouse PWA score 100
-- [ ] Lighthouse accessibility 100
-- [ ] Sentry receiving events
-- [ ] PostHog receiving events
-- [ ] Web Push working on iOS and Android
-- [ ] Privacy policy live
-- [ ] Terms of service live
-- [ ] DPDP compliance verified
-- [ ] Backup strategy documented
-- [ ] Incident response runbook documented
-- [ ] 10 beta users recruited and onboarded
-- [ ] Feedback channel active (email or in-app)
+The operational launch gate now lives in `docs/BETA_LAUNCH_CHECKLIST.md`. Treat this older build-plan checklist as historical input, not the sole source of truth.
+
+- [ ] All tests passing (unit, e2e, prompts) — verify through CI and `docs/TEST_EVIDENCE.md`.
+- [ ] Lighthouse PWA score 100 — launch gate or explicitly owner-blocked with rationale.
+- [ ] Lighthouse accessibility 100 — launch gate or explicitly owner-blocked with rationale.
+- [ ] Sentry receiving events — launch gate or intentionally no-op with documented beta reason.
+- [ ] PostHog receiving events — launch gate or intentionally no-op with documented beta reason.
+- [ ] Web Push working on iOS and Android — launch gate unless deferred from closed beta scope.
+- [ ] Privacy policy live — product/founder signoff required.
+- [ ] Terms of service live — product/founder signoff required.
+- [ ] DPDP compliance verified — product/founder signoff required.
+- [ ] Backup strategy documented — see launch checklist and runbook evidence.
+- [ ] Incident response runbook documented — see `RUNBOOK.md`.
+- [ ] 10 beta users recruited and onboarded — product/founder gate in `docs/BETA_LAUNCH_CHECKLIST.md`.
+- [ ] Feedback channel active (email or in-app) — record chosen channel in the beta go/no-go log.
