@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ConfirmableMealEstimate } from "@/lib/meals/confirm";
 import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
 import { evaluateMealSafety, type SafetyFlags } from "@/lib/safety/check";
 
@@ -18,6 +19,7 @@ export type AssistantResponseBlock =
       rationale: string;
       clarificationQuestions: string[];
       safetyFlags: SafetyFlags;
+      confirmPayload?: ConfirmableMealEstimate;
     };
 
 export interface OrchestratorResponse {
@@ -39,6 +41,44 @@ const mealLogPattern =
 function summarizeMealCandidate(text: string): string {
   const normalized = text.replace(/\s+/g, " ").trim();
   return normalized.length <= 160 ? normalized : `${normalized.slice(0, 157)}...`;
+}
+
+function inferMealSlot(text: string): ConfirmableMealEstimate["mealSlot"] {
+  const lower = text.toLowerCase();
+  if (/\bbreakfast\b/.test(lower)) return "breakfast";
+  if (/\blunch\b/.test(lower)) return "lunch";
+  if (/\bdinner\b/.test(lower)) return "dinner";
+  if (/\bsnack\b/.test(lower)) return "snack";
+  if (/\b(drink|drank|tea|coffee|juice|beverage)\b/.test(lower)) return "beverage";
+  return "other";
+}
+
+function confidenceScore(confidence: "high" | "medium" | "low") {
+  if (confidence === "high") return 0.9;
+  if (confidence === "medium") return 0.65;
+  return 0.35;
+}
+
+function normalizedSourceText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function buildConfirmPayload(args: {
+  text: string;
+  items: string[];
+  nutrition: Awaited<ReturnType<typeof runPipeline>>;
+  confidence: "high" | "medium" | "low";
+}): ConfirmableMealEstimate | undefined {
+  if (args.items.length === 0) return undefined;
+  return {
+    mealSlot: inferMealSlot(args.text),
+    sourceText: normalizedSourceText(args.text),
+    items: args.items.map((name) => ({ name, quantity_g: 100, household_unit: "estimated serving" })),
+    kcalLow: args.nutrition.kcalMin,
+    kcalHigh: args.nutrition.kcalMax,
+    kcalLead: Math.round((args.nutrition.kcalMin + args.nutrition.kcalMax) / 2),
+    confidence: confidenceScore(args.confidence),
+  };
 }
 
 export async function handleMessage(userId: string, message: unknown): Promise<OrchestratorResponse> {
@@ -66,6 +106,14 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
       ? nutrition.clarificationQuestions.slice(0, 2)
       : nutrition.clarificationQuestions;
 
+    const candidateConfidence = parsed.isAmbiguous ? "low" : nutrition.confidence;
+    const confirmPayload = buildConfirmPayload({
+      text,
+      items: parsed.items,
+      nutrition,
+      confidence: candidateConfidence,
+    });
+
     return {
       intent: "meal_log_candidate",
       blocks: [
@@ -73,7 +121,7 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
           type: "meal_log_candidate",
           summary: summarizeMealCandidate(text),
           needsConfirmation: true,
-          confidence: parsed.isAmbiguous ? "low" : nutrition.confidence,
+          confidence: candidateConfidence,
           estimate: {
             kcalMin: nutrition.kcalMin,
             kcalMax: nutrition.kcalMax,
@@ -85,6 +133,7 @@ export async function handleMessage(userId: string, message: unknown): Promise<O
           rationale: nutrition.rationale,
           clarificationQuestions,
           safetyFlags,
+          confirmPayload,
         },
         {
           type: "text",
