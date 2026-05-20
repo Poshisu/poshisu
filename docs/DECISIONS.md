@@ -249,3 +249,28 @@ A single source-of-truth startup prompt reduces process drift, improves onboardi
 
 ### Migration path
 If startup automation is introduced later, keep `docs/FORGE_MODE.md` as the human-readable spec and generate automated startup config from it.
+
+
+## 2026-05-20 — Execution reset to evidence-first reality checks
+
+### Context
+Product leadership observed mismatch between implemented behavior and perceived progress. Multiple docs and trackers were being updated without a single enforced evidence loop tied to end-to-end flow validation.
+
+### Options considered
+1. Continue current stage tracker process without additional gates
+2. Pause feature delivery and run a one-time stabilization sprint
+3. Add a permanent evidence-first gate and docs parity checks in each PR
+
+### Decision
+Choose option 3. Keep delivery moving, but require every PR that changes user-visible behavior to include: (a) smoke/e2e evidence, and (b) same-PR updates to Feature Maturity and task tracker status.
+
+### Why
+This preserves velocity while making progress legible and auditable for product and engineering.
+
+### Tradeoffs
+- **Gain:** higher confidence, less status ambiguity, easier founder review.
+- **Cost:** slightly more PR overhead and discipline.
+
+### Migration path
+If process overhead becomes too high, reduce required evidence to critical paths only (auth, onboarding, chat, meal save) while preserving same-PR docs parity.
+
