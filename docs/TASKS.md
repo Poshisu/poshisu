@@ -26,6 +26,23 @@ Use this checklist for Forge/Hermes onboarding governance PRs (first PR in a new
 ### Fail-closed rule
 - If the onboarding report is incomplete or missing, Forge must stop execution and explicitly request clarification before making or submitting additional changes.
 
+
+## Founder reset plan (2026-05-20)
+
+To address drift between "what is built" vs "what docs say", execution is reset to three gates:
+
+1. **Reality check gate (must run first):** run local + preview smoke tests for auth, onboarding, chat send, meal confirm-save, Today visibility, and Profile privacy controls. Record evidence links in `docs/TEST_EVIDENCE.md` and `docs/UAT_VERCEL.md`.
+2. **Single source-of-truth gate:** after each merged PR, update `README.md` Feature Maturity + this file's stage tracker in the same PR. No exceptions.
+3. **Multimodal gate (next):** implement only image + audio intake for chat (video deferred) with explicit acceptance criteria in `docs/MEAL_LOG_MVP_ACCEPTANCE.md`.
+
+### Immediate owner tasks
+
+| ID | Task | Acceptance criteria | Verify | Status |
+|---|---|---|---|---|
+| RESET-01 | Run end-to-end reality test pass (local + Vercel preview) | Document pass/fail for sign-up/login, onboarding, chat, meal save, Today, Trends, Profile, privacy export/delete in `docs/UAT_VERCEL.md` | `pnpm run test:e2e -g "auth|onboarding|chat|today|profile|privacy"` | pending |
+| RESET-02 | Enforce docs parity workflow in PR template | PR template requires "Feature maturity updated?" and "Task tracker updated?" checkboxes | `rg -n "Feature maturity updated|Task tracker updated" .github/PULL_REQUEST_TEMPLATE.md` | pending |
+| RESET-03 | Define image/audio multimodal readiness checklist | Checklist includes capture UI, upload/storage, transcription/OCR/extraction, safety/PII review, and eval cases | `rg -n "image|audio|multimodal" docs/MEAL_LOG_MVP_ACCEPTANCE.md` | pending |
+
 ## Milestone plan
 
 ### M1 — Documentation and execution system hardening (current)
