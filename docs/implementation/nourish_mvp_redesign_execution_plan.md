@@ -211,3 +211,53 @@ MVP-ready only when all are true:
 - Me is user-first; privacy actions are accessible but not first-fold dominant.
 - Mobile + accessibility checks pass at defined baseline.
 - Vercel UAT evidence is attached for each critical flow.
+
+
+## 9) Dependency map, owners, and sign-off gates (RDX-02)
+
+### Task dependency graph
+
+```mermaid
+flowchart TD
+  RDX01[RDX-01 Audit] --> RDX02[RDX-02 Planning + gates]
+  RDX02 --> RDX03[RDX-03 Design system]
+  RDX03 --> RDX04[RDX-04 Welcome/Auth]
+  RDX03 --> RDX05[RDX-05 Progressive onboarding]
+  RDX04 --> RDX06[RDX-06 Home IA merge]
+  RDX05 --> RDX06
+  RDX06 --> RDX07[RDX-07 Inline estimate + confirm-save]
+  RDX05 --> RDX08[RDX-08 Me/Profile IA reset]
+  RDX07 --> RDX09[RDX-09 Multimodal AI text/photo/voice]
+  RDX08 --> RDX09
+  RDX09 --> RDX10[RDX-10 QA + release gate]
+```
+
+### Owner lanes (execution accountability)
+
+| Task | Primary owner lane | Supporting lanes | Why this ownership split |
+|---|---|---|---|
+| RDX-03 | Frontend + Accessibility | Product | Token and component consistency is mostly UI system work with accessibility impact |
+| RDX-04 | Frontend/Auth | QA | Must preserve sign-in/up behavior while changing shell and copy |
+| RDX-05 | Frontend + Backend + Product | QA + Security | Onboarding UX and persistence both change; skip/recovery and safety copy need review |
+| RDX-06 | Frontend + Product | QA | Information architecture and nav simplification must preserve discoverability |
+| RDX-07 | Backend + Frontend | QA + Security | Confirm-save logic is high-risk for data integrity and trust |
+| RDX-08 | Frontend + Product | Security | Privacy controls are re-positioned, so authorization guarantees must be revalidated |
+| RDX-09 | Backend/AI + Security | Frontend + QA + DevOps | Multimodal endpoints touch secrets, cost, latency, and capability flags |
+| RDX-10 | QA + Accessibility | DevOps + Product | Release-readiness evidence and acceptance sign-off lives here |
+
+### PM/founder sign-off checkpoints
+
+| Checkpoint | Must be approved before proceeding | Evidence required |
+|---|---|---|
+| Gate A (after RDX-02) | Scope/dependency lock | Updated task table + dependency graph + owner lanes |
+| Gate B (after RDX-04 + RDX-05) | First-impression and onboarding copy/flow approval | Vercel preview links + mobile screenshots + onboarding pass notes |
+| Gate C (after RDX-06 + RDX-07) | Core Home + estimate + confirm-save UX approval | End-to-end video + saved meal proof in Today/Home details |
+| Gate D (after RDX-08) | Me/Profile IA + privacy hierarchy approval | Profile screenshots + export/delete accessibility proof |
+| Gate E (after RDX-09 + RDX-10) | MVP readiness go/no-go | Acceptance checklist complete + test/eval/UAT evidence |
+
+### Hard blockers (cannot be bypassed)
+
+1. Do not start `RDX-09` until `RDX-07` is complete and confirm-save integrity is validated.
+2. Do not merge UI tasks without mobile screenshots at 390x844, 393x852, and 430x932.
+3. Do not merge AI/multimodal tasks without server-only secret validation and mock fallback proof.
+4. Do not move to release recommendation until `RDX-10` checklist is complete.
