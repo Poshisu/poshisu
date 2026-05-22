@@ -274,3 +274,27 @@ This preserves velocity while making progress legible and auditable for product 
 ### Migration path
 If process overhead becomes too high, reduce required evidence to critical paths only (auth, onboarding, chat, meal save) while preserving same-PR docs parity.
 
+
+
+## 2026-05-22 — Lock redesign dependency and sign-off gates before UI rewrites
+
+### Context
+The redesign backlog existed, but dependency order and founder approval checkpoints were not explicitly locked. This risked parallel work on unstable foundations and subjective merge decisions.
+
+### Options considered
+1. Keep RDX tasks as a flat checklist without explicit gates.
+2. Add dependencies only in TASKS but no sign-off gates.
+3. Add dependency graph, owner lanes, and founder sign-off checkpoints before starting redesign code changes.
+
+### Decision
+Choose option 3. Lock the dependency graph + owner accountability + sign-off gates in the redesign execution plan as RDX-02 completion criteria.
+
+### Why
+This reduces sequencing mistakes, keeps PR scope reviewable, and gives product leadership explicit checkpoints before higher-risk tasks (Home merge, confirm-save, multimodal AI).
+
+### Tradeoffs
+- **Gain:** better delivery control, lower regression risk, clearer accountability.
+- **Cost:** additional process overhead and slower start to implementation.
+
+### Migration path
+If the process becomes too heavy during execution, keep the dependency graph but collapse sign-off checkpoints to three gates: post-onboarding, post-Home+estimate, and pre-release.
