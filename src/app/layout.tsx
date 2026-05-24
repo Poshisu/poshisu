@@ -1,16 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Instrument_Sans } from "next/font/google";
+import { DM_Sans, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const instrumentSans = Instrument_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-instrument-sans",
+  variable: "--font-inter",
   display: "swap",
 });
 
-const geistSans = Geist({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair-display",
   display: "swap",
 });
 
@@ -55,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${instrumentSans.variable} ${geistSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${dmSans.variable} ${playfair.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <a
           href="#main-content"

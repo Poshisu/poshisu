@@ -321,3 +321,26 @@ A single SOP reduces ambiguity, speeds review, and guarantees every redesign PR 
 
 ### Migration path
 If overhead is too high, keep the same SOP structure but allow a reduced artifact bundle for low-risk copy-only UI changes with explicit documented waivers.
+
+## 2026-05-24 — Reopen RDX-05 and split a dedicated foundation slice (RDX-05A)
+
+### Context
+Founder review flagged that the previous RDX-05 closure delivered functional onboarding recovery improvements but did not achieve the intended premium visual quality baseline. A full route-level redesign without stabilizing shared tokens and primitives first would create rework risk and inconsistent UI behavior.
+
+### Options considered
+1. Keep RDX-05 marked done and proceed directly to route rewrites.
+2. Reopen RDX-05 and execute one monolithic redesign PR across all onboarding/auth/home/chat surfaces.
+3. Reopen RDX-05 and split a foundation-first slice (tokens + typography + shared primitives), then continue with route-specific slices.
+
+### Decision
+Choose option 3. Reopen `RDX-05` and add `RDX-05A` as a dedicated foundation slice to align palette, typography, spacing/radius/shadow semantics, and base form/button behavior before route-level redesign work.
+
+### Why
+This reduces regression risk, keeps diffs reviewable, and creates a single visual baseline reused by auth/onboarding/home/chat in subsequent PRs.
+
+### Tradeoffs
+- **Gain:** cleaner incremental rollout, lower rework, easier QA and a11y validation.
+- **Cost:** one additional PR step before route-level redesign.
+
+### Migration path
+If route-level redesign uncovers missing primitives, extend the token set in additional small foundation PRs rather than bypassing shared components with one-off styles.
