@@ -19,6 +19,7 @@ function completeReviewStep() {
 describe("ChatOnboardingFlow conversational", () => {
   beforeEach(() => {
     completeOnboardingActionMock.mockReset();
+    window.localStorage.clear();
   });
   it("disables submit while loading", async () => {
     completeOnboardingActionMock.mockImplementation(() => new Promise(() => {}));
@@ -63,6 +64,88 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getByText("What I understood")).toBeInTheDocument();
   });
 
+  it("restores partial onboarding progress from local storage", () => {
+    window.localStorage.setItem(
+      "onboarding.chat.draft.v1",
+      JSON.stringify({
+        questionIndex: 2,
+        draft: {
+          name: "Aarti",
+          age: 29,
+          gender: "prefer-not-to-say",
+          height_cm: 165,
+          weight_kg: 65,
+          city: "Not shared",
+          primary_goal: "maintain",
+          conditions: [],
+          conditions_other: "",
+          medications_affecting_diet: "",
+          dietary_pattern: "none",
+          allergies: [],
+          dislikes: "",
+          meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
+          eating_context: "mixed",
+          estimation_preference: "midpoint",
+        },
+        messages: [
+          { role: "assistant", content: "What should I call you?" },
+          { role: "user", content: "Aarti" },
+          { role: "assistant", content: "How old are you?" },
+          { role: "user", content: "29" },
+          { role: "assistant", content: "What is your primary health goal right now?" },
+        ],
+      }),
+    );
+
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    expect(screen.getByText("Your onboarding progress is saved on this device while you complete setup.")).toBeInTheDocument();
+    expect(screen.getByText("What is your primary health goal right now?")).toBeInTheDocument();
+    expect(screen.getByText("Aarti")).toBeInTheDocument();
+    expect(screen.getByText("29")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start over" })).toBeInTheDocument();
+  });
+
+  it("supports clearing saved draft and restarting onboarding", () => {
+    window.localStorage.setItem(
+      "onboarding.chat.draft.v1",
+      JSON.stringify({
+        questionIndex: 2,
+        draft: {
+          name: "Aarti",
+          age: 29,
+          gender: "prefer-not-to-say",
+          height_cm: 165,
+          weight_kg: 65,
+          city: "Not shared",
+          primary_goal: "maintain",
+          conditions: [],
+          conditions_other: "",
+          medications_affecting_diet: "",
+          dietary_pattern: "none",
+          allergies: [],
+          dislikes: "",
+          meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
+          eating_context: "mixed",
+          estimation_preference: "midpoint",
+        },
+        messages: [
+          { role: "assistant", content: "What should I call you?" },
+          { role: "user", content: "Aarti" },
+          { role: "assistant", content: "How old are you?" },
+          { role: "user", content: "29" },
+          { role: "assistant", content: "What is your primary health goal right now?" },
+        ],
+      }),
+    );
+
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+
+    expect(screen.getByText("What should I call you?")).toBeInTheDocument();
+    expect(screen.queryByText("How old are you?")).not.toBeInTheDocument();
+    expect(window.localStorage.getItem("onboarding.chat.draft.v1")).toContain("\"questionIndex\":0");
+  });
+
   it("shows contextual chips and applies chip-driven updates", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
 
@@ -93,7 +176,7 @@ describe("ChatOnboardingFlow conversational", () => {
 
     expect(screen.getByText(/medical allergy or mostly a dislike/i)).toBeInTheDocument();
     expect(screen.getByText(/approximate times/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Confidence:/i)).not.toBeInTheDocument();
   });
 
   it("keeps start building disabled until profile is confirmed", () => {
@@ -153,6 +236,8 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Age must be between 13 and 100.");
     expect(screen.getByRole("alert")).toHaveTextContent("Please correct this item");
   });
+
+
 
   it("shows a clear server failure message and supports retry", async () => {
     completeOnboardingActionMock
