@@ -72,14 +72,14 @@ describe("onboardingAnswersSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects conditions_other when 'other' is not selected", () => {
+  it("allows conditions_other even when 'other' is not selected to avoid blocking onboarding", () => {
     const result = onboardingAnswersSchema.safeParse({
       ...validBase,
       conditions: ["hypertension"],
       conditions_other: "Some condition",
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("parse helper returns typed payload", () => {
