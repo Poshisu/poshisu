@@ -11,7 +11,7 @@ import type { z } from "zod";
 
 type Props = { firstName: string };
 type ConfidenceLabel = "high" | "medium" | "low";
-type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
+type ChatMessage = { role: "assistant" | "user"; content: string };
 
 const QUESTIONS = [
   "What should I call you?",
@@ -69,9 +69,8 @@ export function ChatOnboardingFlow({ firstName }: Props) {
       role: "assistant",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
-      confidence: "high",
     },
-    { role: "assistant", content: QUESTIONS[0], confidence: "high" },
+    { role: "assistant", content: QUESTIONS[0] },
   ]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -180,13 +179,13 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setInput("");
     const assessment = inferConfidenceAndClarifier(questionIndex, text);
     if (assessment.clarifier) {
-      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier!, confidence: assessment.confidence }]);
+      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier! }]);
     }
 
     if (questionIndex < QUESTIONS.length - 1) {
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex], confidence: "high" }]);
+      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex] }]);
       return;
     }
 
@@ -197,7 +196,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
         role: "assistant",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
-        confidence: "high",
       },
     ]);
   }
@@ -243,7 +241,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             {messages.map((msg, idx) => (
               <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--brand-muted)]" : "ml-auto bg-[color:var(--brand)] text-[color:var(--brand-foreground)]"}`}>
                 {msg.content}
-                {msg.confidence ? <div className="mt-1 text-[10px] opacity-70">Confidence: {msg.confidence}</div> : null}
               </div>
             ))}
           </div>

@@ -93,7 +93,7 @@ describe("ChatOnboardingFlow conversational", () => {
 
     expect(screen.getByText(/medical allergy or mostly a dislike/i)).toBeInTheDocument();
     expect(screen.getByText(/approximate times/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Confidence:/i)).not.toBeInTheDocument();
   });
 
   it("keeps start building disabled until profile is confirmed", () => {
