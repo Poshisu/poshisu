@@ -7,10 +7,10 @@ export default function HomePage() {
     <main id="main-content" tabIndex={-1} className="min-h-svh bg-[#050706] text-[#eef2ed] focus-visible:outline-none">
       <section className="relative h-[42svh] min-h-[300px] w-full overflow-hidden">
         <picture>
-          <source media="(max-width: 767px)" srcSet="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=80" />
+          <source media="(max-width: 767px)" srcSet="/images/landing-hero-mobile.svg" />
           <img
-            src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=2000&q=80"
-            alt="Fresh healthy food plate"
+            src="/images/landing-hero-desktop.svg"
+            alt="Fresh produce illustration"
             className="h-full w-full object-cover"
           />
         </picture>

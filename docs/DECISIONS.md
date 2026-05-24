@@ -390,3 +390,26 @@ This matches the requested UX model, reduces cognitive overload, and removes the
 
 ### Migration path
 If users request chat-like flexibility later, add a post-onboarding assistant refinement step inside `/chat` instead of reverting setup UX to transcript mode.
+
+## 2026-05-24 — Eliminate remote hero dependency for landing reliability (RDX-05C.1)
+
+### Context
+Founder review reported landing hero failures and broken first impression due to external image dependency/runtime fetch uncertainty.
+
+### Options considered
+1. Keep remote CDN image URLs and retry with different providers.
+2. Store hero assets in local app static files and serve responsive desktop/mobile variants.
+3. Delay hero until storage-hosted media pipeline is complete.
+
+### Decision
+Choose option 2. Ship local responsive hero assets under `public/images` so landing visuals are deterministic and do not depend on external image hosts.
+
+### Why
+This removes avoidable runtime failures, improves preview parity, and preserves visual intent while storage-hosted media workflows mature.
+
+### Tradeoffs
+- **Gain:** reliable render in all environments.
+- **Cost:** temporary use of illustration-style assets before final photographic brand pack is uploaded.
+
+### Migration path
+When brand photography is finalized, upload production hero assets to `nourish-public` bucket and swap `srcSet` paths without changing layout structure.
