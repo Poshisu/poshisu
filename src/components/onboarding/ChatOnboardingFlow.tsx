@@ -110,13 +110,31 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     }
   }
 
+  function labelDiet(value: OnboardingAnswers["dietary_pattern"]) {
+    const map: Record<OnboardingAnswers["dietary_pattern"], string> = {
+      veg: "Vegetarian",
+      "veg-egg": "Eggetarian",
+      "non-veg": "Non-vegetarian",
+      vegan: "Vegan",
+      jain: "Jain",
+      pescetarian: "Pescetarian",
+      none: "No restriction",
+    };
+    return map[value];
+  }
+
+  function friendlyValidationMessage(raw: string) {
+    if (raw.includes("Invalid option")) return "Please choose a valid diet option from the list.";
+    return raw;
+  }
+
   return (
-    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[#eef2ed]">
-      <Card className="border-[var(--border-soft)] bg-[#050706] shadow-none">
+    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[color:var(--foreground)]">
+      <Card className="border-[var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
         <CardHeader>
-          <div className="text-center text-sm text-[#7b867f]">{Math.min(step + 1, 6)} of 6</div>
-          <CardTitle as="h1" className="text-5xl text-[#f1f5f0]">{STEPS[Math.min(step, 5)]?.title}</CardTitle>
-          <CardDescription className="text-xl text-[#8f9d95]">{STEPS[Math.min(step, 5)]?.subtitle}</CardDescription>
+          <div className="text-center text-sm text-[color:var(--muted-foreground)]">{Math.min(step + 1, 6)} of 6</div>
+          <CardTitle as="h1" className="text-5xl text-[color:var(--foreground)]">{STEPS[Math.min(step, 5)]?.title}</CardTitle>
+          <CardDescription className="text-xl text-[color:var(--muted-foreground)]">{STEPS[Math.min(step, 5)]?.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {step === 0 && (
@@ -164,7 +182,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           )}
           {step === 5 && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-4 text-[#9faca4]">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-4 text-[#c7d5cd]">
                 <p>Poshisu provides general nutrition guidance based on the information you share.</p>
                 <p className="mt-2">This is not medical advice and should not replace a qualified doctor.</p>
               </div>
@@ -178,12 +196,16 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-5">
               <p className="mb-3 text-xl">What I understood</p>
               <ul className="list-disc space-y-1 pl-5 text-[#cfd8d2]">
-                {summary.map((item) => <li key={item}>{item}</li>)}
+                {summary.map((item) => (
+                  <li key={item}>
+                    {item.includes("Diet:") ? `Diet: ${labelDiet(draft.dietary_pattern)}` : item}
+                  </li>
+                ))}
               </ul>
             </div>
           )}
 
-          {error ? <div role="alert" className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-[#be3f31]">{error}</div> : null}
+          {error ? <div role="alert" className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-[#be3f31]">{friendlyValidationMessage(error)}</div> : null}
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={back} disabled={step === 0 || saving}>Back</Button>

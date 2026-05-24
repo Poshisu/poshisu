@@ -413,3 +413,26 @@ This removes avoidable runtime failures, improves preview parity, and preserves 
 
 ### Migration path
 When brand photography is finalized, upload production hero assets to `nourish-public` bucket and swap `srcSet` paths without changing layout structure.
+
+## 2026-05-24 — Add canonical design system markdown + readability remediation (RDX-05C.2)
+
+### Context
+Founder review flagged mismatch with provided design guidance and severe readability/contrast regressions (light text on cream cards, jarring mixed surfaces, internal validation strings leaking to end users).
+
+### Options considered
+1. Continue ad-hoc visual tweaks in components without a canonical guideline doc.
+2. Add a canonical `docs/DESIGN_SYSTEM.md` and perform a focused readability/accessibility pass on auth/onboarding surfaces.
+3. Roll back all redesign work and restart from scratch.
+
+### Decision
+Choose option 2. Establish `docs/DESIGN_SYSTEM.md` as explicit UI guidance and immediately remediate contrast/copy issues in onboarding and auth.
+
+### Why
+This creates durable implementation guardrails and fixes the highest-impact user-facing UX defects without losing ongoing progress.
+
+### Tradeoffs
+- **Gain:** clearer UI source-of-truth, improved readability/usability now.
+- **Cost:** requires ongoing discipline to keep route-level styling mapped to design tokens.
+
+### Migration path
+Expand DESIGN_SYSTEM coverage with component examples and enforce a PR checklist item requiring design-system compliance for future UI changes.

@@ -29,10 +29,10 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   const showSignInHint = error === "signup_email_in_use";
 
   return (
-    <Card className="border-[color:var(--border-soft)] bg-[#050706] shadow-none">
+    <Card className="border-[color:var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle as="h1" className="text-4xl text-[#f1f5f0]">Create account</CardTitle>
-        <CardDescription className="text-[#8f9d95]">Set up your coach in under two minutes.</CardDescription>
+        <CardTitle as="h1" className="text-4xl text-[color:var(--foreground)]">Create account</CardTitle>
+        <CardDescription className="text-[color:var(--muted-foreground)]">Set up your coach in under two minutes.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {checkEmail ? (
@@ -42,7 +42,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         ) : null}
 
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#d9e4dc]" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -52,7 +52,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-[#050706] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[#6f7a73]">
+            <span aria-hidden="true" className="bg-[color:var(--surface-raised)] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted-foreground)]">
               Or sign up with email
             </span>
           </div>
@@ -83,7 +83,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               aria-invalid={errorMessage ? true : undefined}
               aria-describedby={passwordDescribedBy}
             />
-            <p id="password-hint" className="text-xs text-[#7a8780]">
+            <p id="password-hint" className="text-xs text-[color:var(--muted-foreground)]">
               At least 8 characters.
             </p>
           </div>
@@ -109,7 +109,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           </SubmitButton>
         </form>
       </CardContent>
-      <CardFooter className="text-sm text-[#7a8780]">
+      <CardFooter className="text-sm text-[color:var(--muted-foreground)]">
         <p>
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-[#2f7f5a] underline underline-offset-4">

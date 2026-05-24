@@ -19,14 +19,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const errorMessage = authErrorMessage(error);
 
   return (
-    <Card className="border-[color:var(--border-soft)] bg-[#050706] shadow-none">
+    <Card className="border-[color:var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle as="h1" className="text-4xl text-[#f1f5f0]">Welcome back</CardTitle>
-        <CardDescription className="text-[#8f9d95]">Sign in and continue your plan.</CardDescription>
+        <CardTitle as="h1" className="text-4xl text-[color:var(--foreground)]">Welcome back</CardTitle>
+        <CardDescription className="text-[color:var(--muted-foreground)]">Sign in and continue your plan.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#d9e4dc]" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -36,7 +36,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-[#050706] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[#6f7a73]">
+            <span aria-hidden="true" className="bg-[color:var(--surface-raised)] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted-foreground)]">
               Or sign in with email
             </span>
           </div>
@@ -78,7 +78,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </SubmitButton>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col items-start gap-2 text-sm text-[#7a8780]">
+      <CardFooter className="flex flex-col items-start gap-2 text-sm text-[color:var(--muted-foreground)]">
         <p>
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="font-medium text-[#2f7f5a] underline underline-offset-4">
