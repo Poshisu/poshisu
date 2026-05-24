@@ -320,3 +320,26 @@ UAT pass is complete when:
 
 - All five modalities are marked PASS, or
 - Any FAIL has a fully completed failure triage block and linked evidence for engineering follow-up.
+
+---
+
+## RDX-04 closure attempt (2026-05-24)
+
+### Scope
+- Welcome/auth UX verification against redesign acceptance criteria.
+
+### Verification commands run
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run test:e2e -g "auth|protected /chat redirects"` ⚠️ blocked in this local environment (no Playwright Chromium binary)
+
+### Closure evidence (GitHub Actions)
+- CI run URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166`
+- Auth/scoped E2E job URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166/job/77589938852`
+- Job status: **succeeded** (`DB types and scoped E2E`, ~2m48s)
+- Artifact upload: `playwright-e2e-proof-26358607166.zip`
+- Artifact ID: `7184352005`
+- Artifact URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166/artifacts/7184352005`
+
+### Final status
+- RDX-04 is **closed** under the standing post-deploy verification SOP using CI pass evidence + finalized Playwright artifact bundle.
