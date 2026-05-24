@@ -65,52 +65,46 @@ function formatValidationError(error: z.ZodError<OnboardingAnswers>) {
 }
 
 export function ChatOnboardingFlow({ firstName }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const fallbackMessages: ChatMessage[] = [
     {
       role: "assistant",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
     },
     { role: "assistant", content: QUESTIONS[0] },
-  ]);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const [canRetry, setCanRetry] = useState(false);
-  const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
-  const [hydrated, setHydrated] = useState(false);
+  ];
 
-  useEffect(() => {
+  const readStoredState = (): { questionIndex: number; draft: OnboardingAnswers; messages: ChatMessage[] } | null => {
+    if (typeof window === "undefined") return null;
     try {
       const stored = window.localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!stored) {
-        setHydrated(true);
-        return;
-      }
-
+      if (!stored) return null;
       const parsed = JSON.parse(stored) as {
         questionIndex?: number;
         draft?: OnboardingAnswers;
         messages?: ChatMessage[];
       };
-
-      if (parsed.draft) setDraft(parsed.draft);
-      if (typeof parsed.questionIndex === "number") setQuestionIndex(parsed.questionIndex);
-      if (parsed.messages?.length) setMessages(parsed.messages);
+      if (typeof parsed.questionIndex !== "number" || !parsed.draft || !parsed.messages?.length) return null;
+      return { questionIndex: parsed.questionIndex, draft: parsed.draft, messages: parsed.messages };
     } catch {
-      // Ignore corrupted local state and continue with defaults.
-    } finally {
-      setHydrated(true);
+      return null;
     }
-  }, []);
+  };
+
+  const initialStoredState = readStoredState();
+  const [messages, setMessages] = useState<ChatMessage[]>(initialStoredState?.messages ?? fallbackMessages);
+  const [questionIndex, setQuestionIndex] = useState(initialStoredState?.questionIndex ?? 0);
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [canRetry, setCanRetry] = useState(false);
+  const [draft, setDraft] = useState<OnboardingAnswers>(initialStoredState?.draft ?? STARTING_DRAFT);
 
   useEffect(() => {
-    if (!hydrated) return;
     const snapshot = JSON.stringify({ questionIndex, draft, messages });
     window.localStorage.setItem(DRAFT_STORAGE_KEY, snapshot);
-  }, [draft, hydrated, messages, questionIndex]);
+  }, [draft, messages, questionIndex]);
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -262,7 +256,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
   return (
     <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
-      {!isReviewStep && hydrated ? (
+      {!isReviewStep ? (
         <p className="mb-2 text-xs text-muted-foreground">Your onboarding progress is saved on this device while you complete setup.</p>
       ) : null}
       <Card className="surface-card-hero rounded-3xl">
