@@ -29,10 +29,10 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   const showSignInHint = error === "signup_email_in_use";
 
   return (
-    <Card>
+    <Card className="border-[color:var(--border-soft)]/80 bg-[color:var(--surface-raised)]/95 shadow-[var(--shadow-lifted)] backdrop-blur">
       <CardHeader>
-        <CardTitle as="h1">Create your account</CardTitle>
-        <CardDescription>Get personalised nutrition coaching in under 2 minutes.</CardDescription>
+        <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Create your account</CardTitle>
+        <CardDescription>Set up your coach in under two minutes.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {checkEmail ? (
@@ -42,7 +42,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         ) : null}
 
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[color:var(--surface-raised)]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -52,8 +52,8 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-card px-2 text-muted-foreground">
-              or
+            <span aria-hidden="true" className="bg-card px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Or sign up with email
             </span>
           </div>
         </div>
