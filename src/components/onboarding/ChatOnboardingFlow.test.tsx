@@ -19,6 +19,7 @@ function completeReviewStep() {
 describe("ChatOnboardingFlow conversational", () => {
   beforeEach(() => {
     completeOnboardingActionMock.mockReset();
+    window.localStorage.clear();
   });
   it("disables submit while loading", async () => {
     completeOnboardingActionMock.mockImplementation(() => new Promise(() => {}));
@@ -61,6 +62,46 @@ describe("ChatOnboardingFlow conversational", () => {
     }
 
     expect(screen.getByText("What I understood")).toBeInTheDocument();
+  });
+
+  it("restores partial onboarding progress from local storage", () => {
+    window.localStorage.setItem(
+      "onboarding.chat.draft.v1",
+      JSON.stringify({
+        questionIndex: 2,
+        draft: {
+          name: "Aarti",
+          age: 29,
+          gender: "prefer-not-to-say",
+          height_cm: 165,
+          weight_kg: 65,
+          city: "Not shared",
+          primary_goal: "maintain",
+          conditions: [],
+          conditions_other: "",
+          medications_affecting_diet: "",
+          dietary_pattern: "none",
+          allergies: [],
+          dislikes: "",
+          meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
+          eating_context: "mixed",
+          estimation_preference: "midpoint",
+        },
+        messages: [
+          { role: "assistant", content: "What should I call you?" },
+          { role: "user", content: "Aarti" },
+          { role: "assistant", content: "How old are you?" },
+          { role: "user", content: "29" },
+          { role: "assistant", content: "What is your primary health goal right now?" },
+        ],
+      }),
+    );
+
+    render(<ChatOnboardingFlow firstName="Aarti" />);
+    expect(screen.getByText("Your onboarding progress is saved on this device while you complete setup.")).toBeInTheDocument();
+    expect(screen.getByText("What is your primary health goal right now?")).toBeInTheDocument();
+    expect(screen.getByText("Aarti")).toBeInTheDocument();
+    expect(screen.getByText("29")).toBeInTheDocument();
   });
 
   it("shows contextual chips and applies chip-driven updates", () => {

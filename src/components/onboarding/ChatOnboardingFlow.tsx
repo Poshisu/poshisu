@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import type { z } from "zod";
 type Props = { firstName: string };
 type ConfidenceLabel = "high" | "medium" | "low";
 type ChatMessage = { role: "assistant" | "user"; content: string };
+const DRAFT_STORAGE_KEY = "onboarding.chat.draft.v1";
 
 const QUESTIONS = [
   "What should I call you?",
@@ -79,6 +80,37 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [confirmed, setConfirmed] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!stored) {
+        setHydrated(true);
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as {
+        questionIndex?: number;
+        draft?: OnboardingAnswers;
+        messages?: ChatMessage[];
+      };
+
+      if (parsed.draft) setDraft(parsed.draft);
+      if (typeof parsed.questionIndex === "number") setQuestionIndex(parsed.questionIndex);
+      if (parsed.messages?.length) setMessages(parsed.messages);
+    } catch {
+      // Ignore corrupted local state and continue with defaults.
+    } finally {
+      setHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const snapshot = JSON.stringify({ questionIndex, draft, messages });
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, snapshot);
+  }, [draft, hydrated, messages, questionIndex]);
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -218,6 +250,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setError(null);
     try {
       await completeOnboardingAction(parsed.data);
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.location.assign("/chat");
     } catch {
       setError("We couldn’t save your onboarding yet. Check your connection and retry.");
@@ -229,6 +262,9 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
   return (
     <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
+      {!isReviewStep && hydrated ? (
+        <p className="mb-2 text-xs text-muted-foreground">Your onboarding progress is saved on this device while you complete setup.</p>
+      ) : null}
       <Card className="surface-card-hero rounded-3xl">
         <CardHeader>
           <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Nourish onboarding</CardTitle>
