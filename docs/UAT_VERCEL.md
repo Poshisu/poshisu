@@ -343,3 +343,28 @@ UAT pass is complete when:
 
 ### Final status
 - RDX-04 is **closed** under the standing post-deploy verification SOP using CI pass evidence + finalized Playwright artifact bundle.
+
+---
+
+## RDX-05.04 closure attempt (2026-05-24)
+
+### Scope
+- Onboarding UX closure gate for `RDX-05` (progressive flow + draft restore + start-over recovery).
+
+### Verification commands run
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` ✅
+- `pnpm run test:e2e -g onboarding` ⚠️ blocked in this local runtime
+
+### Blocker details
+- Local Playwright Chromium binary is unavailable (`browserType.launch: Executable doesn't exist`).
+- Failing local tests are environment-related (browser install missing), not onboarding assertion regressions.
+
+### SOP artifact status
+- ✅ Unit/component evidence complete.
+- ✅ RDX-05 UX behavior docs parity complete (task tracker reflects current increment notes).
+- ⛔ CI onboarding E2E run URL + job URL + artifact ID for this specific closure are still required to mark `RDX-05` done.
+
+### Interim status
+- RDX-05 remains **in_progress** until CI onboarding E2E evidence bundle is attached under this section.
