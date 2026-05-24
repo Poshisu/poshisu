@@ -3,26 +3,42 @@ import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className="flex min-h-svh flex-col items-center justify-center bg-muted/20 px-6 focus-visible:outline-none"
-    >
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Nourish</h1>
-        <p className="text-lg text-muted-foreground">
-          Your AI health coach. Log meals in plain English, get calorie ranges you can trust, and real nutrition insights
-          — built for Indian food and Indian bodies.
-        </p>
-        <div className="flex gap-3">
-          <Button asChild>
-            <Link href="/signup">Get started</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/login">Sign in</Link>
-          </Button>
+    <main id="main-content" tabIndex={-1} className="min-h-svh bg-[#050706] text-[#eef2ed] focus-visible:outline-none">
+      <section className="relative h-[42svh] min-h-[300px] w-full overflow-hidden">
+        <picture>
+          <source media="(max-width: 767px)" srcSet="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=80" />
+          <img
+            src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=2000&q=80"
+            alt="Fresh healthy food plate"
+            className="h-full w-full object-cover"
+          />
+        </picture>
+      </section>
+      <section className="mx-auto -mt-6 w-full max-w-3xl rounded-t-3xl bg-[#050706] px-6 pb-10 pt-8 sm:px-10">
+        <div className="space-y-6">
+          <h1 className="text-5xl leading-tight text-[#f2f5f1]">Your personal nutrition coach</h1>
+          <p className="text-lg leading-relaxed text-[#a0aca4]">
+            Chat naturally about what you eat. Nourish understands Indian food and gives you personalised guidance —
+            without the clinic.
+          </p>
+          <ul className="space-y-3 text-base text-[#d3ddd5]">
+            <li>✓ Chat-first logging — Just say what you ate</li>
+            <li>✓ Indian food library — Accurate estimates</li>
+            <li>✓ Personalised to you — Based on your health profile</li>
+          </ul>
+          <div className="flex w-full flex-col gap-3">
+            <Button asChild className="w-full">
+              <Link href="/signup">Get started</Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full text-[#9db9a8] hover:bg-[#0f1713]">
+              <Link href="/login">I already have an account</Link>
+            </Button>
+          </div>
+          <p className="text-center text-sm text-[#6f7a73]">
+            By continuing you agree to our Terms and Privacy Policy.
+          </p>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

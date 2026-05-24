@@ -131,3 +131,31 @@ If CI fails while local passes, capture:
 ## 7) Vercel deployment UAT (manual)
 
 For modality-focused manual UAT on Vercel (text/image/audio/file/chips), use `docs/UAT_VERCEL.md` as the canonical checklist and pass/fail reporting template.
+
+## 8) Standing post-deploy verification SOP (required for all RDX UI PRs)
+
+This SOP is mandatory for every UI-facing `RDX-*` PR (`RDX-03` onward) before merge recommendation.
+
+### 8.1 Required artifact bundle
+
+For each qualifying PR, include all of the following in PR evidence:
+
+1. Vercel preview URL for the exact commit under review.
+2. Command output for local/CI checks run (at minimum lint + typecheck; add tests/build as required by task).
+3. Mobile screenshots for three viewports:
+   - 390x844
+   - 393x852
+   - 430x932
+4. At least one execution trace artifact for the primary changed flow (Playwright trace, recording, or equivalent).
+5. A pass/fail checklist that maps directly to the task acceptance criteria.
+
+### 8.2 Minimum smoke flow matrix by task lane
+
+- **Auth/entry surfaces (`RDX-04`)**: welcome, login, signup, protected-route redirect behavior.
+- **Onboarding (`RDX-05`)**: full completion path, skip path, refresh recovery, validation/error states.
+- **Home/chat/Today (`RDX-06`,`RDX-07`)**: empty state, first message, estimate correction, confirm-save visibility.
+- **Profile/privacy (`RDX-08`)**: complete/incomplete profile states, export/delete access paths.
+
+### 8.3 Merge gate
+
+If any required artifact is missing, mark PR as **not merge-ready** until evidence is attached or a documented waiver is approved.

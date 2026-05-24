@@ -81,9 +81,10 @@ This is a **working codebase with the foundation implemented** plus the complete
 | `supabase/migrations/0009_push_endpoint_uniqueness.sql` | Enforces global uniqueness for push subscription endpoints |
 | `supabase/migrations/0010_memories_history_insert_policy.sql` | Allows audited memory history inserts through the intended policy path |
 | `supabase/migrations/0011_privacy_account_delete_rpc.sql` | Adds service-role-only transactional account deletion RPC for privacy controls |
+| `supabase/migrations/0012_storage_assets_bucket.sql` | Creates `nourish-assets` (private) and `nourish-public` (public) storage buckets with user-prefix policies |
 | `supabase/seed.sql` | IFCT food data seed (~30 common Indian foods) |
 
-**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql` → `0009_push_endpoint_uniqueness.sql` → `0010_memories_history_insert_policy.sql` → `0011_privacy_account_delete_rpc.sql`.
+**Migration dependency order (run in exact sequence):** `0001_init.sql` → `0002_memory_system.sql` → `0003_nudge_system.sql` → `0004_analytics_views.sql` → `0005_rate_limits.sql` → `0006_schedules.sql` → `0007_hybrid_pipeline_and_fixes.sql` → `0008_security_definer_hardening.sql` → `0009_push_endpoint_uniqueness.sql` → `0010_memories_history_insert_policy.sql` → `0011_privacy_account_delete_rpc.sql` → `0012_storage_assets_bucket.sql`.
 
 **Important:** The migration list is append-only. Never edit committed migration files; always add a new migration and update this list whenever a new migration is added.
 
