@@ -154,6 +154,8 @@ describe("ChatOnboardingFlow conversational", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Please correct this item");
   });
 
+
+
   it("shows a clear server failure message and supports retry", async () => {
     completeOnboardingActionMock
       .mockRejectedValueOnce(new Error("boom"))
