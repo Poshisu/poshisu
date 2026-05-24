@@ -274,3 +274,165 @@ This preserves velocity while making progress legible and auditable for product 
 ### Migration path
 If process overhead becomes too high, reduce required evidence to critical paths only (auth, onboarding, chat, meal save) while preserving same-PR docs parity.
 
+
+
+## 2026-05-22 — Lock redesign dependency and sign-off gates before UI rewrites
+
+### Context
+The redesign backlog existed, but dependency order and founder approval checkpoints were not explicitly locked. This risked parallel work on unstable foundations and subjective merge decisions.
+
+### Options considered
+1. Keep RDX tasks as a flat checklist without explicit gates.
+2. Add dependencies only in TASKS but no sign-off gates.
+3. Add dependency graph, owner lanes, and founder sign-off checkpoints before starting redesign code changes.
+
+### Decision
+Choose option 3. Lock the dependency graph + owner accountability + sign-off gates in the redesign execution plan as RDX-02 completion criteria.
+
+### Why
+This reduces sequencing mistakes, keeps PR scope reviewable, and gives product leadership explicit checkpoints before higher-risk tasks (Home merge, confirm-save, multimodal AI).
+
+### Tradeoffs
+- **Gain:** better delivery control, lower regression risk, clearer accountability.
+- **Cost:** additional process overhead and slower start to implementation.
+
+### Migration path
+If the process becomes too heavy during execution, keep the dependency graph but collapse sign-off checkpoints to three gates: post-onboarding, post-Home+estimate, and pre-release.
+
+## 2026-05-24 — Enforce standing post-deploy verification SOP for all RDX UI PRs
+
+### Context
+UI redesign work is moving quickly and requires repeatable post-deploy proof to avoid subjective review and regressions slipping through without evidence.
+
+### Options considered
+1. Keep evidence requirements distributed across task notes and ad hoc PR comments.
+2. Keep current PR template checks only (high-level, non-prescriptive).
+3. Add one canonical SOP with explicit artifact bundle requirements and enforce it via task tracker + PR template.
+
+### Decision
+Choose option 3. Canonicalize post-deploy verification in `TESTING.md` and enforce it as a fail-closed gate for all UI-facing `RDX-*` PRs.
+
+### Why
+A single SOP reduces ambiguity, speeds review, and guarantees every redesign PR includes comparable artifacts (preview URL, viewport screenshots, flow trace, acceptance mapping).
+
+### Tradeoffs
+- **Gain:** consistent release evidence, lower regression risk, faster founder review.
+- **Cost:** additional execution overhead per UI PR.
+
+### Migration path
+If overhead is too high, keep the same SOP structure but allow a reduced artifact bundle for low-risk copy-only UI changes with explicit documented waivers.
+
+## 2026-05-24 — Reopen RDX-05 and split a dedicated foundation slice (RDX-05A)
+
+### Context
+Founder review flagged that the previous RDX-05 closure delivered functional onboarding recovery improvements but did not achieve the intended premium visual quality baseline. A full route-level redesign without stabilizing shared tokens and primitives first would create rework risk and inconsistent UI behavior.
+
+### Options considered
+1. Keep RDX-05 marked done and proceed directly to route rewrites.
+2. Reopen RDX-05 and execute one monolithic redesign PR across all onboarding/auth/home/chat surfaces.
+3. Reopen RDX-05 and split a foundation-first slice (tokens + typography + shared primitives), then continue with route-specific slices.
+
+### Decision
+Choose option 3. Reopen `RDX-05` and add `RDX-05A` as a dedicated foundation slice to align palette, typography, spacing/radius/shadow semantics, and base form/button behavior before route-level redesign work.
+
+### Why
+This reduces regression risk, keeps diffs reviewable, and creates a single visual baseline reused by auth/onboarding/home/chat in subsequent PRs.
+
+### Tradeoffs
+- **Gain:** cleaner incremental rollout, lower rework, easier QA and a11y validation.
+- **Cost:** one additional PR step before route-level redesign.
+
+### Migration path
+If route-level redesign uncovers missing primitives, extend the token set in additional small foundation PRs rather than bypassing shared components with one-off styles.
+
+## 2026-05-24 — Execute auth/landing redesign as a separate PR slice (RDX-05B)
+
+### Context
+Founder feedback requested immediate visible quality improvement on welcome/auth flows while preserving existing auth behavior. A route-level slice was needed after foundational token work to deliver perceivable UX progress quickly.
+
+### Options considered
+1. Keep all route rewrites bundled with onboarding and home/chat in one large PR.
+2. Deliver landing+auth parity first as a distinct slice, then onboarding/home.
+3. Pause route work until all primitives are fully finalized.
+
+### Decision
+Choose option 2. Implement landing/auth visual parity in `RDX-05B` as a distinct, reviewable slice using the new foundation tokens and typography while leaving auth logic unchanged.
+
+### Why
+This gives fast user-visible improvements, keeps regression surface smaller, and allows focused QA on auth-related UX states (especially error presentation).
+
+### Tradeoffs
+- **Gain:** faster perceived quality improvements and clearer PR review scope.
+- **Cost:** temporary visual mismatch may remain on non-auth routes until subsequent slices land.
+
+### Migration path
+Apply the same shell/form/error visual patterns to onboarding and chat/home in follow-on slices (`RDX-05C+`) to complete parity.
+
+## 2026-05-24 — Switch onboarding from chat transcript to progressive step flow (RDX-05C)
+
+### Context
+Founder feedback highlighted three UX failures: landing hero instability, abrupt onboarding summary CTA outside the primary visual shell, and mismatch with requested progressive disclosure UX.
+
+### Options considered
+1. Keep chat transcript onboarding and restyle only the review card.
+2. Keep hybrid chat + steps model with partial transcript.
+3. Replace onboarding interaction model with strict one-screen-per-step progression and integrated review/submit.
+
+### Decision
+Choose option 3. RDX-05C replaces transcript-style onboarding with a progressive six-step flow and a final integrated review step in the same container.
+
+### Why
+This matches the requested UX model, reduces cognitive overload, and removes the abrupt "outside chat" summary break.
+
+### Tradeoffs
+- **Gain:** cleaner flow, better visual continuity, clearer validation per step.
+- **Cost:** previous transcript-oriented tests/components needed replacement.
+
+### Migration path
+If users request chat-like flexibility later, add a post-onboarding assistant refinement step inside `/chat` instead of reverting setup UX to transcript mode.
+
+## 2026-05-24 — Eliminate remote hero dependency for landing reliability (RDX-05C.1)
+
+### Context
+Founder review reported landing hero failures and broken first impression due to external image dependency/runtime fetch uncertainty.
+
+### Options considered
+1. Keep remote CDN image URLs and retry with different providers.
+2. Store hero assets in local app static files and serve responsive desktop/mobile variants.
+3. Delay hero until storage-hosted media pipeline is complete.
+
+### Decision
+Choose option 2. Ship local responsive hero assets under `public/images` so landing visuals are deterministic and do not depend on external image hosts.
+
+### Why
+This removes avoidable runtime failures, improves preview parity, and preserves visual intent while storage-hosted media workflows mature.
+
+### Tradeoffs
+- **Gain:** reliable render in all environments.
+- **Cost:** temporary use of illustration-style assets before final photographic brand pack is uploaded.
+
+### Migration path
+When brand photography is finalized, upload production hero assets to `nourish-public` bucket and swap `srcSet` paths without changing layout structure.
+
+## 2026-05-24 — Add canonical design system markdown + readability remediation (RDX-05C.2)
+
+### Context
+Founder review flagged mismatch with provided design guidance and severe readability/contrast regressions (light text on cream cards, jarring mixed surfaces, internal validation strings leaking to end users).
+
+### Options considered
+1. Continue ad-hoc visual tweaks in components without a canonical guideline doc.
+2. Add a canonical `docs/DESIGN_SYSTEM.md` and perform a focused readability/accessibility pass on auth/onboarding surfaces.
+3. Roll back all redesign work and restart from scratch.
+
+### Decision
+Choose option 2. Establish `docs/DESIGN_SYSTEM.md` as explicit UI guidance and immediately remediate contrast/copy issues in onboarding and auth.
+
+### Why
+This creates durable implementation guardrails and fixes the highest-impact user-facing UX defects without losing ongoing progress.
+
+### Tradeoffs
+- **Gain:** clearer UI source-of-truth, improved readability/usability now.
+- **Cost:** requires ongoing discipline to keep route-level styling mapped to design tokens.
+
+### Migration path
+Expand DESIGN_SYSTEM coverage with component examples and enforce a PR checklist item requiring design-system compliance for future UI changes.
