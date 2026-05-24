@@ -298,3 +298,26 @@ This reduces sequencing mistakes, keeps PR scope reviewable, and gives product l
 
 ### Migration path
 If the process becomes too heavy during execution, keep the dependency graph but collapse sign-off checkpoints to three gates: post-onboarding, post-Home+estimate, and pre-release.
+
+## 2026-05-24 — Enforce standing post-deploy verification SOP for all RDX UI PRs
+
+### Context
+UI redesign work is moving quickly and requires repeatable post-deploy proof to avoid subjective review and regressions slipping through without evidence.
+
+### Options considered
+1. Keep evidence requirements distributed across task notes and ad hoc PR comments.
+2. Keep current PR template checks only (high-level, non-prescriptive).
+3. Add one canonical SOP with explicit artifact bundle requirements and enforce it via task tracker + PR template.
+
+### Decision
+Choose option 3. Canonicalize post-deploy verification in `TESTING.md` and enforce it as a fail-closed gate for all UI-facing `RDX-*` PRs.
+
+### Why
+A single SOP reduces ambiguity, speeds review, and guarantees every redesign PR includes comparable artifacts (preview URL, viewport screenshots, flow trace, acceptance mapping).
+
+### Tradeoffs
+- **Gain:** consistent release evidence, lower regression risk, faster founder review.
+- **Cost:** additional execution overhead per UI PR.
+
+### Migration path
+If overhead is too high, keep the same SOP structure but allow a reduced artifact bundle for low-risk copy-only UI changes with explicit documented waivers.

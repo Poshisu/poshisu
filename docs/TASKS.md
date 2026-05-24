@@ -451,3 +451,6 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 - Every `RDX-*` PR must include docs parity updates (`README`, `docs/TASKS.md`, `docs/DECISIONS.md` as needed).
 - Every UI-facing `RDX-*` PR requires Vercel preview evidence + mobile screenshots before merge recommendation.
 
+### Standing enforcement note (effective 2026-05-24)
+- The canonical post-deploy verification SOP for all UI-facing `RDX-*` PRs is `TESTING.md` → "Standing post-deploy verification SOP".
+- RDX UI PRs are fail-closed when any required artifact bundle item is missing unless a waiver is explicitly approved and documented.
