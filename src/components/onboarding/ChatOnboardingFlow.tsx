@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,8 @@ import type { z } from "zod";
 
 type Props = { firstName: string };
 type ConfidenceLabel = "high" | "medium" | "low";
-type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
+type ChatMessage = { role: "assistant" | "user"; content: string };
+const DRAFT_STORAGE_KEY = "onboarding.chat.draft.v1";
 
 const QUESTIONS = [
   "What should I call you?",
@@ -54,7 +55,7 @@ function formatValidationIssue(issue: OnboardingValidationIssue) {
   if (field === "meal_times" || field.startsWith("meal_times.")) return issue.message;
   if (field === "goal_target_kg") return "Add a target weight for this goal, or choose maintain/wellness for now.";
   if (field === "goal_timeline_weeks") return "Add a goal timeline, or choose maintain/wellness for now.";
-  if (field === "conditions_other") return "If you share another condition, mark it as Other; otherwise answer No/None.";
+  if (field === "conditions_other") return "Health conditions: either select \"Other\" and type the condition, or answer \"None\" if you have no condition to add.";
   return issue.message;
 }
 
@@ -64,22 +65,61 @@ function formatValidationError(error: z.ZodError<OnboardingAnswers>) {
 }
 
 export function ChatOnboardingFlow({ firstName }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const fallbackMessages: ChatMessage[] = [
     {
       role: "assistant",
       content:
         `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
-      confidence: "high",
     },
-    { role: "assistant", content: QUESTIONS[0], confidence: "high" },
-  ]);
-  const [questionIndex, setQuestionIndex] = useState(0);
+    { role: "assistant", content: QUESTIONS[0] },
+  ];
+
+  const readStoredState = (): { questionIndex: number; draft: OnboardingAnswers; messages: ChatMessage[] } | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as {
+        questionIndex?: number;
+        draft?: OnboardingAnswers;
+        messages?: ChatMessage[];
+      };
+      if (typeof parsed.questionIndex !== "number" || !parsed.draft || !parsed.messages?.length) return null;
+      return { questionIndex: parsed.questionIndex, draft: parsed.draft, messages: parsed.messages };
+    } catch {
+      return null;
+    }
+  };
+
+  const initialStoredState = readStoredState();
+  const hasSavedDraftAtLoad = Boolean(initialStoredState);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialStoredState?.messages ?? fallbackMessages);
+  const [questionIndex, setQuestionIndex] = useState(initialStoredState?.questionIndex ?? 0);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
-  const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
+  const [draft, setDraft] = useState<OnboardingAnswers>(initialStoredState?.draft ?? STARTING_DRAFT);
+  const [hasSavedDraft, setHasSavedDraft] = useState(hasSavedDraftAtLoad);
+
+  useEffect(() => {
+    const snapshot = JSON.stringify({ questionIndex, draft, messages });
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, snapshot);
+  }, [draft, messages, questionIndex]);
+
+  function resetDraftAndRestart() {
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setMessages(fallbackMessages);
+    setQuestionIndex(0);
+    setDraft(STARTING_DRAFT);
+    setInput("");
+    setError(null);
+    setLoading(false);
+    setCanRetry(false);
+    setConfirmed(false);
+    setHasSavedDraft(false);
+  }
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -180,13 +220,13 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setInput("");
     const assessment = inferConfidenceAndClarifier(questionIndex, text);
     if (assessment.clarifier) {
-      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier!, confidence: assessment.confidence }]);
+      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier! }]);
     }
 
     if (questionIndex < QUESTIONS.length - 1) {
       const nextIndex = questionIndex + 1;
       setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex], confidence: "high" }]);
+      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex] }]);
       return;
     }
 
@@ -197,7 +237,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
         role: "assistant",
         content:
           "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
-        confidence: "high",
       },
     ]);
   }
@@ -220,6 +259,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     setError(null);
     try {
       await completeOnboardingAction(parsed.data);
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.location.assign("/chat");
     } catch {
       setError("We couldn’t save your onboarding yet. Check your connection and retry.");
@@ -231,6 +271,16 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
   return (
     <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
+      {!isReviewStep ? (
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <p>Your onboarding progress is saved on this device while you complete setup.</p>
+          {hasSavedDraft ? (
+            <Button type="button" variant="outline" className="h-7 rounded-full px-3 text-xs" onClick={resetDraftAndRestart}>
+              Start over
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       <Card className="surface-card-hero rounded-3xl">
         <CardHeader>
           <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Nourish onboarding</CardTitle>
@@ -243,7 +293,6 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             {messages.map((msg, idx) => (
               <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--brand-muted)]" : "ml-auto bg-[color:var(--brand)] text-[color:var(--brand-foreground)]"}`}>
                 {msg.content}
-                {msg.confidence ? <div className="mt-1 text-[10px] opacity-70">Confidence: {msg.confidence}</div> : null}
               </div>
             ))}
           </div>
