@@ -344,3 +344,26 @@ This reduces regression risk, keeps diffs reviewable, and creates a single visua
 
 ### Migration path
 If route-level redesign uncovers missing primitives, extend the token set in additional small foundation PRs rather than bypassing shared components with one-off styles.
+
+## 2026-05-24 — Execute auth/landing redesign as a separate PR slice (RDX-05B)
+
+### Context
+Founder feedback requested immediate visible quality improvement on welcome/auth flows while preserving existing auth behavior. A route-level slice was needed after foundational token work to deliver perceivable UX progress quickly.
+
+### Options considered
+1. Keep all route rewrites bundled with onboarding and home/chat in one large PR.
+2. Deliver landing+auth parity first as a distinct slice, then onboarding/home.
+3. Pause route work until all primitives are fully finalized.
+
+### Decision
+Choose option 2. Implement landing/auth visual parity in `RDX-05B` as a distinct, reviewable slice using the new foundation tokens and typography while leaving auth logic unchanged.
+
+### Why
+This gives fast user-visible improvements, keeps regression surface smaller, and allows focused QA on auth-related UX states (especially error presentation).
+
+### Tradeoffs
+- **Gain:** faster perceived quality improvements and clearer PR review scope.
+- **Cost:** temporary visual mismatch may remain on non-auth routes until subsequent slices land.
+
+### Migration path
+Apply the same shell/form/error visual patterns to onboarding and chat/home in follow-on slices (`RDX-05C+`) to complete parity.

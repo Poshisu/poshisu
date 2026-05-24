@@ -1,37 +1,45 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <main
-      id="main-content"
-      tabIndex={-1}
-      className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-[var(--surface-canvas)] px-6 focus-visible:outline-none"
-    >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-[var(--surface-brand-soft)] to-transparent" />
-        <div className="absolute -left-28 top-24 h-72 w-72 rounded-full bg-[color:var(--brand)]/8 blur-3xl" />
-        <div className="absolute -right-24 bottom-16 h-80 w-80 rounded-full bg-[color:var(--surface-brand-soft)] blur-3xl" />
-      </div>
-
-      <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-6 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-muted)]">Nourish</p>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight text-[color:var(--brand-muted)] sm:text-5xl">
-          Nourish your day.
-        </h1>
-        <p className="text-balance text-lg leading-relaxed text-muted-foreground">
-          An AI health coach for Indian food, real routines, and steady progress.
-        </p>
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/signup">Start your health setup</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/login">Sign in</Link>
-          </Button>
+    <main id="main-content" tabIndex={-1} className="min-h-svh bg-[#050706] text-[#eef2ed] focus-visible:outline-none">
+      <section className="relative h-[38svh] min-h-[280px] w-full overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1920&q=80"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </section>
+      <section className="mx-auto -mt-2 w-full max-w-2xl rounded-t-3xl border border-[var(--border-soft)] bg-[#050706] px-6 pb-10 pt-8 sm:px-10">
+        <div className="space-y-6">
+          <h1 className="text-5xl leading-tight text-[#f2f5f1]">Your personal nutrition coach</h1>
+          <p className="text-lg leading-relaxed text-[#a0aca4]">
+            Chat naturally about what you eat. Nourish understands Indian food and gives you personalised guidance —
+            without the clinic.
+          </p>
+          <ul className="space-y-3 text-base text-[#d3ddd5]">
+            <li>✓ Chat-first logging — Just say what you ate</li>
+            <li>✓ Indian food library — Accurate estimates</li>
+            <li>✓ Personalised to you — Based on your health profile</li>
+          </ul>
+          <div className="flex w-full flex-col gap-3">
+            <Button asChild className="w-full">
+              <Link href="/signup">Get started</Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full text-[#9db9a8] hover:bg-[#0f1713]">
+              <Link href="/login">I already have an account</Link>
+            </Button>
+          </div>
+          <p className="text-center text-sm text-[#6f7a73]">
+            By continuing you agree to our Terms and Privacy Policy.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">Built for everyday Indian meals. No food scales required.</p>
-      </div>
+      </section>
     </main>
   );
 }
