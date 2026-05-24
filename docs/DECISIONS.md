@@ -367,3 +367,26 @@ This gives fast user-visible improvements, keeps regression surface smaller, and
 
 ### Migration path
 Apply the same shell/form/error visual patterns to onboarding and chat/home in follow-on slices (`RDX-05C+`) to complete parity.
+
+## 2026-05-24 — Switch onboarding from chat transcript to progressive step flow (RDX-05C)
+
+### Context
+Founder feedback highlighted three UX failures: landing hero instability, abrupt onboarding summary CTA outside the primary visual shell, and mismatch with requested progressive disclosure UX.
+
+### Options considered
+1. Keep chat transcript onboarding and restyle only the review card.
+2. Keep hybrid chat + steps model with partial transcript.
+3. Replace onboarding interaction model with strict one-screen-per-step progression and integrated review/submit.
+
+### Decision
+Choose option 3. RDX-05C replaces transcript-style onboarding with a progressive six-step flow and a final integrated review step in the same container.
+
+### Why
+This matches the requested UX model, reduces cognitive overload, and removes the abrupt "outside chat" summary break.
+
+### Tradeoffs
+- **Gain:** cleaner flow, better visual continuity, clearer validation per step.
+- **Cost:** previous transcript-oriented tests/components needed replacement.
+
+### Migration path
+If users request chat-like flexibility later, add a post-onboarding assistant refinement step inside `/chat` instead of reverting setup UX to transcript mode.

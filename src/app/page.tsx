@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button";
 export default function HomePage() {
   return (
     <main id="main-content" tabIndex={-1} className="min-h-svh bg-[#050706] text-[#eef2ed] focus-visible:outline-none">
-      <section className="relative h-[38svh] min-h-[280px] w-full overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1920&q=80"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+      <section className="relative h-[42svh] min-h-[300px] w-full overflow-hidden">
+        <picture>
+          <source media="(max-width: 767px)" srcSet="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=900&q=80" />
+          <img
+            src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=2000&q=80"
+            alt="Fresh healthy food plate"
+            className="h-full w-full object-cover"
+          />
+        </picture>
       </section>
-      <section className="mx-auto -mt-2 w-full max-w-2xl rounded-t-3xl border border-[var(--border-soft)] bg-[#050706] px-6 pb-10 pt-8 sm:px-10">
+      <section className="mx-auto -mt-6 w-full max-w-3xl rounded-t-3xl bg-[#050706] px-6 pb-10 pt-8 sm:px-10">
         <div className="space-y-6">
           <h1 className="text-5xl leading-tight text-[#f2f5f1]">Your personal nutrition coach</h1>
           <p className="text-lg leading-relaxed text-[#a0aca4]">
