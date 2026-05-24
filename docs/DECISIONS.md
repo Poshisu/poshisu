@@ -274,3 +274,50 @@ This preserves velocity while making progress legible and auditable for product 
 ### Migration path
 If process overhead becomes too high, reduce required evidence to critical paths only (auth, onboarding, chat, meal save) while preserving same-PR docs parity.
 
+
+
+## 2026-05-22 — Lock redesign dependency and sign-off gates before UI rewrites
+
+### Context
+The redesign backlog existed, but dependency order and founder approval checkpoints were not explicitly locked. This risked parallel work on unstable foundations and subjective merge decisions.
+
+### Options considered
+1. Keep RDX tasks as a flat checklist without explicit gates.
+2. Add dependencies only in TASKS but no sign-off gates.
+3. Add dependency graph, owner lanes, and founder sign-off checkpoints before starting redesign code changes.
+
+### Decision
+Choose option 3. Lock the dependency graph + owner accountability + sign-off gates in the redesign execution plan as RDX-02 completion criteria.
+
+### Why
+This reduces sequencing mistakes, keeps PR scope reviewable, and gives product leadership explicit checkpoints before higher-risk tasks (Home merge, confirm-save, multimodal AI).
+
+### Tradeoffs
+- **Gain:** better delivery control, lower regression risk, clearer accountability.
+- **Cost:** additional process overhead and slower start to implementation.
+
+### Migration path
+If the process becomes too heavy during execution, keep the dependency graph but collapse sign-off checkpoints to three gates: post-onboarding, post-Home+estimate, and pre-release.
+
+## 2026-05-24 — Enforce standing post-deploy verification SOP for all RDX UI PRs
+
+### Context
+UI redesign work is moving quickly and requires repeatable post-deploy proof to avoid subjective review and regressions slipping through without evidence.
+
+### Options considered
+1. Keep evidence requirements distributed across task notes and ad hoc PR comments.
+2. Keep current PR template checks only (high-level, non-prescriptive).
+3. Add one canonical SOP with explicit artifact bundle requirements and enforce it via task tracker + PR template.
+
+### Decision
+Choose option 3. Canonicalize post-deploy verification in `TESTING.md` and enforce it as a fail-closed gate for all UI-facing `RDX-*` PRs.
+
+### Why
+A single SOP reduces ambiguity, speeds review, and guarantees every redesign PR includes comparable artifacts (preview URL, viewport screenshots, flow trace, acceptance mapping).
+
+### Tradeoffs
+- **Gain:** consistent release evidence, lower regression risk, faster founder review.
+- **Cost:** additional execution overhead per UI PR.
+
+### Migration path
+If overhead is too high, keep the same SOP structure but allow a reduced artifact bundle for low-risk copy-only UI changes with explicit documented waivers.
