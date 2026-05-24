@@ -24,6 +24,7 @@ When applicable, I updated the following documentation and kept it consistent wi
 - [ ] Feature maturity section in `README.md` updated (or explicitly `N/A` with reason).
 - [ ] Task tracker status in `docs/TASKS.md` updated (or explicitly `N/A` with reason).
 - [ ] User-visible behavior changes include test/UAT evidence links (CI, Playwright, or `docs/UAT_VERCEL.md`).
+- [ ] If this PR touches any UI-facing `RDX-*` task, post-deploy verification artifacts satisfy `TESTING.md` → "Standing post-deploy verification SOP".
 
 ## Risks / Rollback
 - Risks introduced:

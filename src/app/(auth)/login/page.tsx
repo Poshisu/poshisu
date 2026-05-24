@@ -19,14 +19,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const errorMessage = authErrorMessage(error);
 
   return (
-    <Card>
+    <Card className="border-[color:var(--border-soft)]/80 bg-[color:var(--surface-raised)]/95 shadow-[var(--shadow-lifted)] backdrop-blur">
       <CardHeader>
-        <CardTitle as="h1">Welcome back</CardTitle>
-        <CardDescription>Sign in to continue your health journey.</CardDescription>
+        <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Welcome back</CardTitle>
+        <CardDescription>Pick up where your coach left off.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[color:var(--surface-raised)]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -36,8 +36,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-card px-2 text-muted-foreground">
-              or
+            <span aria-hidden="true" className="bg-card px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Or sign in with email
             </span>
           </div>
         </div>
