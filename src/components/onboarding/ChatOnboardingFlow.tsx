@@ -54,7 +54,7 @@ function formatValidationIssue(issue: OnboardingValidationIssue) {
   if (field === "meal_times" || field.startsWith("meal_times.")) return issue.message;
   if (field === "goal_target_kg") return "Add a target weight for this goal, or choose maintain/wellness for now.";
   if (field === "goal_timeline_weeks") return "Add a goal timeline, or choose maintain/wellness for now.";
-  if (field === "conditions_other") return "If you share another condition, mark it as Other; otherwise answer No/None.";
+  if (field === "conditions_other") return "Health conditions: either select \"Other\" and type the condition, or answer \"None\" if you have no condition to add.";
   return issue.message;
 }
 

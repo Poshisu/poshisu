@@ -423,3 +423,34 @@ Use this as the day-to-day execution board. Only one task should be `in_progress
 ### S1-T01 closure status (2026-05-11)
 - `Onboarding E2E gate` is now green in CI and S1-T01 is closed.
 - Local environment limitations (browser download restrictions) remain documented for reference only; CI is the source-of-truth gate for onboarding E2E pass/fail.
+
+## Founder-requested redesign planning (2026-05-22)
+
+- New execution plan added at `docs/implementation/nourish_mvp_redesign_execution_plan.md` to sequence product reset, multimodal meal logging (text/photo/voice), Home merge, and Vercel UAT gates.
+- Treat this plan as the tactical backlog for upcoming PR slices while keeping `docs/BUILD_PLAN.md` as historical context.
+
+## Redesign execution queue (founder-requested, 2026-05-22)
+
+This queue is the working backlog for the redesign brief. It is intentionally PR-sized and execution-ordered.
+
+| ID | Lane | Task | Files likely touched | Acceptance criteria | Verify command | Status |
+|---|---|---|---|---|---|---|
+| RDX-01 | Discover/Product | Audit actual current UI/routes/components against redesign brief and capture gaps with screenshots map | `docs/implementation/nourish_redesign_repo_audit.md`, `docs/screenshots/current/*`, `src/app/**`, `src/components/**` | Audit doc lists current behavior, anti-pattern inventory, and exact file-level targets; no app behavior changed | `rg -n "Current route map|Anti-pattern inventory|File-level evidence map|Risk notes" docs/implementation/nourish_redesign_repo_audit.md` | done |
+| RDX-02 | Docs/Planning | Convert redesign brief into execution-ready backlog with dependency map and owners | `docs/TASKS.md`, `docs/implementation/nourish_mvp_redesign_execution_plan.md`, `docs/DECISIONS.md` | Sequenced tasks include acceptance criteria + verification + risk notes; PM sign-off checkpoint added | `rg -n "dependency graph|Owner lanes|sign-off checkpoints|Hard blockers" docs/implementation/nourish_mvp_redesign_execution_plan.md` | done |
+| RDX-03 | Frontend Design System | Apply Nourish tokens globally and remove hardcoded black/white/thick borders in shared UI | `src/app/globals.css`, `src/components/ui/**`, `src/components/**` | Shared components use semantic tokens; tap targets >=44px; no visible debug placeholder copy in shared primitives | `pnpm run lint && pnpm run typecheck` | done |
+| RDX-04 | Auth UX | Redesign welcome/sign-in/sign-up with premium mobile-first layout and updated copy | `src/app/page.tsx`, `src/app/(auth)/**`, `src/components/auth/**`, `docs/implementation/auth_redesign_notes.md` | Auth flows functionally unchanged; copy and visual hierarchy match brief; loading/error states included | `pnpm run test:e2e -g "auth|protected /chat redirects"` | in_progress |
+| RDX-05 | Onboarding UX | Replace fake chat onboarding with progressive 8-step conversational flow + skip/recovery | `src/components/onboarding/**`, `src/app/(onboarding)/**`, `src/lib/onboarding/**` | One-question-per-screen flow with chips + optional input; partial saves recover after refresh; completion summary to Home | `pnpm run test:e2e -g onboarding && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` | pending |
+| RDX-06 | Home IA | Merge Chat + Today into Home and simplify nav to Home/Trends/Me | `src/app/(app)/chat/**`, `src/app/(app)/today/**`, `src/components/navigation/**`, `src/components/chat/**` | Home shows daily summary + chat stream + docked composer; Today removed from primary nav; detail reachable via CTA | `pnpm run test:e2e -g "chat|today"` | pending |
+| RDX-07 | Meal Estimate Flow | Inline EstimateCard, correction chips, and confirmation-only save behavior | `src/components/chat/EstimateCard.tsx`, `src/lib/meals/**`, `src/app/api/chat/**`, `src/app/chat/confirm/**` | Estimate shows range/assumptions; correction chips apply; meal persists only after explicit confirmation | `pnpm run test -- src/lib/meals/confirm-save.integration.test.ts` | pending |
+| RDX-08 | Me/Profile UX | Rebuild Me as user-first profile/preferences/patterns; demote privacy controls lower | `src/app/(app)/profile/page.tsx`, `src/components/profile/**`, `src/app/api/privacy/**` | No backend/internal labels in first fold; export/delete remains reachable and tested | `pnpm run test:e2e -g "profile|privacy"` | pending |
+| RDX-09 | Multimodal AI | Add server routes and UI plumbing for text/photo/voice with feature flags and safe fallbacks | `src/app/api/ai/**`, `src/app/api/voice/**`, `src/lib/agents/**`, `src/lib/voice/**`, `.env.example`, `README.md` | Text/photo/voice flows work or are cleanly hidden by flags; no client-side secret exposure; mock mode documented | `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build` | pending |
+| RDX-10 | QA/Release Gate | Add regression tests, viewport checks, accessibility checks, and Vercel UAT evidence pack | `tests/**`, `playwright.config.*`, `docs/implementation/mvp_acceptance_checklist.md`, `docs/UAT_VERCEL.md` | MVP acceptance checklist fully completed with evidence links/screenshots/traces | `pnpm run test:e2e && pnpm run eval:prompts` | pending |
+
+### Working mode for this queue
+- Only one `RDX-*` task may be `in_progress` at a time.
+- Every `RDX-*` PR must include docs parity updates (`README`, `docs/TASKS.md`, `docs/DECISIONS.md` as needed).
+- Every UI-facing `RDX-*` PR requires Vercel preview evidence + mobile screenshots before merge recommendation.
+
+### Standing enforcement note (effective 2026-05-24)
+- The canonical post-deploy verification SOP for all UI-facing `RDX-*` PRs is `TESTING.md` → "Standing post-deploy verification SOP".
+- RDX UI PRs are fail-closed when any required artifact bundle item is missing unless a waiver is explicitly approved and documented.

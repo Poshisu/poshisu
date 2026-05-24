@@ -69,13 +69,6 @@ export const onboardingAnswersSchema = z
       });
     }
 
-    if (!value.conditions.includes("other") && value.conditions_other) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "conditions_other is only allowed when conditions include 'other'.",
-        path: ["conditions_other"],
-      });
-    }
   });
 
 export function parseOnboardingAnswers(input: unknown): OnboardingAnswers {
