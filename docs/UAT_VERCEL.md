@@ -361,10 +361,15 @@ UAT pass is complete when:
 - Local Playwright Chromium binary is unavailable (`browserType.launch: Executable doesn't exist`).
 - Failing local tests are environment-related (browser install missing), not onboarding assertion regressions.
 
+### CI closure evidence (provided)
+- CI run URL: `https://github.com/Poshisu/poshisu/actions/runs/26369531183`
+- Run summary status: `App gates` ✅ and `DB types and scoped E2E` ✅ (as shown in run summary screenshot).
+- Playwright artifact bundle: `playwright-e2e-proof-26369531183.zip`
+
 ### SOP artifact status
 - ✅ Unit/component evidence complete.
+- ✅ CI onboarding/auth scoped E2E evidence attached via run `26369531183` + Playwright proof bundle.
 - ✅ RDX-05 UX behavior docs parity complete (task tracker reflects current increment notes).
-- ⛔ CI onboarding E2E run URL + job URL + artifact ID for this specific closure are still required to mark `RDX-05` done.
 
-### Interim status
-- RDX-05 remains **in_progress** until CI onboarding E2E evidence bundle is attached under this section.
+### Final status
+- RDX-05 is **closed** under the standing post-deploy verification SOP.
