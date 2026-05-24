@@ -92,6 +92,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   };
 
   const initialStoredState = readStoredState();
+  const hasSavedDraftAtLoad = Boolean(initialStoredState);
   const [messages, setMessages] = useState<ChatMessage[]>(initialStoredState?.messages ?? fallbackMessages);
   const [questionIndex, setQuestionIndex] = useState(initialStoredState?.questionIndex ?? 0);
   const [input, setInput] = useState("");
@@ -100,11 +101,25 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [confirmed, setConfirmed] = useState(false);
   const [canRetry, setCanRetry] = useState(false);
   const [draft, setDraft] = useState<OnboardingAnswers>(initialStoredState?.draft ?? STARTING_DRAFT);
+  const [hasSavedDraft, setHasSavedDraft] = useState(hasSavedDraftAtLoad);
 
   useEffect(() => {
     const snapshot = JSON.stringify({ questionIndex, draft, messages });
     window.localStorage.setItem(DRAFT_STORAGE_KEY, snapshot);
   }, [draft, messages, questionIndex]);
+
+  function resetDraftAndRestart() {
+    window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setMessages(fallbackMessages);
+    setQuestionIndex(0);
+    setDraft(STARTING_DRAFT);
+    setInput("");
+    setError(null);
+    setLoading(false);
+    setCanRetry(false);
+    setConfirmed(false);
+    setHasSavedDraft(false);
+  }
 
   const isReviewStep = questionIndex >= QUESTIONS.length;
 
@@ -257,7 +272,14 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   return (
     <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
       {!isReviewStep ? (
-        <p className="mb-2 text-xs text-muted-foreground">Your onboarding progress is saved on this device while you complete setup.</p>
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <p>Your onboarding progress is saved on this device while you complete setup.</p>
+          {hasSavedDraft ? (
+            <Button type="button" variant="outline" className="h-7 rounded-full px-3 text-xs" onClick={resetDraftAndRestart}>
+              Start over
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       <Card className="surface-card-hero rounded-3xl">
         <CardHeader>
