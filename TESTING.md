@@ -159,3 +159,13 @@ For each qualifying PR, include all of the following in PR evidence:
 ### 8.3 Merge gate
 
 If any required artifact is missing, mark PR as **not merge-ready** until evidence is attached or a documented waiver is approved.
+
+
+## 9) Design system compliance gate (RDX UI PRs)
+
+For UI-facing `RDX-*` PRs, run:
+
+- `pnpm run check:design-tokens`
+- `pnpm exec playwright test tests/e2e/visual-parity.spec.ts --project=chromium`
+
+Fail-closed policy: if either check is missing/failing (without approved waiver), the PR is not merge-ready.

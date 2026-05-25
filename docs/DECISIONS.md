@@ -505,3 +505,26 @@ It closes the immediate regression loop quickly and creates an automated signal 
 
 ### Migration path
 Expand token consolidation to remaining app surfaces and add mobile-project screenshot baselines after this initial gate stabilizes.
+
+## 2026-05-25 — RDX-05D design-system governance hardening
+
+### Context
+UI quality drift persisted because the design system doc was too sparse and enforcement was optional, allowing ad-hoc styling and inconsistent UX decisions.
+
+### Options considered
+1. Keep existing lightweight doc and rely on reviewer judgment.
+2. Fully rewrite all UI immediately before adding governance checks.
+3. Adopt strict canonical design system + enforce via PR/CI gates, then iterate surfaces.
+
+### Decision
+Adopt option 3: canonicalize the full design system in `docs/DESIGN_SYSTEM.md` and enforce compliance with PR checklist + testing gates + token compliance script.
+
+### Why
+This creates a durable process boundary that prevents repeated regressions while allowing incremental UI improvement.
+
+### Tradeoffs
+- Gain: consistent readability/accessibility outcomes and reduced styling drift.
+- Cost: stricter PR process and occasional false positives in compliance checks needing scoped exceptions.
+
+### Migration path
+Phase 1: enforce on landing/auth/onboarding (current). Phase 2: expand compliance checks to all app surfaces and include mobile visual baselines in CI artifacts.
