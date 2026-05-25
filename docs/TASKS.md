@@ -468,3 +468,5 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 | RDX-05D.2 | Token contract hardening | Introduce explicit semantic token contract + compliance script for route-level UI. | `pnpm run check:design-tokens` | done |
 | RDX-05D.3 | UI governance enforcement | Add PR template and testing gates for design-system + visual parity compliance. | `rg -n "UI Design System Compliance" .github/PULL_REQUEST_TEMPLATE.md && rg -n "Design system compliance gate" TESTING.md` | done |
 | RDX-05D.4 | Docs parity and ADR | Record governance decision + rollout policy in DECISIONS/TASKS. | `rg -n "RDX-05D" docs/TASKS.md docs/DECISIONS.md` | done |
+
+- 2026-05-25: In-progress onboarding/auth dark-shell parity pass updated `ChatOnboardingFlow` to use full-viewport guided shell, progress rail, tokenized choice rows, and sticky safe-area CTA while preserving action behavior.
