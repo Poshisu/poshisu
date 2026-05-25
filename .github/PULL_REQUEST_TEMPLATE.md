@@ -24,6 +24,14 @@ When applicable, I updated the following documentation and kept it consistent wi
 - [ ] Feature maturity section in `README.md` updated (or explicitly `N/A` with reason).
 - [ ] Task tracker status in `docs/TASKS.md` updated (or explicitly `N/A` with reason).
 - [ ] User-visible behavior changes include test/UAT evidence links (CI, Playwright, or `docs/UAT_VERCEL.md`).
+- [ ] If this PR touches any UI-facing `RDX-*` task, post-deploy verification artifacts satisfy `TESTING.md` → "Standing post-deploy verification SOP".
+
+
+## UI Design System Compliance (required for UI PRs)
+- [ ] `docs/DESIGN_SYSTEM.md` reviewed before implementation.
+- [ ] Changed UI uses semantic tokens (no ad-hoc hardcoded route-level colors when token exists).
+- [ ] Accessibility checks included (contrast/focus/labels/error semantics).
+- [ ] Visual parity evidence included (`tests/e2e/visual-parity.spec.ts` or equivalent artifacts).
 
 ## Risks / Rollback
 - Risks introduced:

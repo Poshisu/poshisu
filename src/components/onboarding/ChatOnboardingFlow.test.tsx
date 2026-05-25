@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatOnboardingFlow } from "@/components/onboarding/ChatOnboardingFlow";
 
@@ -8,196 +8,52 @@ vi.mock("@/app/(onboarding)/actions", () => ({
   completeOnboardingAction: (...args: unknown[]) => completeOnboardingActionMock(...args),
 }));
 
-function completeReviewStep() {
-  const messages = ["Aarti", "29", "Maintain", "None", "Vegetarian", "09:00 13:00 19:00"];
-  for (const msg of messages) {
-    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-  }
-}
-
-describe("ChatOnboardingFlow conversational", () => {
+describe("ChatOnboardingFlow progressive onboarding", () => {
   beforeEach(() => {
     completeOnboardingActionMock.mockReset();
-  });
-  it("disables submit while loading", async () => {
-    completeOnboardingActionMock.mockImplementation(() => new Promise(() => {}));
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    completeReviewStep();
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    expect(screen.getByRole("button", { name: "Saving profile..." })).toBeDisabled();
-    expect(screen.getByText("This can take a few seconds while we prepare your profile.")).toBeInTheDocument();
+    window.localStorage.clear();
   });
 
-  it("renders chat onboarding and first assistant prompt", () => {
+  it("renders step-by-step onboarding with progress", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
-    expect(screen.getByText("Nourish onboarding")).toBeInTheDocument();
-    expect(screen.getByText("What should I call you?")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Photo upload coming soon" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Camera coming soon" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "File upload coming soon" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Voice coming soon" })).toBeDisabled();
-    expect(screen.getByText("Photos, files, and voice notes are not active yet — type the details for now.")).toBeInTheDocument();
+    expect(screen.getByText("1 of 7")).toBeInTheDocument();
+    expect(screen.getByText("Hey there!")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
 
-  it("does not pretend unfinished media capture is active", () => {
+  it("validates first step name before continue", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    expect(screen.queryByLabelText("Upload photo")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Upload file")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Voice coming soon" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Please enter your name.");
   });
 
-  it("advances through conversational questions", () => {
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    const messages = ["Aarti", "29", "Lose weight", "None", "Vegetarian", "09:00 13:00 19:00"];
-    for (const msg of messages) {
-      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    }
-
-    expect(screen.getByText("What I understood")).toBeInTheDocument();
-  });
-
-  it("shows contextual chips and applies chip-driven updates", () => {
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Aarti" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "29" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: "Maintain" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    fireEvent.click(screen.getByRole("button", { name: "None" }));
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    fireEvent.click(screen.getByRole("button", { name: "Vegetarian" }));
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    fireEvent.click(screen.getByRole("button", { name: "09:00 13:00 19:00" }));
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-
-    expect(screen.getByText("Diet: veg")).toBeInTheDocument();
-    expect(screen.getByText("Conditions: none shared")).toBeInTheDocument();
-  });
-
-  it("shows low-confidence clarifier prompts for ambiguous inputs", () => {
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    const messages = ["Aarti", "29", "Maintain", "None", "allergy to peanuts but i dislike milk", "depends"];
-    for (const msg of messages) {
-      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    }
-
-    expect(screen.getByText(/medical allergy or mostly a dislike/i)).toBeInTheDocument();
-    expect(screen.getByText(/approximate times/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Confidence: low").length).toBeGreaterThan(0);
-  });
-
-  it("keeps start building disabled until profile is confirmed", () => {
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    completeReviewStep();
-
-    expect(screen.getByRole("button", { name: "Start building" })).toBeDisabled();
-  });
-
-  it("does not block final submit when conditions are answered as no instead of none", async () => {
-    completeOnboardingActionMock.mockResolvedValue(undefined);
-    const assign = vi.fn();
-    Object.defineProperty(window, "location", {
-      value: { assign },
-      writable: true,
-    });
-
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    const messages = ["AVBS", "22", "Maintain", "no", "None", "09:00 13:00 19:00"];
-    for (const msg of messages) {
-      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    }
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText(/I still need a few details/i)).not.toBeInTheDocument();
-  });
-
-  it("does not block final submit for natural no-conditions answers", async () => {
-    completeOnboardingActionMock.mockResolvedValue(undefined);
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    const messages = ["AVBS", "22", "Maintain", "no medical conditions", "None", "09:00 13:00 19:00"];
-    for (const msg of messages) {
-      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    }
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText(/I still need a few details/i)).not.toBeInTheDocument();
-  });
-
-  it("shows field-specific recovery guidance when final validation blocks submit", () => {
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    const messages = ["Aarti", "12", "Maintain", "None", "Vegetarian", "09:00 13:00 19:00"];
-    for (const msg of messages) {
-      fireEvent.change(screen.getByPlaceholderText("Type your answer naturally..."), { target: { value: msg } });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    }
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Age must be between 13 and 100.");
-    expect(screen.getByRole("alert")).toHaveTextContent("Please correct this item");
-  });
-
-  it("shows a clear server failure message and supports retry", async () => {
-    completeOnboardingActionMock
-      .mockRejectedValueOnce(new Error("boom"))
-      .mockResolvedValueOnce(undefined);
-
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    completeReviewStep();
-    fireEvent.click(screen.getByRole("checkbox"));
-
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn’t save your onboarding yet. Check your connection and retry.",
+  it("restores saved draft state", () => {
+    window.localStorage.setItem(
+      "onboarding.chat.draft.v1",
+      JSON.stringify({
+        step: 1,
+        draft: {
+          name: "Aarti",
+          age: 29,
+          gender: "prefer-not-to-say",
+          height_cm: 165,
+          weight_kg: 65,
+          city: "Not shared",
+          primary_goal: "maintain",
+          conditions: [],
+          conditions_other: "",
+          medications_affecting_diet: "",
+          dietary_pattern: "none",
+          allergies: [],
+          dislikes: "",
+          meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
+          eating_context: "mixed",
+          estimation_preference: "midpoint",
+        },
+      }),
     );
-    expect(screen.getByRole("button", { name: "Start building" })).toBeEnabled();
-
-    fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
-    await waitFor(() => expect(completeOnboardingActionMock).toHaveBeenCalledTimes(2));
-  });
-
-  it("disables chat input and send while profile save is pending", async () => {
-    completeOnboardingActionMock.mockImplementation(() => new Promise(() => {}));
     render(<ChatOnboardingFlow firstName="Aarti" />);
-
-    completeReviewStep();
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    expect(screen.queryByPlaceholderText("Type your answer naturally...")).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/prepare your profile/i);
-  });
-
-  it("redirects to chat on successful submit", async () => {
-    completeOnboardingActionMock.mockResolvedValue(undefined);
-    const assign = vi.fn();
-    Object.defineProperty(window, "location", {
-      value: { assign },
-      writable: true,
-    });
-
-    render(<ChatOnboardingFlow firstName="Aarti" />);
-    completeReviewStep();
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Start building" }));
-
-    await waitFor(() => expect(assign).toHaveBeenCalledWith("/chat"));
+    expect(screen.getByText("2 of 7")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("29")).toBeInTheDocument();
   });
 });

@@ -19,14 +19,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const errorMessage = authErrorMessage(error);
 
   return (
-    <Card>
+    <Card className="border-[color:var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle as="h1">Welcome back</CardTitle>
-        <CardDescription>Sign in to continue your health journey.</CardDescription>
+        <CardTitle as="h1" className="text-4xl text-[color:var(--foreground)]">Welcome back</CardTitle>
+        <CardDescription className="text-[color:var(--muted-foreground)]">Sign in and continue your plan.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[var(--surface-panel-dark)] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -36,8 +36,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-card px-2 text-muted-foreground">
-              or
+            <span aria-hidden="true" className="bg-[color:var(--surface-raised)] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted-foreground)]">
+              Or sign in with email
             </span>
           </div>
         </div>
@@ -69,19 +69,19 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             />
           </div>
           {errorMessage ? (
-            <p id="login-error" role="alert" className="text-sm text-destructive">
+            <div id="login-error" role="alert" className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-base text-[var(--error-foreground)]">
               {errorMessage}
-            </p>
+            </div>
           ) : null}
           <SubmitButton className="w-full" pendingLabel="Signing in…">
             Sign in
           </SubmitButton>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col items-start gap-2 text-sm text-muted-foreground">
+      <CardFooter className="flex flex-col items-start gap-2 text-sm text-[color:var(--muted-foreground)]">
         <p>
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-medium text-foreground underline underline-offset-4">
+          <Link href="/signup" className="font-medium text-[#2f7f5a] underline underline-offset-4">
             Sign up
           </Link>
         </p>
