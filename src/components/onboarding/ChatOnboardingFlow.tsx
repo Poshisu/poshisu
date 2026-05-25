@@ -39,6 +39,7 @@ const STEPS = [
   { title: "How active are you?", subtitle: "On a typical day." },
   { title: "Health context", subtitle: "Helps with safer suggestions." },
   { title: "One last thing", subtitle: "Safety first." },
+  { title: "Review your profile", subtitle: "Please confirm this summary before we begin." },
 ] as const;
 
 type DraftState = { step: number; draft: OnboardingAnswers };
@@ -63,6 +64,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [dietInput, setDietInput] = useState("");
 
   useEffect(() => {
     const payload: DraftState = { step, draft };
@@ -86,6 +88,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     if (step === 0 && draft.name.trim().length < 2) return setError("Please enter your name.");
     if (step === 1 && (draft.age < 13 || draft.age > 100)) return setError("Age must be between 13 and 100.");
     if (step === 5 && !accepted) return setError("Please acknowledge the safety notice to continue.");
+    if (step === 4 && !draft.dietary_pattern) return setError("Please choose a diet pattern so we can personalize suggestions.");
     setStep((s) => Math.min(s + 1, STEPS.length));
   }
 
@@ -128,13 +131,24 @@ export function ChatOnboardingFlow({ firstName }: Props) {
     return raw;
   }
 
+  function parseDietaryPattern(value: string): OnboardingAnswers["dietary_pattern"] {
+    const lower = value.toLowerCase().trim();
+    if (lower.includes("egg")) return "veg-egg";
+    if (lower.includes("non")) return "non-veg";
+    if (lower.includes("vegan")) return "vegan";
+    if (lower.includes("jain")) return "jain";
+    if (lower.includes("pes")) return "pescetarian";
+    if (lower.includes("veg")) return "veg";
+    return "none";
+  }
+
   return (
     <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[color:var(--foreground)]">
       <Card className="border-[var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
         <CardHeader>
-          <div className="text-center text-sm text-[color:var(--muted-foreground)]">{Math.min(step + 1, 6)} of 6</div>
-          <CardTitle as="h1" className="text-5xl text-[color:var(--foreground)]">{STEPS[Math.min(step, 5)]?.title}</CardTitle>
-          <CardDescription className="text-xl text-[color:var(--muted-foreground)]">{STEPS[Math.min(step, 5)]?.subtitle}</CardDescription>
+          <div className="text-center text-sm text-[color:var(--muted-foreground)]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
+          <CardTitle as="h1" className="text-balance text-4xl text-[color:var(--foreground)] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
+          <CardDescription className="text-lg text-[color:var(--muted-foreground)] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {step === 0 && (
@@ -173,7 +187,17 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           {step === 4 && (
             <div className="space-y-4">
               <Input placeholder="Health conditions (comma separated) or None" onChange={(e) => setDraft((d) => ({ ...d, conditions_other: e.target.value }))} value={draft.conditions_other} />
-              <Input placeholder="Diet preference (veg, non-veg, vegan, etc.)" onChange={(e) => setDraft((d) => ({ ...d, dietary_pattern: e.target.value as OnboardingAnswers["dietary_pattern"] }))} value={draft.dietary_pattern} />
+              <div className="space-y-2">
+                <Input
+                  placeholder="Diet preference (veg, non-veg, vegan, etc.)"
+                  onChange={(e) => {
+                    setDietInput(e.target.value);
+                    setDraft((d) => ({ ...d, dietary_pattern: parseDietaryPattern(e.target.value) }));
+                  }}
+                  value={dietInput}
+                />
+                <p className="text-xs text-[color:var(--muted-foreground)]">Examples: Vegetarian, Non Veg, Vegan, Jain, Eggetarian.</p>
+              </div>
               <Input placeholder="Meal times (e.g. 09:00 13:00 19:00)" onChange={(e) => {
                 const found = e.target.value.match(/(\d{1,2}:\d{2})/g) ?? [];
                 setDraft((d) => ({ ...d, meal_times: { breakfast: found[0] ?? d.meal_times.breakfast, lunch: found[1] ?? d.meal_times.lunch, dinner: found[2] ?? d.meal_times.dinner } }));
@@ -192,7 +216,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
               </label>
             </div>
           )}
-          {step >= STEPS.length && (
+          {step >= STEPS.length - 1 && (
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-5">
               <p className="mb-3 text-xl">What I understood</p>
               <ul className="list-disc space-y-1 pl-5 text-[#cfd8d2]">
@@ -209,7 +233,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={back} disabled={step === 0 || saving}>Back</Button>
-            {step < STEPS.length ? (
+            {step < STEPS.length - 1 ? (
               <Button type="button" onClick={next} className="flex-1">Continue</Button>
             ) : (
               <Button type="button" onClick={() => void finish()} disabled={saving} className="flex-1">

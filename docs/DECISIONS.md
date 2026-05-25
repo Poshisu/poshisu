@@ -436,3 +436,26 @@ This creates durable implementation guardrails and fixes the highest-impact user
 
 ### Migration path
 Expand DESIGN_SYSTEM coverage with component examples and enforce a PR checklist item requiring design-system compliance for future UI changes.
+
+## 2026-05-24 — RDX-05C.3 screenshot defect remediation
+
+### Context
+Founder screenshots still showed unresolved onboarding defects after RDX-05C.2: low readability in step headers, validation text leaking internal enum language, and unclear final-step progression.
+
+### Options considered
+1. Keep current flow and patch only colors.
+2. Add a dedicated final review step and strengthen input-to-enum mapping plus readability updates.
+3. Revert to prior chat-thread onboarding flow.
+
+### Decision
+Choose option 2. Keep progressive onboarding and remediate screenshot defects by adding an explicit review step, improving heading/body contrast, and mapping diet input to valid schema enums before submit.
+
+### Why
+This resolves the most visible UX defects while preserving the preferred progressive interaction model and minimizing churn.
+
+### Tradeoffs
+- **Gain:** cleaner final flow, fewer user-facing validation failures, improved readability.
+- **Cost:** slight increase in setup steps (6 -> 7 screens) and additional state handling.
+
+### Migration path
+If completion rate drops with the extra review step, collapse review into the safety step while retaining friendly validation mapping.

@@ -16,7 +16,7 @@ describe("ChatOnboardingFlow progressive onboarding", () => {
 
   it("renders step-by-step onboarding with progress", () => {
     render(<ChatOnboardingFlow firstName="Aarti" />);
-    expect(screen.getByText("1 of 6")).toBeInTheDocument();
+    expect(screen.getByText("1 of 7")).toBeInTheDocument();
     expect(screen.getByText("Hey there!")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
@@ -53,7 +53,7 @@ describe("ChatOnboardingFlow progressive onboarding", () => {
       }),
     );
     render(<ChatOnboardingFlow firstName="Aarti" />);
-    expect(screen.getByText("2 of 6")).toBeInTheDocument();
+    expect(screen.getByText("2 of 7")).toBeInTheDocument();
     expect(screen.getByDisplayValue("29")).toBeInTheDocument();
   });
 });
