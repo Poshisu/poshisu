@@ -57,3 +57,4 @@ describe("ChatOnboardingFlow progressive onboarding", () => {
     expect(screen.getByDisplayValue("29")).toBeInTheDocument();
   });
 });
+
