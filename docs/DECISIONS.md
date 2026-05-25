@@ -528,3 +528,25 @@ This creates a durable process boundary that prevents repeated regressions while
 
 ### Migration path
 Phase 1: enforce on landing/auth/onboarding (current). Phase 2: expand compliance checks to all app surfaces and include mobile visual baselines in CI artifacts.
+
+## 2026-05-25 — Onboarding dark-shell guided flow restyle (scoped UI parity)
+
+### Context
+Founders requested onboarding/auth visuals move from floating light-card patterns toward a dark full-viewport guided shell without backend behavior changes.
+
+### Options considered
+1. Small polish on existing cream card
+2. Full UX rewrite + data model changes
+3. Scoped UI restyle preserving existing onboarding contract
+
+### Decision
+Choose option 3 and ship a scoped onboarding UI restyle with token-driven dark shell, progress affordance, choice rows, and sticky CTA area.
+
+### Why
+Delivers visual direction quickly while limiting regression risk in onboarding completion behavior.
+
+### Tradeoffs
+Improved parity but further polish is still needed for complete screenshot-level model matching across all auth routes.
+
+### Migration path
+Extend the same primitives into auth and remaining onboarding microstates in follow-up slices.
