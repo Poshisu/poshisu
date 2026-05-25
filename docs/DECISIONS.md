@@ -528,3 +528,47 @@ This creates a durable process boundary that prevents repeated regressions while
 
 ### Migration path
 Phase 1: enforce on landing/auth/onboarding (current). Phase 2: expand compliance checks to all app surfaces and include mobile visual baselines in CI artifacts.
+
+## 2026-05-25 — Onboarding dark-shell guided flow restyle (scoped UI parity)
+
+### Context
+Founders requested onboarding/auth visuals move from floating light-card patterns toward a dark full-viewport guided shell without backend behavior changes.
+
+### Options considered
+1. Small polish on existing cream card
+2. Full UX rewrite + data model changes
+3. Scoped UI restyle preserving existing onboarding contract
+
+### Decision
+Choose option 3 and ship a scoped onboarding UI restyle with token-driven dark shell, progress affordance, choice rows, and sticky CTA area.
+
+### Why
+Delivers visual direction quickly while limiting regression risk in onboarding completion behavior.
+
+### Tradeoffs
+Improved parity but further polish is still needed for complete screenshot-level model matching across all auth routes.
+
+### Migration path
+Extend the same primitives into auth and remaining onboarding microstates in follow-up slices.
+
+## 2026-05-25 — RDX-05 dark-shell onboarding/auth parity follow-up
+
+### Context
+Prior RDX onboarding/auth pass remained too light-card and generic compared to target model screenshots and founder feedback.
+
+### Options considered
+1. Keep minimal patch on light card visuals
+2. Broad route rewrite with backend/scope changes
+3. Scoped UI parity follow-up preserving behavior contracts
+
+### Decision
+Choose option 3 and apply a focused onboarding/auth dark-shell parity pass while preserving existing auth/onboarding behaviors.
+
+### Why
+Improves model-direction visual fidelity without introducing backend or policy risk.
+
+### Tradeoffs
+Still incremental; future polish may refine chip density and visual micro-interactions.
+
+### Migration path
+Continue with small follow-up primitives/screenshots until RDX-05 visual acceptance gate is met.
