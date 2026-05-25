@@ -2,247 +2,65 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
 
 type Props = { firstName: string };
 const DRAFT_STORAGE_KEY = "onboarding.chat.draft.v1";
 
-const STARTING_DRAFT: OnboardingAnswers = {
-  name: "",
-  age: 25,
-  gender: "prefer-not-to-say",
-  height_cm: 165,
-  weight_kg: 65,
-  city: "Not shared",
-  primary_goal: "maintain",
-  goal_target_kg: undefined,
-  goal_timeline_weeks: undefined,
-  conditions: [],
-  conditions_other: "",
-  medications_affecting_diet: "",
-  dietary_pattern: "none",
-  allergies: [],
-  dislikes: "",
-  meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
-  eating_context: "mixed",
-  estimation_preference: "midpoint",
-};
+const STARTING_DRAFT: OnboardingAnswers = { name: "", age: 25, gender: "prefer-not-to-say", height_cm: 165, weight_kg: 65, city: "Not shared", primary_goal: "maintain", goal_target_kg: undefined, goal_timeline_weeks: undefined, conditions: [], conditions_other: "", medications_affecting_diet: "", dietary_pattern: "none", allergies: [], dislikes: "", meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" }, eating_context: "mixed", estimation_preference: "midpoint" };
+const STEPS = ["Hey there!", "A bit about you", "What's your goal?", "How active are you?", "Health context", "One last thing", "Review your profile"] as const;
 
-const STEPS = [
-  { title: "Hey there!", subtitle: "Let’s start with your name." },
-  { title: "A bit about you", subtitle: "Helps us personalise calorie estimates." },
-  { title: "What’s your goal?", subtitle: "No pressure — you can change this any time." },
-  { title: "How active are you?", subtitle: "On a typical day." },
-  { title: "Health context", subtitle: "Helps with safer suggestions." },
-  { title: "One last thing", subtitle: "Safety first." },
-  { title: "Review your profile", subtitle: "Please confirm this summary before we begin." },
-] as const;
+const activityOptions: Array<{ value: OnboardingAnswers["eating_context"]; label: string }> = [{ value: "home", label: "Mostly home-cooked" }, { value: "mixed", label: "Home + outside mix" }, { value: "out", label: "Mostly outside food" }, { value: "varies", label: "Varies day to day" }];
+const goalOptions: Array<{ value: OnboardingAnswers["primary_goal"]; label: string; detail: string }> = [
+  { value: "lose-weight", label: "Lose weight", detail: "Steady fat loss with safe pacing." },
+  { value: "maintain", label: "Maintain", detail: "Keep weight stable with better consistency." },
+  { value: "gain-weight", label: "Build muscle", detail: "Lean gain with protein-forward guidance." },
+  { value: "wellness", label: "General wellness", detail: "Improve overall energy and habits." },
+];
 
-type DraftState = { step: number; draft: OnboardingAnswers };
+function row(selected: boolean) {
+  return `w-full rounded-2xl border px-4 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-muted)] min-h-11 ${selected ? "border-[var(--brand-muted)] bg-[var(--surface-raised)] text-[var(--foreground-on-dark-strong)]" : "border-[var(--border-soft)] bg-[var(--surface-panel-dark)] text-[var(--foreground-on-dark)] hover:border-[var(--brand-muted)]"}`;
+}
 
 export function ChatOnboardingFlow({ firstName }: Props) {
-  const readStored = (): DraftState | null => {
-    if (typeof window === "undefined") return null;
-    try {
-      const saved = window.localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!saved) return null;
-      const parsed = JSON.parse(saved) as DraftState;
-      if (typeof parsed.step !== "number" || !parsed.draft) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  };
-
-  const initialStored = readStored();
+  const initialStored = typeof window === "undefined" ? null : (() => { try { const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY); return raw ? (JSON.parse(raw) as { step: number; draft: OnboardingAnswers }) : null; } catch { return null; } })();
   const [step, setStep] = useState(initialStored?.step ?? 0);
   const [draft, setDraft] = useState<OnboardingAnswers>(initialStored?.draft ?? STARTING_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [accepted, setAccepted] = useState(false);
-  const [dietInput, setDietInput] = useState("");
 
-  useEffect(() => {
-    const payload: DraftState = { step, draft };
-    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
-  }, [step, draft]);
+  useEffect(() => { window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ step, draft })); }, [step, draft]);
 
-  const summary = useMemo(
-    () => [
-      `Name: ${draft.name || firstName}`,
-      `Age: ${draft.age}`,
-      `Goal: ${draft.primary_goal}`,
-      `Conditions: ${draft.conditions.length ? draft.conditions.join(", ") : "none shared"}`,
-      `Diet: ${draft.dietary_pattern}`,
-      `Meal times: ${draft.meal_times.breakfast}, ${draft.meal_times.lunch}, ${draft.meal_times.dinner}`,
-    ],
-    [draft, firstName],
-  );
+  const progress = ((step + 1) / STEPS.length) * 100;
+  const summary = useMemo(() => [
+    `Name: ${draft.name || firstName}`,
+    `About: ${draft.age} years · ${draft.height_cm} cm · ${draft.weight_kg} kg`,
+    `Goal: ${draft.primary_goal}`,
+    `Activity: ${draft.eating_context}`,
+    `Health notes: ${draft.conditions_other || "None shared"}`,
+    `Diet: ${draft.dietary_pattern}`,
+  ], [draft, firstName]);
 
-  function next() {
-    setError(null);
-    if (step === 0 && draft.name.trim().length < 2) return setError("Please enter your name.");
-    if (step === 1 && (draft.age < 13 || draft.age > 100)) return setError("Age must be between 13 and 100.");
-    if (step === 5 && !accepted) return setError("Please acknowledge the safety notice to continue.");
-    if (step === 4 && !draft.dietary_pattern) return setError("Please choose a diet pattern so we can personalize suggestions.");
-    setStep((s) => Math.min(s + 1, STEPS.length));
-  }
-
-  function back() {
-    setError(null);
-    setStep((s) => Math.max(s - 1, 0));
-  }
+  const next = () => { setError(null); if (step === 0 && draft.name.trim().length < 2) return setError("Please enter your name."); if (step === 1 && (draft.age < 13 || draft.age > 100)) return setError("Age must be between 13 and 100."); if (step === 5 && !accepted) return setError("Please acknowledge the safety notice to continue."); setStep((s) => Math.min(s + 1, STEPS.length - 1)); };
+  const back = () => setStep((s) => Math.max(s - 1, 0));
 
   async function finish() {
-    setError(null);
     const parsed = onboardingAnswersSchema.safeParse(draft);
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Please check your details.");
+    if (!parsed.success) return setError("Please review your details before continuing.");
     setSaving(true);
-    try {
-      await completeOnboardingAction(parsed.data);
-      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-      window.location.assign("/chat");
-    } catch {
-      setError("We couldn’t save your onboarding yet. Check your connection and retry.");
-    } finally {
-      setSaving(false);
-    }
+    try { await completeOnboardingAction(parsed.data); window.localStorage.removeItem(DRAFT_STORAGE_KEY); window.location.assign("/chat"); } catch { setError("We couldn’t save yet. Please retry."); } finally { setSaving(false); }
   }
 
-  function labelDiet(value: OnboardingAnswers["dietary_pattern"]) {
-    const map: Record<OnboardingAnswers["dietary_pattern"], string> = {
-      veg: "Vegetarian",
-      "veg-egg": "Eggetarian",
-      "non-veg": "Non-vegetarian",
-      vegan: "Vegan",
-      jain: "Jain",
-      pescetarian: "Pescetarian",
-      none: "No restriction",
-    };
-    return map[value];
-  }
-
-  function friendlyValidationMessage(raw: string) {
-    if (raw.includes("Invalid option")) return "Please choose a valid diet option from the list.";
-    return raw;
-  }
-
-  function parseDietaryPattern(value: string): OnboardingAnswers["dietary_pattern"] {
-    const lower = value.toLowerCase().trim();
-    if (lower.includes("egg")) return "veg-egg";
-    if (lower.includes("non")) return "non-veg";
-    if (lower.includes("vegan")) return "vegan";
-    if (lower.includes("jain")) return "jain";
-    if (lower.includes("pes")) return "pescetarian";
-    if (lower.includes("veg")) return "veg";
-    return "none";
-  }
-
-  return (
-    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[var(--surface-app-dark)] px-4 py-6 text-[#1a1a1a]">
-      <Card className="border-[#c7d2c8] bg-[var(--surface-raised)] shadow-[var(--shadow-card)]">
-        <CardHeader>
-          <div className="text-center text-sm text-[#75847b]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
-          <CardTitle as="h1" className="text-balance text-4xl text-[var(--brand)] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
-          <CardDescription className="text-lg text-[#6f8277] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {step === 0 && (
-            <Input value={draft.name} placeholder="Priya, Rahul, Ananya..." onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
-          )}
-          {step === 1 && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input type="number" value={draft.age} onChange={(e) => setDraft((d) => ({ ...d, age: Number(e.target.value) || d.age }))} placeholder="Age" />
-              <Input type="number" value={draft.height_cm} onChange={(e) => setDraft((d) => ({ ...d, height_cm: Number(e.target.value) || d.height_cm }))} placeholder="Height (cm)" />
-              <Input type="number" value={draft.weight_kg} onChange={(e) => setDraft((d) => ({ ...d, weight_kg: Number(e.target.value) || d.weight_kg }))} placeholder="Weight (kg)" />
-            </div>
-          )}
-          {step === 2 && (
-            <div className="grid gap-3">
-              {[
-                ["lose-weight", "Lose weight"],
-                ["maintain", "Maintain weight"],
-                ["gain-weight", "Build muscle"],
-                ["wellness", "Eat healthier"],
-              ].map(([value, label]) => (
-                <Button key={value} type="button" variant={draft.primary_goal === value ? "default" : "outline"} onClick={() => setDraft((d) => ({ ...d, primary_goal: value as OnboardingAnswers["primary_goal"] }))} className="justify-start">
-                  {label}
-                </Button>
-              ))}
-            </div>
-          )}
-          {step === 3 && (
-            <div className="grid gap-3">
-              {["mostly-sitting", "light-activity", "moderately-active", "very-active"].map((opt) => (
-                <Button key={opt} type="button" variant={draft.eating_context === "mixed" && opt === "moderately-active" ? "default" : "outline"} onClick={() => setDraft((d) => ({ ...d, eating_context: "mixed" }))} className="justify-start">
-                  {opt.replace("-", " ")}
-                </Button>
-              ))}
-            </div>
-          )}
-          {step === 4 && (
-            <div className="space-y-4">
-              <Input placeholder="Health conditions (comma separated) or None" onChange={(e) => setDraft((d) => ({ ...d, conditions_other: e.target.value }))} value={draft.conditions_other} />
-              <div className="space-y-2">
-                <Input
-                  placeholder="Diet preference (veg, non-veg, vegan, etc.)"
-                  onChange={(e) => {
-                    setDietInput(e.target.value);
-                    setDraft((d) => ({ ...d, dietary_pattern: parseDietaryPattern(e.target.value) }));
-                  }}
-                  value={dietInput}
-                />
-                <p className="text-xs text-[color:var(--muted-foreground)]">Examples: Vegetarian, Non Veg, Vegan, Jain, Eggetarian.</p>
-              </div>
-              <Input placeholder="Meal times (e.g. 09:00 13:00 19:00)" onChange={(e) => {
-                const found = e.target.value.match(/(\d{1,2}:\d{2})/g) ?? [];
-                setDraft((d) => ({ ...d, meal_times: { breakfast: found[0] ?? d.meal_times.breakfast, lunch: found[1] ?? d.meal_times.lunch, dinner: found[2] ?? d.meal_times.dinner } }));
-              }} />
-            </div>
-          )}
-          {step === 5 && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-[#2a3a30] bg-[var(--surface-panel-dark)] p-4 text-[var(--success-soft-foreground)]">
-                <p>Poshisu provides general nutrition guidance based on the information you share.</p>
-                <p className="mt-2">This is not medical advice and should not replace a qualified doctor.</p>
-              </div>
-              <label className="flex items-start gap-2 text-lg">
-                <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-1 h-6 w-6" />
-                I understand Poshisu provides nutrition guidance only, not medical advice.
-              </label>
-            </div>
-          )}
-          {step >= STEPS.length - 1 && (
-            <div className="rounded-2xl border border-[#2a3a30] bg-[var(--surface-panel-dark)] p-5">
-              <p className="mb-3 text-xl text-[var(--foreground-on-dark-strong)]">What I understood</p>
-              <ul className="list-disc space-y-1 pl-5 text-[var(--foreground-on-dark)]">
-                {summary.map((item) => (
-                  <li key={item}>
-                    {item.includes("Diet:") ? `Diet: ${labelDiet(draft.dietary_pattern)}` : item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {error ? <div role="alert" className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-[var(--error-foreground)]">{friendlyValidationMessage(error)}</div> : null}
-
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={back} disabled={step === 0 || saving}>Back</Button>
-            {step < STEPS.length - 1 ? (
-              <Button type="button" onClick={next} className="flex-1">Continue</Button>
-            ) : (
-              <Button type="button" onClick={() => void finish()} disabled={saving} className="flex-1">
-                {saving ? "Saving profile..." : "Let's begin"}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </main>
-  );
+  return <main className="min-h-svh bg-[var(--surface-app-dark)] text-[var(--foreground-on-dark)]"><div className="mx-auto flex w-full max-w-2xl flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:px-6"><div className="mb-5"><div className="mb-2 h-1.5 w-full rounded-full bg-[var(--surface-panel-dark)]"><div className="h-full rounded-full bg-[var(--brand-muted)]" style={{ width: `${progress}%` }} /></div><p className="text-xs text-[var(--foreground-on-dark-muted)]">{step + 1} of {STEPS.length}</p></div><section className="flex-1 space-y-5 overflow-y-auto pb-28"><h1 className="text-4xl text-[var(--foreground-on-dark-strong)]">{STEPS[step]}</h1>
+    {step === 0 && <label className="block"><span className="mb-2 block text-sm">First name</span><input className={row(false)} value={draft.name} onChange={(e)=>setDraft((d)=>({...d,name:e.target.value}))} placeholder="Your first name" /></label>}
+    {step === 1 && <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">{[["Age","age"],["Height (cm)","height_cm"],["Weight (kg)","weight_kg"]].map(([label,key])=><label key={key} className="block"><span className="mb-2 block text-sm">{label}</span><input inputMode="numeric" className={row(false)} value={String(draft[key as keyof OnboardingAnswers] as number)} onChange={(e)=>setDraft((d)=>({...d,[key]:Number(e.target.value)||d[key as keyof OnboardingAnswers]}))} /></label>)}</div>}
+    {step === 2 && <div className="space-y-3">{goalOptions.map((g)=><button key={g.value} type="button" className={row(draft.primary_goal===g.value)} onClick={()=>setDraft((d)=>({...d,primary_goal:g.value}))}><div className="font-semibold">{g.label}</div><div className="text-sm opacity-80">{g.detail}</div></button>)}</div>}
+    {step === 3 && <div className="space-y-3">{activityOptions.map((opt)=><button type="button" key={opt.value} className={row(draft.eating_context===opt.value)} onClick={()=>setDraft((d)=>({...d,eating_context:opt.value}))}>{opt.label}</button>)}</div>}
+    {step === 4 && <div className="space-y-3"><label className="block"><span className="mb-2 block text-sm">Health conditions (optional)</span><input className={row(false)} value={draft.conditions_other} onChange={(e)=>setDraft((d)=>({...d,conditions_other:e.target.value}))} placeholder="Example: thyroid, none"/></label><label className="block"><span className="mb-2 block text-sm">Dietary pattern</span><select className={row(false)} value={draft.dietary_pattern} onChange={(e)=>setDraft((d)=>({...d,dietary_pattern:e.target.value as OnboardingAnswers['dietary_pattern']}))}><option value="none">No restriction</option><option value="veg">Vegetarian</option><option value="veg-egg">Eggetarian</option><option value="non-veg">Non-vegetarian</option><option value="vegan">Vegan</option></select></label></div>}
+    {step===5 && <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-panel-dark)] p-4"><p className="text-sm">Nourish provides general nutrition guidance, not medical diagnosis or treatment.</p><label className="mt-4 flex items-start gap-3"><button type="button" aria-pressed={accepted} onClick={()=>setAccepted((v)=>!v)} className={`mt-1 h-5 w-5 rounded border ${accepted?"border-[var(--brand-muted)] bg-[var(--brand-muted)]":"border-[var(--border-soft)] bg-transparent"}`}>{accepted?"✓":""}</button><span>I understand and want to continue.</span></label></div>}
+    {step===6 && <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-panel-dark)] p-4"><ul className="space-y-2 text-sm">{summary.map((item)=><li key={item}>{item}</li>)}</ul></div>}
+    {error && <p role="alert" className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-3 text-sm text-[var(--error-foreground)]">{error}</p>}
+  </section><footer className="sticky bottom-0 mt-4 flex gap-3 border-t border-[var(--border-soft)] bg-[var(--surface-app-dark)] py-3"><button type="button" onClick={back} disabled={step===0||saving} className="min-h-11 rounded-xl border border-[var(--border-soft)] px-4">Back</button>{step<STEPS.length-1?<button type="button" onClick={next} className="min-h-11 flex-1 rounded-xl bg-[var(--brand)] px-4 text-[var(--brand-foreground)]">Continue</button>:<button type="button" onClick={()=>void finish()} disabled={saving} className="min-h-11 flex-1 rounded-xl bg-[var(--brand)] px-4 text-[var(--brand-foreground)]">{saving?"Saving...":"Begin with Nourish"}</button>}</footer></div></main>;
 }
