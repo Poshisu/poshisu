@@ -143,12 +143,12 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   }
 
   return (
-    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[color:var(--foreground)]">
-      <Card className="border-[var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
+    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[#1a1a1a]">
+      <Card className="border-[#c7d2c8] bg-[#f5f5ed] shadow-[var(--shadow-card)]">
         <CardHeader>
-          <div className="text-center text-sm text-[color:var(--muted-foreground)]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
-          <CardTitle as="h1" className="text-balance text-4xl text-[color:var(--foreground)] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
-          <CardDescription className="text-lg text-[color:var(--muted-foreground)] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
+          <div className="text-center text-sm text-[#75847b]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
+          <CardTitle as="h1" className="text-balance text-4xl text-[#0d4a34] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
+          <CardDescription className="text-lg text-[#6f8277] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {step === 0 && (
@@ -206,7 +206,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           )}
           {step === 5 && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-4 text-[#c7d5cd]">
+              <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-4 text-[#d8e2db]">
                 <p>Poshisu provides general nutrition guidance based on the information you share.</p>
                 <p className="mt-2">This is not medical advice and should not replace a qualified doctor.</p>
               </div>
@@ -217,9 +217,9 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             </div>
           )}
           {step >= STEPS.length - 1 && (
-            <div className="rounded-2xl border border-[var(--border-soft)] bg-[#0f1713] p-5">
-              <p className="mb-3 text-xl">What I understood</p>
-              <ul className="list-disc space-y-1 pl-5 text-[#cfd8d2]">
+            <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-5">
+              <p className="mb-3 text-xl text-[#eef4ef]">What I understood</p>
+              <ul className="list-disc space-y-1 pl-5 text-[#d6dfd8]">
                 {summary.map((item) => (
                   <li key={item}>
                     {item.includes("Diet:") ? `Diet: ${labelDiet(draft.dietary_pattern)}` : item}

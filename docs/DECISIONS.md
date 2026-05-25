@@ -459,3 +459,25 @@ This resolves the most visible UX defects while preserving the preferred progres
 
 ### Migration path
 If completion rate drops with the extra review step, collapse review into the safety step while retaining friendly validation mapping.
+
+## 2026-05-25 — RDX-05C.4 visual parity stabilization
+
+### Context
+Prior redesign passes produced contrast and readability regressions on landing/auth/onboarding surfaces and did not match the approved dark-first visual references.
+
+### Options considered
+1. Keep existing tokenized mix and patch only individual text colors.
+2. Revert to old light layout and defer parity.
+3. Execute a focused dark-first parity pass on critical first-run screens.
+
+### Decision
+Adopt option 3: focused parity updates for landing hero section, auth shell readability, and onboarding contrast hierarchy.
+
+### Why
+This yields immediate UX quality gains on the highest-traffic entry funnel without broad refactors.
+
+### Tradeoffs
+We gain readable, coherent first-run UX quickly but still need a later token harmonization pass to fully consolidate hard-coded colors.
+
+### Migration path
+Promote hard-coded parity values into canonical design tokens once visual acceptance is complete.

@@ -460,3 +460,5 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 ### Standing enforcement note (effective 2026-05-24)
 - The canonical post-deploy verification SOP for all UI-facing `RDX-*` PRs is `TESTING.md` → "Standing post-deploy verification SOP".
 - RDX UI PRs are fail-closed when any required artifact bundle item is missing unless a waiver is explicitly approved and documented.
+
+| RDX-05C.4 | Final visual parity pass (landing + auth + onboarding readability) | Landing/auth/onboarding match dark-first brand palette, no low-contrast text, and final-step summary readability fixed. | pnpm run lint && pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx | done |
