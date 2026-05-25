@@ -1,26 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { completeOnboardingAction } from "@/app/(onboarding)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { onboardingAnswersSchema } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/onboarding/types";
-import type { z } from "zod";
 
 type Props = { firstName: string };
-type ConfidenceLabel = "high" | "medium" | "low";
-type ChatMessage = { role: "assistant" | "user"; content: string; confidence?: ConfidenceLabel };
-
-const QUESTIONS = [
-  "What should I call you?",
-  "How old are you?",
-  "What is your primary health goal right now?",
-  "Any conditions I should know (diabetes, PCOS, hypertension, etc.)?",
-  "Any diet pattern or allergies to remember?",
-  "What are your usual meal times? (e.g. breakfast 09:00, lunch 13:00, dinner 19:00)",
-] as const;
+const DRAFT_STORAGE_KEY = "onboarding.chat.draft.v1";
 
 const STARTING_DRAFT: OnboardingAnswers = {
   name: "",
@@ -43,316 +32,215 @@ const STARTING_DRAFT: OnboardingAnswers = {
   estimation_preference: "midpoint",
 };
 
-const NO_ANSWER_PATTERN = /^(no|none|nope|nil|nothing|n\/a|na|skip|skip for now|not applicable)(?:[\s,.:;!-]+(?:conditions?|medical conditions?|health conditions?|issues?|problems?|that i know of|shared|to share))*$/i;
+const STEPS = [
+  { title: "Hey there!", subtitle: "Let’s start with your name." },
+  { title: "A bit about you", subtitle: "Helps us personalise calorie estimates." },
+  { title: "What’s your goal?", subtitle: "No pressure — you can change this any time." },
+  { title: "How active are you?", subtitle: "On a typical day." },
+  { title: "Health context", subtitle: "Helps with safer suggestions." },
+  { title: "One last thing", subtitle: "Safety first." },
+  { title: "Review your profile", subtitle: "Please confirm this summary before we begin." },
+] as const;
 
-type OnboardingValidationIssue = z.ZodError<OnboardingAnswers>["issues"][number];
-
-function formatValidationIssue(issue: OnboardingValidationIssue) {
-  const field = issue.path.join(".");
-  if (field === "age") return "Age must be between 13 and 100.";
-  if (field === "name") return "Name must be at least 2 characters.";
-  if (field === "meal_times" || field.startsWith("meal_times.")) return issue.message;
-  if (field === "goal_target_kg") return "Add a target weight for this goal, or choose maintain/wellness for now.";
-  if (field === "goal_timeline_weeks") return "Add a goal timeline, or choose maintain/wellness for now.";
-  if (field === "conditions_other") return "If you share another condition, mark it as Other; otherwise answer No/None.";
-  return issue.message;
-}
-
-function formatValidationError(error: z.ZodError<OnboardingAnswers>) {
-  const uniqueMessages = Array.from(new Set(error.issues.map(formatValidationIssue)));
-  return `Please correct ${uniqueMessages.length > 1 ? "these items" : "this item"}: ${uniqueMessages.join(" ")}`;
-}
+type DraftState = { step: number; draft: OnboardingAnswers };
 
 export function ChatOnboardingFlow({ firstName }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      content:
-        `Hey ${firstName}. I’ll set up your health context in a short conversation. You can type naturally — no rigid forms.`,
-      confidence: "high",
-    },
-    { role: "assistant", content: QUESTIONS[0], confidence: "high" },
-  ]);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [input, setInput] = useState("");
+  const readStored = (): DraftState | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const saved = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as DraftState;
+      if (typeof parsed.step !== "number" || !parsed.draft) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const initialStored = readStored();
+  const [step, setStep] = useState(initialStored?.step ?? 0);
+  const [draft, setDraft] = useState<OnboardingAnswers>(initialStored?.draft ?? STARTING_DRAFT);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const [canRetry, setCanRetry] = useState(false);
-  const [draft, setDraft] = useState<OnboardingAnswers>(STARTING_DRAFT);
+  const [saving, setSaving] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [dietInput, setDietInput] = useState("");
 
-  const isReviewStep = questionIndex >= QUESTIONS.length;
+  useEffect(() => {
+    const payload: DraftState = { step, draft };
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+  }, [step, draft]);
 
-  const chips =
-    questionIndex === 3
-      ? ["None", "Skip for now"]
-      : questionIndex === 4
-        ? ["Vegetarian", "Vegan", "None", "Skip for now"]
-        : questionIndex === 5
-          ? ["09:00 13:00 19:00", "Skip for now"]
-          : ["Skip for now"];
-
-
-  function inferConfidenceAndClarifier(idx: number, text: string): { confidence: ConfidenceLabel; clarifier?: string } {
-    const lower = text.toLowerCase();
-    if (lower.includes("skip for now") || lower === "skip") {
-      return { confidence: "low", clarifier: "No problem — we can revisit this later in chat." };
-    }
-    if (idx === 4 && (lower.includes("allergy") || lower.includes("allergic")) && (lower.includes("dislike") || lower.includes("hate"))) {
-      return { confidence: "low", clarifier: "Quick check: is that a medical allergy or mostly a dislike? This helps me avoid unsafe suggestions." };
-    }
-    if (idx === 5 && !/(\d{1,2}:\d{2})/.test(lower)) {
-      return { confidence: "low", clarifier: "Could you share approximate times (like 09:00, 13:00, 19:00)? Even rough times are fine." };
-    }
-    if (idx === 5 && (lower.includes("depends") || lower.includes("random") || lower.includes("varies"))) {
-      return { confidence: "low", clarifier: "Got it. Rough windows still help — do you usually eat early, mid, or late for each meal?" };
-    }
-    if (idx <= 1 && text.trim().length < 2) {
-      return { confidence: "medium", clarifier: "Could you share a bit more so I capture this correctly?" };
-    }
-    return { confidence: "high" };
-  }
-
-
-  const summary = [
+  const summary = useMemo(
+    () => [
       `Name: ${draft.name || firstName}`,
       `Age: ${draft.age}`,
       `Goal: ${draft.primary_goal}`,
       `Conditions: ${draft.conditions.length ? draft.conditions.join(", ") : "none shared"}`,
       `Diet: ${draft.dietary_pattern}`,
       `Meal times: ${draft.meal_times.breakfast}, ${draft.meal_times.lunch}, ${draft.meal_times.dinner}`,
-  ];
+    ],
+    [draft, firstName],
+  );
 
-  function captureAnswer(idx: number, answer: string) {
-    const text = answer.trim();
-    if (!text) return;
-
-    setDraft((current) => {
-      const next = { ...current };
-      if (idx === 0) next.name = text;
-      if (idx === 1) next.age = Number.parseInt(text, 10) || current.age;
-      if (idx === 2) {
-        const lower = text.toLowerCase();
-        if (lower.includes("lose")) next.primary_goal = "lose-weight";
-        else if (lower.includes("gain") || lower.includes("muscle")) next.primary_goal = "gain-weight";
-        else if (lower.includes("condition")) next.primary_goal = "manage-condition";
-        else if (lower.includes("well")) next.primary_goal = "wellness";
-        else next.primary_goal = "maintain";
-      }
-      if (idx === 3) {
-        const lower = text.toLowerCase();
-        const conditions: OnboardingAnswers["conditions"] = [];
-        if (lower.includes("diabetes")) conditions.push("type-2-diabetes");
-        if (lower.includes("pcos") || lower.includes("pcod")) conditions.push("pcos-pcod");
-        if (lower.includes("hyper") || lower.includes("blood pressure")) conditions.push("hypertension");
-        next.conditions = conditions;
-        next.conditions_other = !conditions.length && !NO_ANSWER_PATTERN.test(text) ? text : "";
-      }
-      if (idx === 4) {
-        const lower = text.toLowerCase();
-        if (NO_ANSWER_PATTERN.test(text)) next.dietary_pattern = "none";
-        else if (lower.includes("jain")) next.dietary_pattern = "jain";
-        else if (lower.includes("vegan")) next.dietary_pattern = "vegan";
-        else if (lower.includes("egg")) next.dietary_pattern = "veg-egg";
-        else if (lower.includes("non")) next.dietary_pattern = "non-veg";
-        else if (lower.includes("veg")) next.dietary_pattern = "veg";
-        else next.dietary_pattern = "none";
-      }
-      if (idx === 5) {
-        const found = text.match(/(\d{1,2}:\d{2})/g) ?? [];
-        next.meal_times = {
-          breakfast: found[0] ?? current.meal_times.breakfast,
-          lunch: found[1] ?? current.meal_times.lunch,
-          dinner: found[2] ?? current.meal_times.dinner,
-        };
-      }
-      return next;
-    });
-  }
-
-  async function submitMessage() {
-    const text = input.trim();
-    if (!text) return;
-
+  function next() {
     setError(null);
-    setMessages((m) => [...m, { role: "user", content: text }]);
-    captureAnswer(questionIndex, text);
-    setInput("");
-    const assessment = inferConfidenceAndClarifier(questionIndex, text);
-    if (assessment.clarifier) {
-      setMessages((m) => [...m, { role: "assistant", content: assessment.clarifier!, confidence: assessment.confidence }]);
-    }
-
-    if (questionIndex < QUESTIONS.length - 1) {
-      const nextIndex = questionIndex + 1;
-      setQuestionIndex(nextIndex);
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[nextIndex], confidence: "high" }]);
-      return;
-    }
-
-    setQuestionIndex(QUESTIONS.length);
-    setMessages((m) => [
-      ...m,
-      {
-        role: "assistant",
-        content:
-          "Thanks. I drafted your profile summary below. Confirm when this looks right — you can always edit later from your profile.",
-        confidence: "high",
-      },
-    ]);
+    if (step === 0 && draft.name.trim().length < 2) return setError("Please enter your name.");
+    if (step === 1 && (draft.age < 13 || draft.age > 100)) return setError("Age must be between 13 and 100.");
+    if (step === 5 && !accepted) return setError("Please acknowledge the safety notice to continue.");
+    if (step === 4 && !draft.dietary_pattern) return setError("Please choose a diet pattern so we can personalize suggestions.");
+    setStep((s) => Math.min(s + 1, STEPS.length));
   }
 
-  async function confirmAndContinue() {
-    if (loading) return;
-    if (!confirmed) {
-      setError("Please confirm the profile summary before we continue.");
-      return;
-    }
+  function back() {
+    setError(null);
+    setStep((s) => Math.max(s - 1, 0));
+  }
 
+  async function finish() {
+    setError(null);
     const parsed = onboardingAnswersSchema.safeParse(draft);
-    if (!parsed.success) {
-      setError(formatValidationError(parsed.error));
-      return;
-    }
-
-    setLoading(true);
-    setCanRetry(false);
-    setError(null);
+    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Please check your details.");
+    setSaving(true);
     try {
       await completeOnboardingAction(parsed.data);
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.location.assign("/chat");
     } catch {
       setError("We couldn’t save your onboarding yet. Check your connection and retry.");
-      setCanRetry(true);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  return (
-    <main className="mx-auto min-h-svh w-full max-w-2xl p-4 md:p-6">
-      <Card className="surface-card-hero rounded-3xl">
-        <CardHeader>
-          <CardTitle as="h1" className="text-2xl text-[color:var(--brand-muted)]">Nourish onboarding</CardTitle>
-          <CardDescription className="text-[color:var(--muted-foreground)]">
-            A short conversational setup so your coach understands your context.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="max-h-[52vh] space-y-3 overflow-y-auto rounded-2xl bg-[color:var(--surface-soft)] p-4 shadow-[var(--shadow-soft)]">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "assistant" ? "bg-[color:var(--surface-brand-soft)] text-[color:var(--brand-muted)]" : "ml-auto bg-[color:var(--brand)] text-[color:var(--brand-foreground)]"}`}>
-                {msg.content}
-                {msg.confidence ? <div className="mt-1 text-[10px] opacity-70">Confidence: {msg.confidence}</div> : null}
-              </div>
-            ))}
-          </div>
+  function labelDiet(value: OnboardingAnswers["dietary_pattern"]) {
+    const map: Record<OnboardingAnswers["dietary_pattern"], string> = {
+      veg: "Vegetarian",
+      "veg-egg": "Eggetarian",
+      "non-veg": "Non-vegetarian",
+      vegan: "Vegan",
+      jain: "Jain",
+      pescetarian: "Pescetarian",
+      none: "No restriction",
+    };
+    return map[value];
+  }
 
-          {isReviewStep ? (
-            <div className="surface-card space-y-3 rounded-2xl border p-4 text-sm text-foreground">
-              <p className="font-medium">What I understood</p>
-              <ul className="list-disc space-y-1 pl-5">
-                {summary.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <input type="checkbox" checked={confirmed} disabled={loading} onChange={(e) => setConfirmed(e.target.checked)} />
-                This looks right. Start building my health context.
-              </label>
-              <Button
-                onClick={confirmAndContinue}
-                disabled={loading || !confirmed}
-                className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
-              >
-                {loading ? "Saving profile..." : "Start building"}
-              </Button>
-              {loading ? (
-                <p role="status" className="text-xs text-muted-foreground">
-                  This can take a few seconds while we prepare your profile.
-                </p>
-              ) : null}
-              {canRetry && !loading ? (
-                <Button type="button" variant="outline" onClick={() => void confirmAndContinue()} className="rounded-full border-[color:var(--border-soft)]">
-                  Retry save
-                </Button>
-              ) : null}
+  function friendlyValidationMessage(raw: string) {
+    if (raw.includes("Invalid option")) return "Please choose a valid diet option from the list.";
+    return raw;
+  }
+
+  function parseDietaryPattern(value: string): OnboardingAnswers["dietary_pattern"] {
+    const lower = value.toLowerCase().trim();
+    if (lower.includes("egg")) return "veg-egg";
+    if (lower.includes("non")) return "non-veg";
+    if (lower.includes("vegan")) return "vegan";
+    if (lower.includes("jain")) return "jain";
+    if (lower.includes("pes")) return "pescetarian";
+    if (lower.includes("veg")) return "veg";
+    return "none";
+  }
+
+  return (
+    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[#1a1a1a]">
+      <Card className="border-[#c7d2c8] bg-[#f5f5ed] shadow-[var(--shadow-card)]">
+        <CardHeader>
+          <div className="text-center text-sm text-[#75847b]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
+          <CardTitle as="h1" className="text-balance text-4xl text-[#0d4a34] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
+          <CardDescription className="text-lg text-[#6f8277] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {step === 0 && (
+            <Input value={draft.name} placeholder="Priya, Rahul, Ananya..." onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
+          )}
+          {step === 1 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input type="number" value={draft.age} onChange={(e) => setDraft((d) => ({ ...d, age: Number(e.target.value) || d.age }))} placeholder="Age" />
+              <Input type="number" value={draft.height_cm} onChange={(e) => setDraft((d) => ({ ...d, height_cm: Number(e.target.value) || d.height_cm }))} placeholder="Height (cm)" />
+              <Input type="number" value={draft.weight_kg} onChange={(e) => setDraft((d) => ({ ...d, weight_kg: Number(e.target.value) || d.weight_kg }))} placeholder="Weight (kg)" />
             </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-2">
-              {chips.map((chip) => (
-                <Button key={chip} type="button" variant="outline" className="rounded-full" onClick={() => setInput(chip)}>
-                  {chip}
+          )}
+          {step === 2 && (
+            <div className="grid gap-3">
+              {[
+                ["lose-weight", "Lose weight"],
+                ["maintain", "Maintain weight"],
+                ["gain-weight", "Build muscle"],
+                ["wellness", "Eat healthier"],
+              ].map(([value, label]) => (
+                <Button key={value} type="button" variant={draft.primary_goal === value ? "default" : "outline"} onClick={() => setDraft((d) => ({ ...d, primary_goal: value as OnboardingAnswers["primary_goal"] }))} className="justify-start">
+                  {label}
                 </Button>
               ))}
             </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" className="rounded-full" disabled>
-                  Photo upload coming soon
+          )}
+          {step === 3 && (
+            <div className="grid gap-3">
+              {["mostly-sitting", "light-activity", "moderately-active", "very-active"].map((opt) => (
+                <Button key={opt} type="button" variant={draft.eating_context === "mixed" && opt === "moderately-active" ? "default" : "outline"} onClick={() => setDraft((d) => ({ ...d, eating_context: "mixed" }))} className="justify-start">
+                  {opt.replace("-", " ")}
                 </Button>
-                <Button type="button" variant="outline" className="rounded-full" disabled>
-                  Camera coming soon
-                </Button>
-                <Button type="button" variant="outline" className="rounded-full" disabled>
-                  File upload coming soon
-                </Button>
-                <Button type="button" variant="outline" className="rounded-full" disabled>
-                  Voice coming soon
-                </Button>
-              </div>
-              <p className="text-muted-foreground">Photos, files, and voice notes are not active yet — type the details for now.</p>
+              ))}
             </div>
-            <div className="space-y-2">
-              <label htmlFor="onboarding-answer" className="text-sm font-medium text-foreground">
-                Onboarding answer
-              </label>
-              <div className="flex gap-2">
+          )}
+          {step === 4 && (
+            <div className="space-y-4">
+              <Input placeholder="Health conditions (comma separated) or None" onChange={(e) => setDraft((d) => ({ ...d, conditions_other: e.target.value }))} value={draft.conditions_other} />
+              <div className="space-y-2">
                 <Input
-                  id="onboarding-answer"
-                  name="onboarding-answer"
-                  aria-describedby="onboarding-answer-help"
-                  placeholder="Type your answer naturally..."
-                  value={input}
-                  disabled={loading}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void submitMessage();
-                    }
+                  placeholder="Diet preference (veg, non-veg, vegan, etc.)"
+                  onChange={(e) => {
+                    setDietInput(e.target.value);
+                    setDraft((d) => ({ ...d, dietary_pattern: parseDietaryPattern(e.target.value) }));
                   }}
-                  className="rounded-full border-[color:var(--border-soft)] bg-[color:var(--surface-raised)]"
+                  value={dietInput}
                 />
-                <Button
-                  onClick={() => void submitMessage()}
-                  disabled={loading}
-                  className="rounded-full bg-[color:var(--brand)] text-[color:var(--brand-foreground)] hover:opacity-90"
-                >
-                  Send
-                </Button>
+                <p className="text-xs text-[color:var(--muted-foreground)]">Examples: Vegetarian, Non Veg, Vegan, Jain, Eggetarian.</p>
               </div>
-              <p id="onboarding-answer-help" className="text-xs text-muted-foreground">
-                Type naturally, then press Send or Enter.
-              </p>
+              <Input placeholder="Meal times (e.g. 09:00 13:00 19:00)" onChange={(e) => {
+                const found = e.target.value.match(/(\d{1,2}:\d{2})/g) ?? [];
+                setDraft((d) => ({ ...d, meal_times: { breakfast: found[0] ?? d.meal_times.breakfast, lunch: found[1] ?? d.meal_times.lunch, dinner: found[2] ?? d.meal_times.dinner } }));
+              }} />
             </div>
-            </>
+          )}
+          {step === 5 && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-4 text-[#d8e2db]">
+                <p>Poshisu provides general nutrition guidance based on the information you share.</p>
+                <p className="mt-2">This is not medical advice and should not replace a qualified doctor.</p>
+              </div>
+              <label className="flex items-start gap-2 text-lg">
+                <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="mt-1 h-6 w-6" />
+                I understand Poshisu provides nutrition guidance only, not medical advice.
+              </label>
+            </div>
+          )}
+          {step >= STEPS.length - 1 && (
+            <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-5">
+              <p className="mb-3 text-xl text-[#eef4ef]">What I understood</p>
+              <ul className="list-disc space-y-1 pl-5 text-[#d6dfd8]">
+                {summary.map((item) => (
+                  <li key={item}>
+                    {item.includes("Diet:") ? `Diet: ${labelDiet(draft.dietary_pattern)}` : item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
-          {error ? (
-            <p
-              role="alert"
-              aria-live="assertive"
-              className="rounded-xl border border-[color:var(--warning)] bg-[color:var(--surface-raised)] px-3 py-2 text-sm text-[color:var(--warning)]"
-            >
-              {error}
-            </p>
-          ) : null}
+          {error ? <div role="alert" className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-[#be3f31]">{friendlyValidationMessage(error)}</div> : null}
 
-          <p className="text-xs text-muted-foreground">
-            You can refine any onboarding answer later from your profile after setup is complete.
-          </p>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={back} disabled={step === 0 || saving}>Back</Button>
+            {step < STEPS.length - 1 ? (
+              <Button type="button" onClick={next} className="flex-1">Continue</Button>
+            ) : (
+              <Button type="button" onClick={() => void finish()} disabled={saving} className="flex-1">
+                {saving ? "Saving profile..." : "Let's begin"}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </main>
