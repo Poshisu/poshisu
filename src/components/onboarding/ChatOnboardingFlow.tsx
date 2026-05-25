@@ -8,26 +8,8 @@ import type { OnboardingAnswers } from "@/lib/onboarding/types";
 type Props = { firstName: string };
 const DRAFT_STORAGE_KEY = "onboarding.chat.draft.v1";
 
-const STARTING_DRAFT: OnboardingAnswers = {
-  name: "",
-  age: 25,
-  gender: "prefer-not-to-say",
-  height_cm: 165,
-  weight_kg: 65,
-  city: "Not shared",
-  primary_goal: "maintain",
-  goal_target_kg: undefined,
-  goal_timeline_weeks: undefined,
-  conditions: [],
-  conditions_other: "",
-  medications_affecting_diet: "",
-  dietary_pattern: "none",
-  allergies: [],
-  dislikes: "",
-  meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" },
-  eating_context: "mixed",
-  estimation_preference: "midpoint",
-};
+const STARTING_DRAFT: OnboardingAnswers = { name: "", age: 25, gender: "prefer-not-to-say", height_cm: 165, weight_kg: 65, city: "Not shared", primary_goal: "maintain", goal_target_kg: undefined, goal_timeline_weeks: undefined, conditions: [], conditions_other: "", medications_affecting_diet: "", dietary_pattern: "none", allergies: [], dislikes: "", meal_times: { breakfast: "09:00", lunch: "13:00", dinner: "19:00" }, eating_context: "mixed", estimation_preference: "midpoint" };
+const STEPS = ["Hey there!", "A bit about you", "What's your goal?", "How active are you?", "Health context", "One last thing", "Review your profile"] as const;
 
 const STEPS = ["Hey there!", "A bit about you", "What's your goal?", "How active are you?", "Health context", "One last thing", "Review your profile"] as const;
 const GOAL_OPTIONS: Array<{ value: OnboardingAnswers["primary_goal"]; label: string }> = [
