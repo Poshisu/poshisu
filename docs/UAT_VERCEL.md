@@ -320,3 +320,56 @@ UAT pass is complete when:
 
 - All five modalities are marked PASS, or
 - Any FAIL has a fully completed failure triage block and linked evidence for engineering follow-up.
+
+---
+
+## RDX-04 closure attempt (2026-05-24)
+
+### Scope
+- Welcome/auth UX verification against redesign acceptance criteria.
+
+### Verification commands run
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run test:e2e -g "auth|protected /chat redirects"` ⚠️ blocked in this local environment (no Playwright Chromium binary)
+
+### Closure evidence (GitHub Actions)
+- CI run URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166`
+- Auth/scoped E2E job URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166/job/77589938852`
+- Job status: **succeeded** (`DB types and scoped E2E`, ~2m48s)
+- Artifact upload: `playwright-e2e-proof-26358607166.zip`
+- Artifact ID: `7184352005`
+- Artifact URL: `https://github.com/Poshisu/poshisu/actions/runs/26358607166/artifacts/7184352005`
+
+### Final status
+- RDX-04 is **closed** under the standing post-deploy verification SOP using CI pass evidence + finalized Playwright artifact bundle.
+
+---
+
+## RDX-05.04 closure attempt (2026-05-24)
+
+### Scope
+- Onboarding UX closure gate for `RDX-05` (progressive flow + draft restore + start-over recovery).
+
+### Verification commands run
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx` ✅
+- `pnpm run test:e2e -g onboarding` ⚠️ blocked in this local runtime
+
+### Blocker details
+- Local Playwright Chromium binary is unavailable (`browserType.launch: Executable doesn't exist`).
+- Failing local tests are environment-related (browser install missing), not onboarding assertion regressions.
+
+### CI closure evidence (provided)
+- CI run URL: `https://github.com/Poshisu/poshisu/actions/runs/26369531183`
+- Run summary status: `App gates` ✅ and `DB types and scoped E2E` ✅ (as shown in run summary screenshot).
+- Playwright artifact bundle: `playwright-e2e-proof-26369531183.zip`
+
+### SOP artifact status
+- ✅ Unit/component evidence complete.
+- ✅ CI onboarding/auth scoped E2E evidence attached via run `26369531183` + Playwright proof bundle.
+- ✅ RDX-05 UX behavior docs parity complete (task tracker reflects current increment notes).
+
+### Final status
+- RDX-05 is **closed** under the standing post-deploy verification SOP.
