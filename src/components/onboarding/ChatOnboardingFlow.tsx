@@ -143,11 +143,11 @@ export function ChatOnboardingFlow({ firstName }: Props) {
   }
 
   return (
-    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[#050706] px-4 py-6 text-[#1a1a1a]">
-      <Card className="border-[#c7d2c8] bg-[#f5f5ed] shadow-[var(--shadow-card)]">
+    <main className="mx-auto min-h-svh w-full max-w-3xl bg-[var(--surface-app-dark)] px-4 py-6 text-[#1a1a1a]">
+      <Card className="border-[#c7d2c8] bg-[var(--surface-raised)] shadow-[var(--shadow-card)]">
         <CardHeader>
           <div className="text-center text-sm text-[#75847b]">{Math.min(step + 1, STEPS.length)} of {STEPS.length}</div>
-          <CardTitle as="h1" className="text-balance text-4xl text-[#0d4a34] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
+          <CardTitle as="h1" className="text-balance text-4xl text-[var(--brand)] sm:text-5xl">{STEPS[Math.min(step, STEPS.length - 1)]?.title}</CardTitle>
           <CardDescription className="text-lg text-[#6f8277] sm:text-xl">{STEPS[Math.min(step, STEPS.length - 1)]?.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -206,7 +206,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
           )}
           {step === 5 && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-4 text-[#d8e2db]">
+              <div className="rounded-2xl border border-[#2a3a30] bg-[var(--surface-panel-dark)] p-4 text-[var(--success-soft-foreground)]">
                 <p>Poshisu provides general nutrition guidance based on the information you share.</p>
                 <p className="mt-2">This is not medical advice and should not replace a qualified doctor.</p>
               </div>
@@ -217,9 +217,9 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             </div>
           )}
           {step >= STEPS.length - 1 && (
-            <div className="rounded-2xl border border-[#2a3a30] bg-[#0f1713] p-5">
-              <p className="mb-3 text-xl text-[#eef4ef]">What I understood</p>
-              <ul className="list-disc space-y-1 pl-5 text-[#d6dfd8]">
+            <div className="rounded-2xl border border-[#2a3a30] bg-[var(--surface-panel-dark)] p-5">
+              <p className="mb-3 text-xl text-[var(--foreground-on-dark-strong)]">What I understood</p>
+              <ul className="list-disc space-y-1 pl-5 text-[var(--foreground-on-dark)]">
                 {summary.map((item) => (
                   <li key={item}>
                     {item.includes("Diet:") ? `Diet: ${labelDiet(draft.dietary_pattern)}` : item}
@@ -229,7 +229,7 @@ export function ChatOnboardingFlow({ firstName }: Props) {
             </div>
           )}
 
-          {error ? <div role="alert" className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-[#be3f31]">{friendlyValidationMessage(error)}</div> : null}
+          {error ? <div role="alert" className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-[var(--error-foreground)]">{friendlyValidationMessage(error)}</div> : null}
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={back} disabled={step === 0 || saving}>Back</Button>

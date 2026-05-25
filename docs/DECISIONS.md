@@ -481,3 +481,27 @@ We gain readable, coherent first-run UX quickly but still need a later token har
 
 ### Migration path
 Promote hard-coded parity values into canonical design tokens once visual acceptance is complete.
+
+
+## 2026-05-25 — RDX-05C.5 token consolidation and visual regression gates
+
+### Context
+RDX-05C.4 improved visuals but still used route-level hard-coded colors, which risked further drift from the design system and repeated regressions.
+
+### Options considered
+1. Keep hard-coded values and rely on manual review.
+2. Full design-system refactor across all components immediately.
+3. Targeted token consolidation on landing/auth/onboarding plus screenshot regression checks.
+
+### Decision
+Adopt option 3 to reduce drift risk with minimal scope.
+
+### Why
+It closes the immediate regression loop quickly and creates an automated signal for future UI drift without requiring a risky broad refactor.
+
+### Tradeoffs
+- Gain: more maintainable route styles and screenshot-based parity guardrails.
+- Cost: screenshot tests can be environment-sensitive and require baseline upkeep.
+
+### Migration path
+Expand token consolidation to remaining app surfaces and add mobile-project screenshot baselines after this initial gate stabilizes.

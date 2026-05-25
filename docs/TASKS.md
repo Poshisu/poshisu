@@ -462,3 +462,5 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 - RDX UI PRs are fail-closed when any required artifact bundle item is missing unless a waiver is explicitly approved and documented.
 
 | RDX-05C.4 | Final visual parity pass (landing + auth + onboarding readability) | Landing/auth/onboarding match dark-first brand palette, no low-contrast text, and final-step summary readability fixed. | pnpm run lint && pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx | done |
+
+| RDX-05C.5 | Token consolidation + visual regression guardrail | Replace remaining hard-coded route-level colors with canonical tokens and add Playwright screenshot checks for landing/auth/onboarding. | pnpm run lint && pnpm run typecheck && pnpm run test -- src/components/onboarding/ChatOnboardingFlow.test.tsx && pnpm exec playwright test tests/e2e/visual-parity.spec.ts --project=chromium | done |

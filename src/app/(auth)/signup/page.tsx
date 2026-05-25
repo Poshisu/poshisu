@@ -42,7 +42,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         ) : null}
 
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[var(--surface-panel-dark)] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -89,7 +89,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           </div>
           {errorMessage ? (
             <div id="signup-error" role="alert" className="space-y-1">
-              <p className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-base text-[#be3f31]">{errorMessage}</p>
+              <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-base text-[var(--error-foreground)]">{errorMessage}</p>
               {showSignInHint ? (
                 <p className="text-sm">
                   <Link href="/login" className="font-medium text-[#2f7f5a] underline underline-offset-4">

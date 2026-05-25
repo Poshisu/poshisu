@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </CardHeader>
       <CardContent className="space-y-4">
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full bg-[#0f1713] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[var(--surface-panel-dark)] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -69,7 +69,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             />
           </div>
           {errorMessage ? (
-            <div id="login-error" role="alert" className="rounded-xl border border-[#e4b8b0] bg-[#f3e3e1] p-4 text-base text-[#be3f31]">
+            <div id="login-error" role="alert" className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-base text-[var(--error-foreground)]">
               {errorMessage}
             </div>
           ) : null}
