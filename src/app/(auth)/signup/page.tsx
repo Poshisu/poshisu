@@ -29,20 +29,20 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   const showSignInHint = error === "signup_email_in_use";
 
   return (
-    <Card className="border-[color:var(--border-soft)] bg-[color:var(--surface-raised)] shadow-[var(--shadow-card)]">
+    <Card className="border-[color:var(--border-soft)] bg-[var(--surface-panel-dark)] shadow-[var(--shadow-card)]">
       <CardHeader>
-        <CardTitle as="h1" className="text-4xl text-[color:var(--foreground)]">Create account</CardTitle>
-        <CardDescription className="text-[color:var(--muted-foreground)]">Set up your coach in under two minutes.</CardDescription>
+        <CardTitle as="h1" className="text-4xl text-[var(--foreground-on-dark-strong)]">Create account</CardTitle>
+        <CardDescription className="text-[var(--foreground-on-dark-muted)]">Set up your coach in under two minutes.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {checkEmail ? (
-          <p role="status" className="rounded-xl border border-[var(--border-soft)] bg-[#101915] p-3 text-sm text-[#c9d7cf]">
+          <p role="status" className="rounded-xl border border-[var(--border-soft)] bg-[#101915] p-3 text-sm text-[var(--foreground-on-dark)]">
             Check your inbox to confirm your email, then come back to finish setup.
           </p>
         ) : null}
 
         <form action={signInWithGoogleAction}>
-          <SubmitButton variant="outline" className="w-full bg-[var(--surface-panel-dark)] text-[#e7efe9]" pendingLabel="Redirecting to Google…">
+          <SubmitButton variant="outline" className="w-full bg-[#121a15] text-[var(--foreground-on-dark)]" pendingLabel="Redirecting to Google…">
             Continue with Google
           </SubmitButton>
         </form>
@@ -52,7 +52,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
             <span className="w-full border-t border-border" aria-hidden="true" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span aria-hidden="true" className="bg-[color:var(--surface-raised)] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--muted-foreground)]">
+            <span aria-hidden="true" className="bg-[var(--surface-panel-dark)] px-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--foreground-on-dark-muted)]">
               Or sign up with email
             </span>
           </div>
@@ -83,7 +83,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               aria-invalid={errorMessage ? true : undefined}
               aria-describedby={passwordDescribedBy}
             />
-            <p id="password-hint" className="text-xs text-[color:var(--muted-foreground)]">
+            <p id="password-hint" className="text-xs text-[var(--foreground-on-dark-muted)]">
               At least 8 characters.
             </p>
           </div>
@@ -92,7 +92,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
               <p className="rounded-xl border border-[var(--error-border)] bg-[var(--error-surface)] p-4 text-base text-[var(--error-foreground)]">{errorMessage}</p>
               {showSignInHint ? (
                 <p className="text-sm">
-                  <Link href="/login" className="font-medium text-[#2f7f5a] underline underline-offset-4">
+                  <Link href="/login" className="font-medium text-[var(--brand-muted)] underline underline-offset-4">
                     Sign in instead
                   </Link>
                 </p>
@@ -109,10 +109,10 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           </SubmitButton>
         </form>
       </CardContent>
-      <CardFooter className="text-sm text-[color:var(--muted-foreground)]">
+      <CardFooter className="text-sm text-[var(--foreground-on-dark-muted)]">
         <p>
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-[#2f7f5a] underline underline-offset-4">
+          <Link href="/login" className="font-medium text-[var(--brand-muted)] underline underline-offset-4">
             Sign in
           </Link>
         </p>

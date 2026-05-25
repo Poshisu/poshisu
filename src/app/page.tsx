@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
@@ -31,7 +30,7 @@ export default function HomePage() {
               <Link href="/login">I already have an account</Link>
             </Button>
           </div>
-          <p className="text-center text-sm text-[#6f7a73]">By continuing you agree to our Terms and Privacy Policy.</p>
+          <p className="text-center text-sm text-[var(--foreground-on-dark-muted)]">By continuing you agree to our Terms and Privacy Policy.</p>
         </div>
       </section>
     </main>

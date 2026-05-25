@@ -470,3 +470,5 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 | RDX-05D.4 | Docs parity and ADR | Record governance decision + rollout policy in DECISIONS/TASKS. | `rg -n "RDX-05D" docs/TASKS.md docs/DECISIONS.md` | done |
 
 - 2026-05-25: In-progress onboarding/auth dark-shell parity pass updated `ChatOnboardingFlow` to use full-viewport guided shell, progress rail, tokenized choice rows, and sticky safe-area CTA while preserving action behavior.
+
+- 2026-05-25: RDX-05 visual parity follow-up updates onboarding + auth dark-shell surfaces to align closer with Model_UI guidance (tokenized dark fields/rows, custom consent checkbox, sticky safe-area actions, and Nourish copy corrections).

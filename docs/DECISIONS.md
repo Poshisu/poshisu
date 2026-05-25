@@ -550,3 +550,25 @@ Improved parity but further polish is still needed for complete screenshot-level
 
 ### Migration path
 Extend the same primitives into auth and remaining onboarding microstates in follow-up slices.
+
+## 2026-05-25 — RDX-05 dark-shell onboarding/auth parity follow-up
+
+### Context
+Prior RDX onboarding/auth pass remained too light-card and generic compared to target model screenshots and founder feedback.
+
+### Options considered
+1. Keep minimal patch on light card visuals
+2. Broad route rewrite with backend/scope changes
+3. Scoped UI parity follow-up preserving behavior contracts
+
+### Decision
+Choose option 3 and apply a focused onboarding/auth dark-shell parity pass while preserving existing auth/onboarding behaviors.
+
+### Why
+Improves model-direction visual fidelity without introducing backend or policy risk.
+
+### Tradeoffs
+Still incremental; future polish may refine chip density and visual micro-interactions.
+
+### Migration path
+Continue with small follow-up primitives/screenshots until RDX-05 visual acceptance gate is met.
