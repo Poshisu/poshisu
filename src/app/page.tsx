@@ -1,14 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
     <main id="main-content" tabIndex={-1} className="min-h-svh bg-[var(--surface-app-dark)] text-[var(--foreground-on-dark)] focus-visible:outline-none">
-      <section className="relative h-[36svh] min-h-[260px] w-full overflow-hidden sm:h-[42svh]">
-        <picture>
-          <source media="(max-width: 767px)" srcSet="/images/landing-hero-mobile.svg" />
-          <img src="/images/landing-hero-desktop.svg" alt="Fresh produce illustration" className="h-full w-full object-cover" />
-        </picture>
+      <section className="relative h-[44svh] min-h-[320px] w-full overflow-hidden sm:h-[56svh]">
+        <Image
+          src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1800&q=85&auto=format&fit=crop"
+          alt="Overhead view of a vibrant bowl of fresh fruit, berries, and grains"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[var(--surface-app-dark)]" aria-hidden="true" />
       </section>
 
       <section className="mx-auto w-full max-w-3xl bg-[var(--surface-app-dark)] px-6 pb-10 pt-8 sm:px-10 sm:pt-10">

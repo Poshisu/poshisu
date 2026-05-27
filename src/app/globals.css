@@ -45,8 +45,8 @@
   --shadow-soft: var(--shadow-soft);
   --shadow-card: var(--shadow-card);
   --shadow-lifted: var(--shadow-lifted);
-  --font-sans: var(--font-inter), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-secondary: var(--font-dm-sans), var(--font-inter), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-manrope), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-secondary: var(--font-dm-sans), var(--font-manrope), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: var(--font-playfair-display), Georgia, serif;
   --font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --text-xs: var(--type-scale-xs);
@@ -105,6 +105,16 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+  /* Surface + foreground tokens used across auth, landing, and onboarding.
+     Mapped to light-theme equivalents so text is visible on the cream canvas. */
+  --surface-app-dark: var(--surface-canvas);
+  --surface-panel-dark: var(--surface-raised);
+  --foreground-on-dark: var(--foreground);
+  --foreground-on-dark-strong: #0a0a0a;
+  --foreground-on-dark-muted: #4f5f53;
+  --error-surface: #fef1ee;
+  --error-border: #f1b9af;
+  --error-foreground: #8b2a23;
 }
 
 .dark {
@@ -146,12 +156,31 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --surface-app-dark: #0a0a0a;
+  --surface-panel-dark: #16221c;
+  --foreground-on-dark: #eef2ed;
+  --foreground-on-dark-strong: #ffffff;
+  --foreground-on-dark-muted: #b6c2bc;
+  --error-surface: #2a1815;
+  --error-border: #6b2a23;
+  --error-foreground: #f4b6ad;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+  font-feature-settings: "ss01", "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
 }
 
 h1,

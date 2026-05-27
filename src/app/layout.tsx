@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Inter, Playfair_Display } from "next/font/google";
+import { DM_Sans, Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-manrope",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -61,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmSans.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="en" className={`${manrope.variable} ${dmSans.variable} ${playfair.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <a
           href="#main-content"
