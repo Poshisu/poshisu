@@ -78,6 +78,7 @@ function WordmarkLink() {
   return (
     <Link
       href="/chat"
+      aria-label="Nourish Home"
       className="inline-flex items-center gap-2 rounded-sm text-base font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <span

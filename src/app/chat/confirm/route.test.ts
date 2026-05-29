@@ -72,7 +72,7 @@ describe("POST /chat/confirm", () => {
 
     expect(confirmMealEstimateMock).toHaveBeenCalledWith(confirmPayload);
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("http://localhost/today?status=saved");
+    expect(response.headers.get("location")).toBe("http://localhost/chat?status=saved");
   });
 
   it("rejects direct or malformed client payloads without throwing", async () => {

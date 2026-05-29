@@ -572,3 +572,26 @@ Still incremental; future polish may refine chip density and visual micro-intera
 
 ### Migration path
 Continue with small follow-up primitives/screenshots until RDX-05 visual acceptance gate is met.
+
+## 2026-05-29 — RDX-06 combined Home IA on `/chat`
+
+### Context
+The authenticated app split daily nutrition review (`/today`) and meal logging (`/chat`) into separate primary tabs. Founder feedback requested a faster move toward a premium app-quality Home that combines day state, chat, and estimate confirmation while keeping `/chat` as the route for now.
+
+### Options considered
+1. Keep Chat and Today as separate primary tabs and polish both independently.
+2. Create a new `/home` route and migrate `/chat` later.
+3. Treat `/chat` as Home for now, remove Today from primary nav, and keep `/today` as a detail/history route.
+
+### Decision
+Choose option 3. RDX-06A/B combines Home IA and the rich meal estimate review into one PR, with `/chat` serving as the Home route and `/today` preserved for direct/detail access.
+
+### Why
+This moves faster, avoids route-migration churn, preserves existing confirm-save/API behavior, and aligns the UI with the target Home screenshots: daily summary, today's meals, chat replies, estimate card, and sticky composer in one surface.
+
+### Tradeoffs
+- **Gain:** immediate app-quality improvement and simpler primary navigation (`Home`, `Trends`, `Me`).
+- **Cost:** route naming remains technically `/chat` until a later migration. Camera and microphone inputs are device-capability affordances but full photo analysis and ElevenLabs transcription are separate follow-up slices.
+
+### Migration path
+If `/home` becomes necessary, add `/home` as a route alias or redirect target after the Home UX stabilizes, then gradually migrate deep links and redirects away from `/chat`.

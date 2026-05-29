@@ -71,6 +71,6 @@ export async function POST(request: Request) {
   }
 
   const result = await confirmMealEstimate(parsed.data.mealCandidate.confirmPayload);
-  const destination = result.status === "duplicate_ignored" ? "/today?status=duplicate_ignored" : "/today?status=saved";
+  const destination = result.status === "duplicate_ignored" ? "/chat?status=duplicate_ignored" : "/chat?status=saved";
   return redirectTo(request, destination);
 }

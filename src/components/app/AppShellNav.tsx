@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, MessageCircle, TrendingUp, User } from "lucide-react";
+import { Home, TrendingUp, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +13,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/chat", label: "Chat", icon: MessageCircle },
-  { href: "/today", label: "Today", icon: CalendarDays },
+  { href: "/chat", label: "Home", icon: Home },
   { href: "/trends", label: "Trends", icon: TrendingUp },
   { href: "/profile", label: "Me", icon: User },
 ];
@@ -67,7 +66,7 @@ export function TabBar() {
         "pb-[env(safe-area-inset-bottom)]",
       )}
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-4">
+      <ul className="mx-auto grid max-w-xl grid-cols-3 gap-2 px-3 py-2">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
@@ -76,9 +75,9 @@ export function TabBar() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex min-h-16 flex-col items-center justify-center gap-1 px-2 py-2 text-xs transition-colors",
+                  "relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-full px-2 py-2 text-xs transition-colors",
                   "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                  active ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
+                  active ? "bg-[var(--surface-brand-soft)] font-semibold text-[var(--brand)]" : "font-medium text-muted-foreground",
                 )}
               >
                 <Icon aria-hidden="true" className="size-[22px]" strokeWidth={active ? 2.25 : 1.75} />
