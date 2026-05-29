@@ -45,7 +45,7 @@ test.describe("auth flow", () => {
     }
 
     await page.goto("/chat");
-    await expect(page.getByText(unique)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
 
     await page.getByTestId("logout-button").click();
     await expect(page).toHaveURL(/\/$/);
@@ -99,10 +99,12 @@ test.describe("auth flow", () => {
     await expect(page).toHaveURL(/\/chat/);
 
     await page.getByLabel("Meal message").fill("I had idli and sambar for breakfast");
-    await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByRole("heading", { name: /estimated meal: i had idli and sambar for breakfast/i })).toBeVisible();
-    await page.getByRole("button", { name: /looks right — save meal/i }).click();
-    await expect(page).toHaveURL(/\/today/);
+    await page.getByRole("button", { name: "Send meal message" }).click();
+    await expect(page.getByRole("region", { name: "Meal estimate" })).toBeVisible();
+    await page.getByRole("button", { name: "Looks right" }).click();
+    await expect(page).toHaveURL(/\/chat/);
+    await expect(page.getByText(/meal saved/i)).toBeVisible();
+    await page.goto("/today");
     await expect(page.getByRole("heading", { name: /breakfast/i })).toBeVisible();
     await expect(page.getByText(/i had idli and sambar for breakfast/i)).toBeVisible();
   });

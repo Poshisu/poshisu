@@ -472,3 +472,12 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 - 2026-05-25: In-progress onboarding/auth dark-shell parity pass updated `ChatOnboardingFlow` to use full-viewport guided shell, progress rail, tokenized choice rows, and sticky safe-area CTA while preserving action behavior.
 
 - 2026-05-25: RDX-05 visual parity follow-up updates onboarding + auth dark-shell surfaces to align closer with Model_UI guidance (tokenized dark fields/rows, custom consent checkbox, sticky safe-area actions, and Nourish copy corrections).
+
+## 2026-05-29 — RDX-06A/B execution note
+
+- **Status:** `in_progress`
+- **Scope:** Combine RDX-06A Home IA and RDX-06B rich meal estimate review in one PR for speed.
+- **Route decision:** `/chat` remains the Home route for now; primary nav labels it `Home`, and `/today` stays available as a detail/history route outside primary nav.
+- **Implemented behavior target:** Home shows daily nutrition summary, today's meal preview, chat transcript, rich estimate card, and sticky composer with camera/mic device affordances.
+- **Explicit follow-ups:** PostHog setup, real LLM-backed chat, and ElevenLabs transcription remain required before founder-approved beta; they are not claimed complete by RDX-06A/B.
+- **PRD:** See `docs/RDX_06_HOME_IA_PRD.md` for the living product/design rationale and change process.

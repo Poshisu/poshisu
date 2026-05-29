@@ -206,12 +206,16 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
-- **Chat:** Authenticated text meal logging MVP with transcript, composer, structured estimate blocks, and confirm-save handoff; image/audio/file modalities remain deferred/coming soon unless separately implemented.
+- **Home / Chat:** `/chat` now serves as the Home surface, combining daily nutrition summary, today's meals preview, chat transcript, sticky composer, and rich confirm-save estimate review; real LLM-backed chat, PostHog instrumentation, and ElevenLabs transcription remain pre-beta follow-ups.
 - **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation.
 - **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state.
 - **Profile memory inspector:** Implemented with memory edit affordances, audit context, privacy export, and guarded delete-account controls.
 - **Auth and app shell:** Implemented baseline with route protection and scoped E2E smoke coverage.
 - **Closed beta launch:** Operating packet lives at `docs/BETA_LAUNCH_CHECKLIST.md`; real cohort run remains product/founder gated.
+
+### Product decision records
+
+- `docs/RDX_06_HOME_IA_PRD.md` records the living PRD for the combined Home information architecture. It is intentionally changeable via future PRs with task/ADR updates.
 
 ## Tech stack
 

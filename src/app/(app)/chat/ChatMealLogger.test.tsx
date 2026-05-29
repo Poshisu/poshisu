@@ -1,8 +1,32 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatMealLogger } from "./ChatMealLogger";
+import type { TodayMeal } from "@/lib/meals/today";
 
 const originalFetch = globalThis.fetch;
+
+const meals: TodayMeal[] = [
+  {
+    id: "meal-1",
+    meal_slot: "breakfast",
+    source_text: "Ate 1 grilled chicken breast with broccoli and beans",
+    kcal_low: 180,
+    kcal_high: 240,
+    kcal_lead: 210,
+    protein_g_low: 22,
+    protein_g_high: 28,
+    carbs_g_low: 2,
+    carbs_g_high: 6,
+    fat_g_low: 8,
+    fat_g_high: 14,
+    fiber_g_low: 0,
+    fiber_g_high: 1,
+    confidence: 0.86,
+    preparation_assumptions: "Chicken breast estimated at 100g cooked.",
+    safety_flags: [],
+    logged_at: "2026-05-29T04:30:00.000Z",
+  },
+];
 
 describe("ChatMealLogger", () => {
   beforeEach(() => {
@@ -24,8 +48,8 @@ describe("ChatMealLogger", () => {
                   mealSlot: "breakfast",
                   sourceText: "I had 2 idlis and sambar for breakfast",
                   items: [
-                    { name: "idli", quantity_g: 100, household_unit: "estimated serving" },
-                    { name: "dal", quantity_g: 100, household_unit: "estimated serving" },
+                    { name: "idli", quantity_g: 100, household_unit: "2 pieces" },
+                    { name: "sambar", quantity_g: 100, household_unit: "1 bowl" },
                   ],
                   kcalLow: 185,
                   kcalHigh: 251,
@@ -37,15 +61,12 @@ describe("ChatMealLogger", () => {
                 clarificationQuestions: [],
                 safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
               },
-              { type: "text", text: "I can log this meal. Please confirm if the estimate looks right." },
+              { type: "text", text: "Got it. Looks like a meal with idli and sambar." },
             ],
             assistantMessage: {
               id: "msg-assistant-1",
               role: "assistant",
-              kind: "text",
-              content: "I can log this meal. Please confirm if the estimate looks right.",
-              created_at: "2026-05-15T00:00:00.000Z",
-              in_reply_to: "msg-user-1",
+              content: "Got it. Looks like a meal with idli and sambar.",
             },
           },
         }),
@@ -56,46 +77,50 @@ describe("ChatMealLogger", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
-    vi.restoreAllMocks();
   });
 
-  it("submits a text meal to /api/chat and renders a confirmable estimate", async () => {
-    render(<ChatMealLogger />);
+  it("renders the combined Home summary, meal preview, and accessible composer", () => {
+    render(<ChatMealLogger dateLabel="29 May 2026" initialMeals={meals} userName="Atu" />);
 
-    fireEvent.change(screen.getByLabelText("Meal message"), {
-      target: { value: "I had 2 idlis and sambar for breakfast" },
+    expect(screen.getByRole("heading", { name: "Home" })).toBeInTheDocument();
+    expect(screen.getByText(/Good (morning|afternoon|evening), Atu/i)).toBeInTheDocument();
+    expect(screen.getByText("1 meal logged today.")).toBeInTheDocument();
+    expect(screen.getAllByText("180–240")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("25g")[0]).toBeInTheDocument();
+    expect(screen.getByText("Today's meals (1)")).toBeInTheDocument();
+    expect(screen.getByText("Ate 1 grilled chicken breast with broccoli and beans")).toBeInTheDocument();
+    expect(screen.getByLabelText("Meal message")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add meal photo" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record voice note" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send meal message" })).toBeDisabled();
+  });
+
+  it("sends a meal message and renders the rich estimate card with confirm action", async () => {
+    render(<ChatMealLogger initialMeals={meals} />);
+
+    fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "I had 2 idlis and sambar for breakfast" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ text: "I had 2 idlis and sambar for breakfast" }),
+        }),
+      );
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith(
-      "/api/chat",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ text: "I had 2 idlis and sambar for breakfast" }),
-      }),
-    ));
-
-    expect(await screen.findByText("I had 2 idlis and sambar for breakfast")).toBeInTheDocument();
-    expect(screen.getByText("I can log this meal. Please confirm if the estimate looks right.")).toBeInTheDocument();
-    expect(screen.getByText("Estimated meal: I had 2 idlis and sambar for breakfast")).toBeInTheDocument();
-    expect(screen.getByText("185–251 kcal · confidence high")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Looks right — save meal" })).toBeInTheDocument();
-    expect(screen.getByDisplayValue("msg-assistant-1")).toHaveAttribute("name", "candidateId");
-  });
-
-  it("applies a quick chip through the same text submit path", async () => {
-    render(<ChatMealLogger />);
-
-    fireEvent.click(screen.getByRole("button", { name: "I had idli and sambar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
-
-    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith(
-      "/api/chat",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ text: "I had idli and sambar" }),
-      }),
-    ));
+    expect(await screen.findByText("Got it. Looks like a meal with idli and sambar.")).toBeInTheDocument();
+    const estimate = screen.getByRole("region", { name: "Meal estimate" });
+    expect(within(estimate).getByRole("heading", { name: "185–251 kcal" })).toBeInTheDocument();
+    expect(within(estimate).getByText("Based on your logs")).toBeInTheDocument();
+    expect(within(estimate).getByText("Carbs")).toBeInTheDocument();
+    expect(within(estimate).getByText("35g")).toBeInTheDocument();
+    expect(within(estimate).getByText("idli")).toBeInTheDocument();
+    expect(within(estimate).getByText("2 pieces")).toBeInTheDocument();
+    expect(within(estimate).getByRole("button", { name: "Breakfast" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(estimate).getByRole("button", { name: "Looks right" })).toBeInTheDocument();
   });
 
   it("does not render a broken save form when the assistant has no confirm payload", async () => {
@@ -131,9 +156,9 @@ describe("ChatMealLogger", () => {
     render(<ChatMealLogger />);
 
     fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "I had unknown food" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
 
     expect(await screen.findByText("I need one quick clarification before I can save this.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Looks right — save meal" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Looks right" })).not.toBeInTheDocument();
   });
 });

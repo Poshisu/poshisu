@@ -111,10 +111,9 @@ test.describe("accessibility release gate", () => {
     await signupAndCompleteOnboarding(page, testInfo);
 
     await expect(page.getByRole("main")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Chat" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Primary" }).first()).toBeVisible();
     await expect(page.getByLabel("Chat transcript")).toBeVisible();
-    await expect(page.getByLabel("Quick meal prompts")).toBeVisible();
     await expect(page.getByLabel("Meal message")).toBeVisible();
 
 
@@ -123,10 +122,10 @@ test.describe("accessibility release gate", () => {
     await attachScreenshot(page, testInfo, "chat-keyboard-ready-state");
 
     await page.getByLabel("Meal message").fill("I had idli and sambar for breakfast");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("button", { name: "Send meal message" }).click();
     await expect(page.getByRole("status")).toContainText(/estimating your meal/i);
-    await expect(page.getByRole("heading", { name: /estimated meal: i had idli and sambar for breakfast/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /looks right — save meal/i })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Meal estimate" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Looks right" })).toBeVisible();
     await attachScreenshot(page, testInfo, "chat-estimate-confirm-save-state");
 
     for (const route of ["/today", "/trends", "/profile"]) {
