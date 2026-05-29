@@ -85,15 +85,18 @@ export async function POST(request: Request) {
   let intent = "general_fallback_guidance";
   let usedFallback = false;
   let blocks: Awaited<ReturnType<typeof handleMessage>>["blocks"] = [];
+  let agentMetadata: Awaited<ReturnType<typeof handleMessage>>["metadata"] | undefined;
 
   try {
     const orchestrated = await handleMessage(user.id, {
       text: parsed.data.text,
       allergies: parsed.data.allergies,
       conditions: parsed.data.conditions,
-    });
+    }, { supabase });
     intent = orchestrated.intent;
     blocks = orchestrated.blocks;
+    agentMetadata = orchestrated.metadata;
+    usedFallback = Boolean(agentMetadata?.usedDeterministicFallback);
     const firstTextBlock = blocks.find((block) => block.type === "text");
     if (firstTextBlock && firstTextBlock.text.trim()) {
       assistantText = firstTextBlock.text;
@@ -109,6 +112,7 @@ export async function POST(request: Request) {
     intent,
     requestId,
     usedFallback,
+    agent: agentMetadata,
     mealCandidate: mealCandidate
       ? {
           confirmPayload: mealCandidate.confirmPayload,

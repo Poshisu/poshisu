@@ -174,6 +174,10 @@ Any edits to the Forge startup prompt must be versioned like code and accompanie
 
 CI enforces this with the same `db:types:check` command and fails when committed types are stale.
 
+### AI health-coach architecture
+
+AI-CHAT-01 is documented in [`docs/ai-chat-01-architecture.md`](docs/ai-chat-01-architecture.md), including the LLM provider path, deterministic fallback, memory lifecycle, trace logging, and eval commands.
+
 ### Vercel env + runbook parity
 
 Preview and Production deploys must follow the committed environment matrix, smoke checks, and rollback notes in [RUNBOOK.md#vercel-environment-parity](RUNBOOK.md#vercel-environment-parity).
@@ -194,7 +198,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
-| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
+| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated health-coach runtime with validation, per-user rate limiting, Claude-backed responses when configured, deterministic fallback, memory/context metadata, and safe error envelopes. |
 | `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | Yes | `src/app/api/memory/route.ts` | Authenticated memory read/write API with safe envelopes, Zod validation, user scoping, and writes restricted to `profile/main` and `patterns/main`. |
 | `/api/push` | Yes | `src/app/api/push/route.ts`, `src/app/api/push/subscribe/route.ts`, `src/app/api/push/unsubscribe/route.ts` | Authenticated push subscription lifecycle with VAPID public-key discovery, HTTPS endpoint validation, user-scoped subscribe/upsert, cross-user endpoint ownership cleanup, and idempotent unsubscribe. |
@@ -206,7 +210,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
-- **Home / Chat:** `/chat` now serves as the Home surface, combining daily nutrition summary, today's meals preview, chat transcript, sticky composer, and rich confirm-save estimate review; real LLM-backed chat, PostHog instrumentation, and ElevenLabs transcription remain pre-beta follow-ups.
+- **Home / Chat:** `/chat` now serves as the Home surface and `/api/chat` uses the AI-CHAT-01 health-coach runtime with Claude-backed responses when configured, deterministic nutrition fallback, retrieved profile/memory context, markdown memory effects, and structured confirm-save estimate review; PostHog instrumentation and ElevenLabs transcription remain pre-beta follow-ups.
 - **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation.
 - **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state.
 - **Profile memory inspector:** Implemented with memory edit affordances, audit context, privacy export, and guarded delete-account controls.

@@ -595,3 +595,26 @@ This moves faster, avoids route-migration churn, preserves existing confirm-save
 
 ### Migration path
 If `/home` becomes necessary, add `/home` as a route alias or redirect target after the Home UX stabilizes, then gradually migrate deep links and redirects away from `/chat`.
+
+## 2026-05-29 — AI-CHAT-01 health-coach runtime with deterministic fallback
+
+### Context
+Nourish needs a real agentic health-coach foundation before closed beta. The prior chat path persisted messages and produced deterministic meal estimates, but it did not call an LLM, retrieve user memory/profile context, write safe inferred memory, or extend prompt evals for the health-coach runtime.
+
+### Options considered
+1. Replace the deterministic orchestrator with direct Claude calls.
+2. Keep deterministic chat only and defer LLM integration.
+3. Add a health-coach runtime that retrieves context, calls Claude when configured, preserves deterministic nutrition/safety fallback, writes limited markdown memory effects, and records traces when service-role env is available.
+
+### Decision
+Choose option 3. AI-CHAT-01 introduces a health-coach runtime under `src/lib/agents/health-coach/` while preserving deterministic estimates as the source of numeric meal data and as the no-provider fallback.
+
+### Why
+This gives Nourish a real LLM-backed chat foundation without letting the model invent nutrition numbers or unsafe health advice. It also keeps local tests deterministic and allows previews without an Anthropic key to keep functioning.
+
+### Tradeoffs
+- **Gain:** safer LLM rollout, memory/context foundation, eval coverage, trace path, and graceful no-key behavior.
+- **Cost:** more runtime modules and a two-layer response model where deterministic tools own numeric estimates while the LLM owns coaching language.
+
+### Migration path
+Future PRs can add tool execution, voice/photo intake, proactive check-ins, server-side analytics, and richer memory promotion behind the same runtime instead of adding parallel agent paths.
