@@ -1,8 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { handleMessage } from "./orchestrator";
 
+const createOpenAITextResponseMock = vi.fn();
+
+vi.mock("@/lib/openai/client", () => ({
+  createOpenAITextResponse: (...args: unknown[]) => createOpenAITextResponseMock(...args),
+}));
+
+function mockCoachReply(text = "Got it — I can help with that.") {
+  createOpenAITextResponseMock.mockResolvedValue({
+    text: JSON.stringify({ assistantText: text, inferredFacts: [], userVisibleMemoryNotes: [] }),
+    usage: { inputTokens: 50, outputTokens: 20 },
+  });
+}
+
 describe("handleMessage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    delete process.env.NOURISH_LLM_PROVIDER;
+    mockCoachReply("Got it — I can log this meal.");
+  });
+
   it("routes meal logging candidate messages with estimate + confidence", async () => {
     const response = await handleMessage("user-123", {
       text: "I had paneer and roti for dinner",
@@ -10,6 +30,7 @@ describe("handleMessage", () => {
     });
 
     expect(response.intent).toBe("meal_log_candidate");
+    expect(response.metadata?.provider).toBe("openai");
     const candidate = response.blocks[0];
     expect(candidate).toMatchObject({
       type: "meal_log_candidate",
@@ -26,8 +47,8 @@ describe("handleMessage", () => {
         confidence: 0.9,
       });
       expect(candidate.confirmPayload?.items).toEqual([
-        { name: "roti", quantity_g: 100, household_unit: "estimated serving" },
-        { name: "paneer", quantity_g: 100, household_unit: "estimated serving" },
+        { name: "roti", quantity_g: 35, household_unit: "1 medium roti (~35 g)" },
+        { name: "paneer", quantity_g: 100, household_unit: "~100 g paneer portion" },
       ]);
       expect(candidate.safetyFlags.allergenFlags).toContain("allergen:dairy");
     }
@@ -50,7 +71,7 @@ describe("handleMessage", () => {
 
     expect(response.blocks[1]).toEqual({
       type: "text",
-      text: expect.stringContaining("safety conflict"),
+      text: expect.stringContaining("Got it"),
     });
   });
 
@@ -80,16 +101,18 @@ describe("handleMessage", () => {
     }
   });
 
-  it("routes non-meal messages to fallback guidance", async () => {
+  it("routes non-meal messages to LLM coach responses instead of template fallback guidance", async () => {
+    mockCoachReply("Small win: take a 10-minute walk after dinner and log your next meal when ready.");
     const response = await handleMessage("user-123", {
       text: "Can you motivate me today?",
     });
 
-    expect(response.intent).toBe("general_fallback_guidance");
+    expect(response.intent).toBe("coach_response");
+    expect(response.metadata?.provider).toBe("openai");
     expect(response.blocks).toEqual([
       {
         type: "text",
-        text: expect.stringContaining("meal logging"),
+        text: expect.stringContaining("10-minute walk"),
       },
     ]);
   });

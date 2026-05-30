@@ -58,6 +58,10 @@ describe("ChatMealLogger", () => {
                 },
                 estimate: { kcalMin: 185, kcalMax: 251, protein: 11, carbs: 35, fat: 3, fiber: 8 },
                 rationale: "Assumed typical Indian home-style prep.",
+                displayAssumptions: [
+                  { label: "Portion", detail: "idli: 2 medium pieces; sambar: 1 bowl" },
+                  { label: "Preparation", detail: "Steamed idli with home-style sambar and light tempering" },
+                ],
                 clarificationQuestions: [],
                 safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
               },
@@ -119,8 +123,45 @@ describe("ChatMealLogger", () => {
     expect(within(estimate).getByText("35g")).toBeInTheDocument();
     expect(within(estimate).getByText("idli")).toBeInTheDocument();
     expect(within(estimate).getByText("2 pieces")).toBeInTheDocument();
+    expect(within(estimate).getByText("Portion")).toBeInTheDocument();
+    expect(within(estimate).getByText("idli: 2 medium pieces; sambar: 1 bowl")).toBeInTheDocument();
     expect(within(estimate).getByRole("button", { name: "Breakfast" })).toHaveAttribute("aria-pressed", "true");
     expect(within(estimate).getByRole("button", { name: "Looks right" })).toBeInTheDocument();
+  });
+
+
+  it("hydrates persisted chat messages and pending estimate after refresh", () => {
+    render(
+      <ChatMealLogger
+        initialMessages={[
+          { id: "msg-user-old", role: "user", content: "I had paneer and roti" },
+          { id: "msg-assistant-old", role: "assistant", content: "Got it — I estimated this meal." },
+        ]}
+        initialCandidate={{
+          type: "meal_log_candidate",
+          summary: "paneer and roti",
+          needsConfirmation: true,
+          confidence: "high",
+          mealSlot: "dinner",
+          assistantMessageId: "msg-assistant-old",
+          confirmPayload: {
+            mealSlot: "dinner",
+            items: [{ name: "paneer", quantity_g: 100, household_unit: "~100 g paneer portion" }],
+          },
+          estimate: { kcalMin: 320, kcalMax: 430, protein: 22, carbs: 24, fat: 20, fiber: 3 },
+          rationale: "Portion: paneer ~100 g",
+          displayAssumptions: [{ label: "Preparation", detail: "Medium-spice paneer with moderate oil" }],
+          clarificationQuestions: [],
+          safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("I had paneer and roti")).toBeInTheDocument();
+    expect(screen.getByText("Got it — I estimated this meal.")).toBeInTheDocument();
+    expect(screen.queryByText(/Tell me what you ate/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Meal estimate" })).toBeInTheDocument();
+    expect(screen.getByText("~100 g paneer portion")).toBeInTheDocument();
   });
 
   it("does not render a broken save form when the assistant has no confirm payload", async () => {

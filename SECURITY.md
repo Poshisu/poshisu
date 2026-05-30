@@ -58,8 +58,10 @@ All untrusted inputs must be schema-validated.
 - Never commit secrets to git.
 - Keep environment variables documented in `.env.local.example`.
 - Separate public env vars from server-only secrets.
-- Treat Supabase service role keys, Anthropic keys, and third-party API tokens as server-only.
+- Treat Supabase service role keys, OpenAI keys, Anthropic keys, and third-party API tokens as server-only.
 - Rotate compromised keys immediately and invalidate old credentials.
+- If a real API key is pasted into chat, a PR body, an issue, logs, screenshots, or any tracked file, treat it as compromised even if it was not committed to git. Revoke it in the provider dashboard, create a replacement key, update encrypted environment variables, redeploy, and verify the old key no longer works.
+- Never add real secret values to `.env.local.example`, committed `.env` files, documentation, tests, fixtures, screenshots, or GitHub-tracked files. Use placeholders only.
 
 ## 6) LLM-specific risk notes
 

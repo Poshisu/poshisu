@@ -182,6 +182,8 @@ If future framework primitives provide first-class typed action errors, migrate 
 
 ## 2026-05-04 — `/api/chat` MVP error handling contract
 
+> Superseded for the health-coach LLM path by the 2026-05-30 AI-CHAT-01B decision: selected-provider failures now return `503 LLM_UNAVAILABLE` instead of deterministic assistant fallback text.
+
 ### Context
 The first production-facing chat API needed to ship quickly while limiting abuse and avoiding unsafe error leakage.
 
@@ -595,3 +597,118 @@ This moves faster, avoids route-migration churn, preserves existing confirm-save
 
 ### Migration path
 If `/home` becomes necessary, add `/home` as a route alias or redirect target after the Home UX stabilizes, then gradually migrate deep links and redirects away from `/chat`.
+
+## 2026-05-29 — AI-CHAT-01 health-coach runtime foundation
+
+### Context
+Nourish needs a real agentic health-coach foundation before closed beta. The prior chat path persisted messages and produced deterministic meal estimates, but it did not call an LLM, retrieve user memory/profile context, write safe inferred memory, or extend prompt evals for the health-coach runtime.
+
+### Options considered
+1. Replace the deterministic orchestrator with direct Claude calls.
+2. Keep deterministic chat only and defer LLM integration.
+3. Add a health-coach runtime that retrieves context, calls an LLM provider when configured, preserves deterministic nutrition/safety baselines, writes limited markdown memory effects, and records traces when service-role env is available.
+
+### Decision
+Choose option 3. AI-CHAT-01 introduces a health-coach runtime under `src/lib/agents/health-coach/` while preserving deterministic estimates as the source of numeric meal data.
+
+### Why
+This gives Nourish a real LLM-backed chat foundation without letting the model invent nutrition numbers or unsafe health advice.
+
+### Tradeoffs
+- **Gain:** safer LLM rollout, memory/context foundation, eval coverage, and trace path.
+- **Cost:** more runtime modules and a two-layer response model where deterministic tools own numeric estimates while the LLM owns coaching language.
+
+### Migration path
+Future PRs can add tool execution, voice/photo intake, proactive check-ins, server-side analytics, and richer memory promotion behind the same runtime instead of adding parallel agent paths.
+
+
+## 2026-05-30 — AI-CHAT-01B OpenAI-first provider switching with no chatbot fallback
+
+### Context
+The MVP needs a real chatbot before beta. The prior AI-CHAT-01 implementation still allowed deterministic/template assistant responses when no LLM provider was configured, and it only supported Anthropic for real model calls. Product direction is OpenAI-first while preserving a clean provider switch for Anthropic and future providers.
+
+### Options considered
+1. Keep Anthropic-only and add OpenAI later.
+2. Add OpenAI as a fallback behind Anthropic.
+3. Add explicit provider selection (`openai` or `anthropic`) and fail closed when the selected provider is unavailable.
+
+### Decision
+Choose option 3. `NOURISH_LLM_PROVIDER` selects the provider, defaults to `openai`, and `/api/chat` returns `503 LLM_UNAVAILABLE` instead of persisting template assistant fallback text when the selected provider key is missing or the provider call fails.
+
+### Why
+This matches the product requirement that normal chat must be LLM-backed. It also prevents hidden provider fallback behavior from masking broken production configuration. Deterministic nutrition logic remains an internal baseline for estimates and confirm payloads, not a replacement chatbot.
+
+### Tradeoffs
+- **Gain:** OpenAI-first MVP path, clear provider switch, easier future provider additions, and visible misconfiguration failures.
+- **Cost:** local/dev chat requires an API key or mocked tests; preview deployments without provider env vars show an explicit unavailable state instead of a degraded assistant reply.
+
+### Migration path
+To add another model vendor, add a server-only client wrapper, extend `LlmProviderId`, add provider env validation in `llmProvider.ts`, and add focused provider tests.
+
+## 2026-05-30 — Add authenticated LLM health diagnostics and Structured Outputs for OpenAI
+
+### Context
+The first OpenAI-first deployment failed closed with `503 LLM_UNAVAILABLE`, and the suggested `/api/health/llm` debug URL returned `404` because no such route existed yet. Operators needed a safe way to distinguish missing keys, invalid model access, provider rejection, rate limits, and malformed model output without exposing secrets.
+
+### Options considered
+1. Keep debugging only in Vercel function logs.
+2. Add a public unauthenticated provider health endpoint.
+3. Add an authenticated diagnostics endpoint plus provider smoke test.
+
+### Decision
+Choose option 3. Add authenticated `GET /api/health/llm` for safe configuration diagnostics and `GET /api/health/llm?check=1` for a tiny live provider smoke test. Also request OpenAI Structured Outputs for the health-coach JSON draft instead of relying only on prompt wording.
+
+### Why
+This gives product/ops a deterministic browser-checkable path while keeping API keys server-only and avoiding public endpoints that could burn LLM spend.
+
+### Tradeoffs
+The smoke test still costs a tiny number of provider tokens and requires a signed-in session. It does not replace Vercel function logs for deeper provider outages, but it makes the most common env/model/key failures visible immediately.
+
+### Migration path
+If the app later adds admin roles, restrict `/api/health/llm` to admin users. If the provider SDK is adopted, keep the same route contract and swap the underlying client implementation.
+
+
+## 2026-05-30 — Normalize matching `NAME=value` server env mistakes
+
+### Context
+Vercel environment variables have separate Name and Value fields. During health-coach setup, `NOURISH_LLM_PROVIDER` was accidentally configured with the value `nourish_llm_provider=openai`, causing provider resolution to fail as an unsupported provider.
+
+### Options considered
+1. Require operators to fix the env value manually every time.
+2. Normalize all assignment-like env values by splitting on `=`.
+3. Normalize only when the assignment left-hand side matches the env var being read.
+
+### Decision
+Choose option 3. Server env reads now strip a matching `NAME=` prefix for the health-coach provider, model, and provider API keys, while leaving non-matching assignment-like values untouched.
+
+### Why
+This fixes the common Vercel paste mistake without mutating arbitrary secret values that may legitimately contain `=` or catching the wrong env var being pasted into a field.
+
+### Tradeoffs
+The app is more forgiving, but docs still instruct operators to use clean Vercel values because normalized mistakes can hide dashboard confusion.
+
+### Migration path
+If stricter config validation is needed later, keep the normalizer but emit safe warnings through server logs or an admin-only diagnostics surface rather than failing user chat immediately.
+
+
+## 2026-05-30 — Persist chat UI from Supabase messages and separate estimate presentation from nutrition numbers
+
+### Context
+After the LLM provider was connected, `/chat` still behaved like a transient client-only transcript: refreshing the page erased visible chat history and pending estimate context. The estimate card also used the raw user message as oversized display copy and showed vague `estimated serving` item labels and unstructured assumptions.
+
+### Options considered
+1. Keep transcript state client-only and rely on meals as the durable record.
+2. Hydrate the Home chat from the existing `messages` table and persist the full meal-candidate block in assistant metadata.
+3. Add a new conversation/thread table before fixing the UI.
+
+### Decision
+Choose option 2. `/chat` now hydrates recent user/assistant text messages from Supabase and reconstructs the latest pending estimate from assistant metadata. The LLM may provide concise presentation metadata — summary, serving portions, structured assumptions, and clarifying questions — while deterministic nutrition remains the source of calorie/macro numbers.
+
+### Why
+This uses the existing RLS-protected messages table, fixes refresh continuity immediately, and avoids adding a thread system before we know how users use the chat. Separating presentation from nutrition keeps the UI specific and readable without letting the model invent nutrition numbers.
+
+### Tradeoffs
+Only recent text messages are hydrated for now, and older assistant messages created before full candidate metadata was stored cannot fully reconstruct an estimate card. A future thread model may still be needed for search, pagination, or multi-day conversation navigation.
+
+### Migration path
+Add message pagination or explicit conversation threads later if the transcript grows beyond the recent-message window. Continue storing structured estimate metadata on assistant messages so older cards can be reconstructed without re-calling the LLM.

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { handleMessage } from "@/lib/agents/orchestrator";
+import { HealthCoachProviderError } from "@/lib/agents/health-coach/runtime";
 import { enforceChatRateLimit } from "@/lib/rate-limit/chat";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,11 +11,29 @@ const chatRequestSchema = z.object({
   conditions: z.array(z.string()).optional(),
 });
 
-const FALLBACK_RESPONSE =
-  "I had trouble processing that right now. Please try again in a moment, and I can still help log your meal.";
+type JsonErrorDetails = Record<string, string | number | boolean | undefined>;
 
-function jsonError(status: number, code: string, message: string, requestId: string) {
-  return Response.json({ ok: false, error: { code, message }, requestId }, { status });
+function jsonError(status: number, code: string, message: string, requestId: string, details?: JsonErrorDetails) {
+  return Response.json({ ok: false, error: { code, message, details }, requestId }, { status });
+}
+
+function healthCoachProviderMessage(error: HealthCoachProviderError) {
+  if (error.reason === "model_unavailable") {
+    return "The selected OpenAI model is unavailable for this project. Set OPENAI_HEALTH_COACH_MODEL to an enabled model, then redeploy.";
+  }
+  if (error.reason === "auth_failed") {
+    return "OpenAI rejected the API key. Rotate OPENAI_API_KEY in Vercel, then redeploy.";
+  }
+  if (error.reason === "missing_api_key") {
+    return "OPENAI_API_KEY is missing for the selected health coach provider. Add it in Vercel, then redeploy.";
+  }
+  if (error.reason === "rate_limited") {
+    return "The selected LLM provider is rate-limiting Nourish right now. Check provider usage limits or retry shortly.";
+  }
+  if (error.reason === "invalid_response") {
+    return "The health coach model returned an invalid response. Try a lower-latency enabled model and redeploy.";
+  }
+  return "The Nourish health coach is temporarily unavailable. Please check the LLM provider configuration and try again.";
 }
 
 export async function POST(request: Request) {
@@ -81,27 +100,36 @@ export async function POST(request: Request) {
     return jsonError(500, "MESSAGE_PERSIST_FAILED", "Could not save your message. Please try again.", requestId);
   }
 
-  let assistantText = FALLBACK_RESPONSE;
-  let intent = "general_fallback_guidance";
-  let usedFallback = false;
-  let blocks: Awaited<ReturnType<typeof handleMessage>>["blocks"] = [];
-
+  let orchestrated: Awaited<ReturnType<typeof handleMessage>>;
   try {
-    const orchestrated = await handleMessage(user.id, {
+    orchestrated = await handleMessage(user.id, {
       text: parsed.data.text,
       allergies: parsed.data.allergies,
       conditions: parsed.data.conditions,
-    });
-    intent = orchestrated.intent;
-    blocks = orchestrated.blocks;
-    const firstTextBlock = blocks.find((block) => block.type === "text");
-    if (firstTextBlock && firstTextBlock.text.trim()) {
-      assistantText = firstTextBlock.text;
-    } else {
-      usedFallback = true;
+    }, { supabase });
+  } catch (error) {
+    if (error instanceof HealthCoachProviderError) {
+      const details = {
+        provider: error.provider,
+        model: error.model,
+        reason: error.reason,
+      };
+      console.error("[api/chat] health coach provider unavailable", { requestId, ...details });
+      return jsonError(503, "LLM_UNAVAILABLE", healthCoachProviderMessage(error), requestId, details);
     }
-  } catch {
-    usedFallback = true;
+
+    console.error("[api/chat] health coach failed", { requestId });
+    return jsonError(503, "LLM_UNAVAILABLE", "The Nourish health coach is temporarily unavailable. Please check the LLM provider configuration and try again.", requestId);
+  }
+
+  const intent = orchestrated.intent;
+  const blocks = orchestrated.blocks;
+  const agentMetadata = orchestrated.metadata;
+  const usedFallback = false;
+  const firstTextBlock = blocks.find((block) => block.type === "text");
+  const assistantText = firstTextBlock?.text.trim();
+  if (!assistantText) {
+    return jsonError(502, "LLM_EMPTY_RESPONSE", "The health coach did not return a usable reply. Please try again.", requestId);
   }
 
   const mealCandidate = blocks.find((block) => block.type === "meal_log_candidate");
@@ -109,8 +137,10 @@ export async function POST(request: Request) {
     intent,
     requestId,
     usedFallback,
+    agent: agentMetadata,
     mealCandidate: mealCandidate
       ? {
+          candidateBlock: mealCandidate,
           confirmPayload: mealCandidate.confirmPayload,
           safetyFlags: mealCandidate.safetyFlags,
         }
