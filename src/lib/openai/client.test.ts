@@ -40,6 +40,24 @@ describe("createOpenAITextResponse", () => {
     expect(body.text.format.schema.required).toEqual(["assistantText", "inferredFacts", "userVisibleMemoryNotes"]);
   });
 
+  it("strips an accidental OPENAI_API_KEY= prefix before sending authorization", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "OPENAI_API_KEY=sk-test");
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      output_text: '{"assistantText":"ok","inferredFacts":[],"userVisibleMemoryNotes":[]}',
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createOpenAITextResponse({
+      model: "gpt-5.2",
+      system: "Return JSON.",
+      prompt: "hello",
+      maxOutputTokens: 100,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer sk-test");
+  });
+
   it("preserves OpenAI error status and code for diagnostics", async () => {
     vi.stubEnv("OPENAI_API_KEY", "sk-test");
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({

@@ -118,7 +118,7 @@ Server-side LLM execution requires one selected provider and its matching server
 
 There is intentionally no deterministic chatbot kill switch. If the selected provider key is absent or invalid, `/api/chat` returns `503 LLM_UNAVAILABLE` after saving the user message, and no assistant fallback message is persisted. The OpenAI provider asks the Responses API for Structured Outputs with the health-coach JSON schema so app-side parsing failures are less likely than prompt-only JSON instructions.
 
-Authenticated operators can inspect the deployed provider configuration at `/api/health/llm` and run a tiny live provider smoke test at `/api/health/llm?check=1`. The endpoint reports provider, model, key-presence, reason codes, and latency only; it never returns API keys and does not write chat messages.
+Authenticated operators can inspect the deployed provider configuration at `/api/health/llm` and run a tiny live provider smoke test at `/api/health/llm?check=1`. The endpoint reports provider, model, key-presence, reason codes, and latency only; it never returns API keys and does not write chat messages. Server env reads tolerate the common Vercel mistake of pasting `NAME=value` into the value field by stripping a matching `NAME=` prefix before provider/key/model resolution.
 
 Trace logging into `agent_traces` requires the existing server-only Supabase service role configuration:
 

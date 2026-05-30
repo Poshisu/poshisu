@@ -101,6 +101,22 @@ describe("runHealthCoachAgent", () => {
     expect(supabase.upserts.some((row) => row.layer === "patterns" && String(row.content).includes("Prefers lighter dinners"))).toBe(true);
   });
 
+  it("tolerates Vercel env values pasted as KEY=value", async () => {
+    process.env.NOURISH_LLM_PROVIDER = "NOURISH_LLM_PROVIDER=openai";
+    process.env.OPENAI_API_KEY = "OPENAI_API_KEY=test-openai-key";
+    process.env.OPENAI_HEALTH_COACH_MODEL = "OPENAI_HEALTH_COACH_MODEL=gpt-5.2";
+    createOpenAITextResponseMock.mockResolvedValueOnce(llmJson("Got it — I can log this meal."));
+
+    const response = await runHealthCoachAgent({
+      userId: "user-1",
+      message: { text: "I had dal rice for lunch" },
+    });
+
+    expect(response.metadata.provider).toBe("openai");
+    expect(createOpenAITextResponseMock).toHaveBeenCalledWith(expect.objectContaining({ model: "gpt-5.2" }));
+    expect(createAnthropicTextMessageMock).not.toHaveBeenCalled();
+  });
+
   it("uses Anthropic when selected by NOURISH_LLM_PROVIDER", async () => {
     process.env.NOURISH_LLM_PROVIDER = "anthropic";
     process.env.ANTHROPIC_API_KEY = "test-anthropic-key";

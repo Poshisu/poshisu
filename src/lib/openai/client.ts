@@ -1,3 +1,5 @@
+import { readServerEnv } from "@/lib/env/server";
+
 type OpenAIResponseOutputContent = {
   type?: string;
   text?: string;
@@ -96,7 +98,7 @@ export type OpenAITextResponseResult = {
 };
 
 function getOpenAIKey() {
-  const key = process.env.OPENAI_API_KEY?.trim();
+  const key = readServerEnv("OPENAI_API_KEY");
   if (!key) {
     throw new Error("OPENAI_API_KEY is not configured.");
   }

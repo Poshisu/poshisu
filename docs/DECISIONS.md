@@ -666,3 +666,26 @@ The smoke test still costs a tiny number of provider tokens and requires a signe
 
 ### Migration path
 If the app later adds admin roles, restrict `/api/health/llm` to admin users. If the provider SDK is adopted, keep the same route contract and swap the underlying client implementation.
+
+
+## 2026-05-30 — Normalize matching `NAME=value` server env mistakes
+
+### Context
+Vercel environment variables have separate Name and Value fields. During health-coach setup, `NOURISH_LLM_PROVIDER` was accidentally configured with the value `nourish_llm_provider=openai`, causing provider resolution to fail as an unsupported provider.
+
+### Options considered
+1. Require operators to fix the env value manually every time.
+2. Normalize all assignment-like env values by splitting on `=`.
+3. Normalize only when the assignment left-hand side matches the env var being read.
+
+### Decision
+Choose option 3. Server env reads now strip a matching `NAME=` prefix for the health-coach provider, model, and provider API keys, while leaving non-matching assignment-like values untouched.
+
+### Why
+This fixes the common Vercel paste mistake without mutating arbitrary secret values that may legitimately contain `=` or catching the wrong env var being pasted into a field.
+
+### Tradeoffs
+The app is more forgiving, but docs still instruct operators to use clean Vercel values because normalized mistakes can hide dashboard confusion.
+
+### Migration path
+If stricter config validation is needed later, keep the normalizer but emit safe warnings through server logs or an admin-only diagnostics surface rather than failing user chat immediately.

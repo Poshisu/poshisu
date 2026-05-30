@@ -277,9 +277,9 @@ Conditional public browser/runtime values — set in Preview and Production when
 
 Server-only/runtime secrets — set in both **Preview** and **Production** as encrypted Vercel env vars:
 - `SUPABASE_SERVICE_ROLE_KEY`: Server/admin Supabase key. Never prefix with `NEXT_PUBLIC_`; never expose in client bundles, logs, PR bodies, screenshots, or chat.
-- `NOURISH_LLM_PROVIDER`: Health-coach provider selector. Use `openai` for the MVP default; use `anthropic` only when intentionally testing Claude.
-- `OPENAI_API_KEY`: OpenAI API key for the default health-coach provider. Required when `NOURISH_LLM_PROVIDER=openai`.
-- `OPENAI_HEALTH_COACH_MODEL`: Optional OpenAI health-coach model override; defaults to `gpt-5.2`.
+- `NOURISH_LLM_PROVIDER`: Health-coach provider selector. Use `openai` for the MVP default; use `anthropic` only when intentionally testing Claude. In Vercel, enter **Name** = `NOURISH_LLM_PROVIDER` and **Value** = `openai`; do not put `NOURISH_LLM_PROVIDER=openai` in the value field.
+- `OPENAI_API_KEY`: OpenAI API key for the default health-coach provider. Required when `NOURISH_LLM_PROVIDER=openai`. In Vercel, enter **Name** = `OPENAI_API_KEY` and **Value** = the secret key only; do not include `OPENAI_API_KEY=` in the value field.
+- `OPENAI_HEALTH_COACH_MODEL`: Optional OpenAI health-coach model override; defaults to `gpt-5.2`. In Vercel, enter **Name** = `OPENAI_HEALTH_COACH_MODEL` and **Value** = the API model id only, for example `gpt-5.2`.
 - `ANTHROPIC_API_KEY`: Claude API key for Anthropic-selected agent/parser/orchestrator paths. Required when `NOURISH_LLM_PROVIDER=anthropic`.
 - `ELEVENLABS_API_KEY`: ElevenLabs Scribe key for voice transcription when voice is in-scope.
 - `VAPID_PRIVATE_KEY`: Web Push private key. Must pair with the public VAPID key.
@@ -313,6 +313,8 @@ Supabase Edge Function secrets — configure in Supabase, not Vercel:
 Use when `/api/chat` returns `503 LLM_UNAVAILABLE`. The API response includes safe diagnostics under `error.details` with `provider`, `model`, and `reason`; it never includes API keys.
 
 Before changing secrets, sign in to the deployed app and open `/api/health/llm` in the same browser. Expected: a JSON response showing `provider`, `model`, `apiKeyConfigured`, and `checkRequested:false`. Then open `/api/health/llm?check=1` to run a tiny live provider smoke test that does not save chat messages. A `404` on this URL means the deployment does not include the diagnostics route yet; redeploy the commit that added `src/app/api/health/llm/route.ts`.
+
+Common Vercel setup mistake: each env var has a separate **Name** and **Value** field. If the app reports `Unsupported NOURISH_LLM_PROVIDER: nourish_llm_provider=openai`, the value was pasted as `NOURISH_LLM_PROVIDER=openai` instead of just `openai`. Current code defensively strips a matching `NAME=` prefix, but the Vercel value should still be corrected for clarity.
 
 1. If `reason` is `model_unavailable`, set `OPENAI_HEALTH_COACH_MODEL` to an OpenAI model enabled for the project. Avoid display names such as `GPT 5.5`; use an API model id such as `gpt-5.2` or another enabled model id from the OpenAI dashboard. Redeploy after changing the value.
 2. If `reason` is `auth_failed`, rotate `OPENAI_API_KEY`, update the encrypted Vercel env var, and redeploy.

@@ -1,4 +1,5 @@
 import { createAnthropicTextMessage } from "@/lib/claude/client";
+import { readServerEnv } from "@/lib/env/server";
 import { createOpenAITextResponse, OpenAIResponseError } from "@/lib/openai/client";
 import { AI_CHAT_01_PROMPT_VERSION, buildHealthCoachPrompt } from "./promptRegistry";
 import { parseLlmCoachDraft } from "./responseQuality";
@@ -30,22 +31,22 @@ export type HealthCoachProviderConfig = {
 };
 
 export function resolveHealthCoachProviderConfig(): HealthCoachProviderConfig {
-  const requestedProvider = process.env.NOURISH_LLM_PROVIDER?.trim().toLowerCase() || "openai";
+  const requestedProvider = readServerEnv("NOURISH_LLM_PROVIDER")?.toLowerCase() || "openai";
   if (!providerIds.has(requestedProvider as LlmProviderId)) {
     throw new Error(`Unsupported NOURISH_LLM_PROVIDER: ${requestedProvider}. Expected openai or anthropic.`);
   }
 
   const provider = requestedProvider as LlmProviderId;
   const model = provider === "openai"
-    ? process.env.OPENAI_HEALTH_COACH_MODEL?.trim() || DEFAULT_OPENAI_MODEL
-    : process.env.ANTHROPIC_HEALTH_COACH_MODEL?.trim() || DEFAULT_ANTHROPIC_MODEL;
+    ? readServerEnv("OPENAI_HEALTH_COACH_MODEL") || DEFAULT_OPENAI_MODEL
+    : readServerEnv("ANTHROPIC_HEALTH_COACH_MODEL") || DEFAULT_ANTHROPIC_MODEL;
 
   return { provider, model };
 }
 
 export function isLlmConfigured(provider: LlmProviderId = resolveHealthCoachProviderConfig().provider) {
-  if (provider === "openai") return Boolean(process.env.OPENAI_API_KEY?.trim());
-  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+  if (provider === "openai") return Boolean(readServerEnv("OPENAI_API_KEY"));
+  return Boolean(readServerEnv("ANTHROPIC_API_KEY"));
 }
 
 async function callProvider(args: {
