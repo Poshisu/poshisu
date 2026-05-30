@@ -308,6 +308,16 @@ Supabase Edge Function secrets — configure in Supabase, not Vercel:
 - `VAPID_PRIVATE_KEY`
 - `VAPID_SUBJECT`
 
+### Health coach LLM unavailable triage
+
+Use when `/api/chat` returns `503 LLM_UNAVAILABLE`. The API response includes safe diagnostics under `error.details` with `provider`, `model`, and `reason`; it never includes API keys.
+
+1. If `reason` is `model_unavailable`, set `OPENAI_HEALTH_COACH_MODEL` to an OpenAI model enabled for the project. Avoid display names such as `GPT 5.5`; use an API model id such as `gpt-5.2` or another enabled model id from the OpenAI dashboard. Redeploy after changing the value.
+2. If `reason` is `auth_failed`, rotate `OPENAI_API_KEY`, update the encrypted Vercel env var, and redeploy.
+3. If `reason` is `missing_api_key`, add `OPENAI_API_KEY` in the selected Vercel environment scopes and redeploy.
+4. If `reason` is `rate_limited`, check provider billing/usage limits and retry after limits reset.
+5. If `reason` is `invalid_response`, switch to a known enabled non-preview model and capture the request id plus Vercel function log line for debugging.
+
 ### Preview smoke checks
 
 Run these after every Vercel Preview deployment that changes env handling, auth, onboarding, chat, meals, memory, push, telemetry, or build/runtime config.

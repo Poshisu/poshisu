@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { handleMessage } from "@/lib/agents/orchestrator";
+import { HealthCoachProviderError } from "@/lib/agents/health-coach/runtime";
 import { enforceChatRateLimit } from "@/lib/rate-limit/chat";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,8 +11,29 @@ const chatRequestSchema = z.object({
   conditions: z.array(z.string()).optional(),
 });
 
-function jsonError(status: number, code: string, message: string, requestId: string) {
-  return Response.json({ ok: false, error: { code, message }, requestId }, { status });
+type JsonErrorDetails = Record<string, string | number | boolean | undefined>;
+
+function jsonError(status: number, code: string, message: string, requestId: string, details?: JsonErrorDetails) {
+  return Response.json({ ok: false, error: { code, message, details }, requestId }, { status });
+}
+
+function healthCoachProviderMessage(error: HealthCoachProviderError) {
+  if (error.reason === "model_unavailable") {
+    return "The selected OpenAI model is unavailable for this project. Set OPENAI_HEALTH_COACH_MODEL to an enabled model, then redeploy.";
+  }
+  if (error.reason === "auth_failed") {
+    return "OpenAI rejected the API key. Rotate OPENAI_API_KEY in Vercel, then redeploy.";
+  }
+  if (error.reason === "missing_api_key") {
+    return "OPENAI_API_KEY is missing for the selected health coach provider. Add it in Vercel, then redeploy.";
+  }
+  if (error.reason === "rate_limited") {
+    return "The selected LLM provider is rate-limiting Nourish right now. Check provider usage limits or retry shortly.";
+  }
+  if (error.reason === "invalid_response") {
+    return "The health coach model returned an invalid response. Try a lower-latency enabled model and redeploy.";
+  }
+  return "The Nourish health coach is temporarily unavailable. Please check the LLM provider configuration and try again.";
 }
 
 export async function POST(request: Request) {
@@ -85,7 +107,18 @@ export async function POST(request: Request) {
       allergies: parsed.data.allergies,
       conditions: parsed.data.conditions,
     }, { supabase });
-  } catch {
+  } catch (error) {
+    if (error instanceof HealthCoachProviderError) {
+      const details = {
+        provider: error.provider,
+        model: error.model,
+        reason: error.reason,
+      };
+      console.error("[api/chat] health coach provider unavailable", { requestId, ...details });
+      return jsonError(503, "LLM_UNAVAILABLE", healthCoachProviderMessage(error), requestId, details);
+    }
+
+    console.error("[api/chat] health coach failed", { requestId });
     return jsonError(503, "LLM_UNAVAILABLE", "The Nourish health coach is temporarily unavailable. Please check the LLM provider configuration and try again.", requestId);
   }
 

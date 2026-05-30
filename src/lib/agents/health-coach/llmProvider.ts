@@ -1,13 +1,28 @@
 import { createAnthropicTextMessage } from "@/lib/claude/client";
-import { createOpenAITextResponse } from "@/lib/openai/client";
+import { createOpenAITextResponse, OpenAIResponseError } from "@/lib/openai/client";
 import { AI_CHAT_01_PROMPT_VERSION, buildHealthCoachPrompt } from "./promptRegistry";
 import { parseLlmCoachDraft } from "./responseQuality";
-import type { CoachContext, CoachMessage, CoachResponse, LlmCallResult, LlmProviderId } from "./types";
+import type { CoachContext, CoachMessage, CoachResponse, LlmCallResult, LlmProviderId, LlmFailureCode } from "./types";
 
 const DEFAULT_OPENAI_MODEL = "gpt-5.2";
 const DEFAULT_ANTHROPIC_MODEL = "claude-3-5-haiku-latest";
 
 const providerIds = new Set<LlmProviderId>(["openai", "anthropic"]);
+
+function classifyLlmError(error: unknown): LlmFailureCode {
+  if (error instanceof OpenAIResponseError) {
+    if (error.status === 401 || error.status === 403) return "auth_failed";
+    if (error.status === 404 || error.code === "model_not_found" || error.message.toLowerCase().includes("model")) {
+      return "model_unavailable";
+    }
+    if (error.status === 429) return "rate_limited";
+    return "provider_rejected";
+  }
+
+  if (error instanceof SyntaxError) return "invalid_response";
+  if (error instanceof Error && error.message.toLowerCase().includes("json")) return "invalid_response";
+  return "provider_request_failed";
+}
 
 export type HealthCoachProviderConfig = {
   provider: LlmProviderId;
@@ -72,6 +87,7 @@ export async function callHealthCoachLlm(args: {
       model,
       promptVersion: AI_CHAT_01_PROMPT_VERSION,
       error: `${provider}_api_key_not_configured`,
+      errorCode: "missing_api_key",
       latencyMs: Date.now() - started,
     };
   }
@@ -103,6 +119,7 @@ export async function callHealthCoachLlm(args: {
       model,
       promptVersion: AI_CHAT_01_PROMPT_VERSION,
       error: error instanceof Error ? error.message : "unknown_llm_error",
+      errorCode: classifyLlmError(error),
       latencyMs: Date.now() - started,
     };
   }

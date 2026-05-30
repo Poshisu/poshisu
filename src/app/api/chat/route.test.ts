@@ -1,3 +1,4 @@
+import { HealthCoachProviderError } from "@/lib/agents/health-coach/runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const handleMessageMock = vi.fn();
@@ -138,6 +139,32 @@ describe("POST /api/chat", () => {
     const json = await response.json();
     expect(json.ok).toBe(false);
     expect(json.error.code).toBe("LLM_UNAVAILABLE");
+    expect(insertedPayloads.filter((payload) => payload.role === "assistant")).toHaveLength(0);
+  });
+
+
+  it("returns safe provider diagnostics when the selected model is unavailable", async () => {
+    handleMessageMock.mockRejectedValueOnce(
+      new HealthCoachProviderError(
+        "Health coach LLM provider unavailable: model not found",
+        "openai",
+        "GPT 5.5",
+        "ai-chat-01-health-coach-v1",
+        "model_unavailable",
+      ),
+    );
+    const { POST } = await import("./route");
+    const response = await POST(new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "I had lunch" }),
+    }));
+
+    expect(response.status).toBe(503);
+    const json = await response.json();
+    expect(json.error.code).toBe("LLM_UNAVAILABLE");
+    expect(json.error.message).toContain("selected OpenAI model is unavailable");
+    expect(json.error.details).toMatchObject({ provider: "openai", model: "GPT 5.5", reason: "model_unavailable" });
     expect(insertedPayloads.filter((payload) => payload.role === "assistant")).toHaveLength(0);
   });
 

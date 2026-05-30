@@ -21,6 +21,16 @@ export type CoachResponseBlock = CoachTextBlock | CoachMealCandidateBlock;
 
 export type LlmProviderId = "openai" | "anthropic";
 
+export type LlmFailureCode =
+  | "missing_api_key"
+  | "unsupported_provider"
+  | "auth_failed"
+  | "model_unavailable"
+  | "rate_limited"
+  | "invalid_response"
+  | "provider_rejected"
+  | "provider_request_failed";
+
 export interface CoachResponseMetadata {
   provider: LlmProviderId | "safety" | "baseline";
   model: string;
@@ -131,5 +141,6 @@ export type LlmCallResult = {
   model: string;
   promptVersion: string;
   error: string;
+  errorCode: LlmFailureCode;
   latencyMs: number;
 };

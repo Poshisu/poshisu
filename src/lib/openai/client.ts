@@ -22,6 +22,19 @@ type OpenAIResponsesApiResult = {
   };
 };
 
+
+export class OpenAIResponseError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+    readonly type?: string,
+  ) {
+    super(message);
+    this.name = "OpenAIResponseError";
+  }
+}
+
 export type OpenAITextResponseInput = {
   model: string;
   system: string;
@@ -79,7 +92,12 @@ export async function createOpenAITextResponse(input: OpenAITextResponseInput): 
 
   const result = (await response.json()) as OpenAIResponsesApiResult;
   if (!response.ok) {
-    throw new Error(result.error?.message ?? `OpenAI request failed with status ${response.status}.`);
+    throw new OpenAIResponseError(
+      result.error?.message ?? `OpenAI request failed with status ${response.status}.`,
+      response.status,
+      result.error?.code,
+      result.error?.type,
+    );
   }
 
   return {

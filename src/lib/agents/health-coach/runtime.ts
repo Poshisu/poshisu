@@ -7,7 +7,7 @@ import { inferFactsFromUserText, mergeInferredFacts } from "./responseQuality";
 import { evaluateCoachMessageSafety } from "./safetyPolicy";
 import { recordHealthCoachTrace } from "./traceLogger";
 import { writeCoachMemoryEffects } from "./memoryWriter";
-import type { CoachMessage, CoachResponse, CoachResponseBlock } from "./types";
+import type { CoachMessage, CoachResponse, CoachResponseBlock, LlmFailureCode } from "./types";
 
 export class HealthCoachProviderError extends Error {
   constructor(
@@ -15,6 +15,7 @@ export class HealthCoachProviderError extends Error {
     readonly provider: string,
     readonly model: string,
     readonly promptVersion: string,
+    readonly reason: LlmFailureCode,
   ) {
     super(message);
     this.name = "HealthCoachProviderError";
@@ -99,6 +100,7 @@ export async function runHealthCoachAgent(args: {
       llmResult.provider,
       llmResult.model,
       llmResult.promptVersion,
+      llmResult.errorCode,
     );
   }
 
