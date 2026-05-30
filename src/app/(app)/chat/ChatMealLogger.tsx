@@ -8,7 +8,7 @@ import type { TodayMeal } from "@/lib/meals/today";
 
 type ChatRole = "user" | "assistant";
 
-type ChatMessage = {
+export type ChatMessage = {
   id: string;
   role: ChatRole;
   content: string;
@@ -16,7 +16,7 @@ type ChatMessage = {
 
 type MealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "beverage" | "other";
 
-type MealCandidateBlock = {
+export type MealCandidateBlock = {
   type: "meal_log_candidate";
   summary: string;
   needsConfirmation: true;
@@ -26,6 +26,7 @@ type MealCandidateBlock = {
   rationale: string;
   clarificationQuestions: string[];
   safetyFlags: { blocked: boolean; allergenFlags: string[]; conditionFlags: string[]; blockingReasons: string[] };
+  displayAssumptions?: Array<{ label: string; detail: string }>;
   confirmPayload?: { mealSlot?: MealSlot; items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | unknown;
   assistantMessageId?: string;
 };
@@ -47,6 +48,8 @@ type ChatApiResponse =
 type ChatMealLoggerProps = {
   dateLabel?: string;
   initialMeals?: TodayMeal[];
+  initialMessages?: ChatMessage[];
+  initialCandidate?: MealCandidateBlock | null;
   saveStatus?: string;
   userName?: string;
 };
@@ -104,7 +107,24 @@ function getCandidateMealSlot(candidate: MealCandidateBlock | null): MealSlot {
 function getCandidateItems(candidate: MealCandidateBlock) {
   const payload = candidate.confirmPayload as { items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | undefined;
   if (payload?.items?.length) return payload.items;
-  return [{ name: candidate.summary, household_unit: "estimated serving" }];
+  return [{ name: candidate.summary, household_unit: "estimated portion" }];
+}
+
+function conciseMealSummary(summary: string) {
+  const cleaned = summary
+    .replace(/^for\s+(breakfast|lunch|dinner|snack)\s+i\s+(had|ate|drank)[:\s-]*/i, "")
+    .replace(/^i\s+(had|ate|drank)\s+/i, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.。]+$/, "")
+    .trim();
+  if (!cleaned) return "this meal";
+  return cleaned.length <= 72 ? cleaned : `${cleaned.slice(0, 69).trim()}…`;
+}
+
+function itemServingLabel(item: { household_unit?: string; quantity_g?: number }) {
+  if (item.household_unit && item.household_unit !== "estimated serving") return item.household_unit;
+  if (typeof item.quantity_g === "number") return `~${formatNumber(item.quantity_g)} g`;
+  return "estimated portion";
 }
 
 function dailyTotals(meals: TodayMeal[]) {
@@ -123,17 +143,21 @@ function dailyTotals(meals: TodayMeal[]) {
   );
 }
 
-export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveStatus, userName = "there" }: ChatMealLoggerProps) {
+export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initialMessages = [], initialCandidate = null, saveStatus, userName = "there" }: ChatMealLoggerProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "assistant-welcome",
-      role: "assistant",
-      content: "Tell me what you ate. I’ll estimate it, show assumptions, and only save after you confirm.",
-    },
-  ]);
-  const [candidate, setCandidate] = useState<MealCandidateBlock | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<MealSlot>("breakfast");
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages.length > 0
+      ? initialMessages
+      : [
+          {
+            id: "assistant-welcome",
+            role: "assistant",
+            content: "Tell me what you ate. I’ll estimate it, show assumptions, and only save after you confirm.",
+          },
+        ],
+  );
+  const [candidate, setCandidate] = useState<MealCandidateBlock | null>(initialCandidate);
+  const [selectedSlot, setSelectedSlot] = useState<MealSlot>(getCandidateMealSlot(initialCandidate));
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mediaNotice, setMediaNotice] = useState<string | null>(null);
@@ -465,7 +489,7 @@ function MealEstimateCard({
             <FlameKindling aria-hidden="true" className="size-7 text-[var(--brand)]" />
             <h2 className="font-display text-4xl leading-none tracking-tight">{formatRange(candidate.estimate.kcalMin, candidate.estimate.kcalMax, "kcal")}</h2>
           </div>
-          <p className="mt-4 max-w-md text-2xl leading-snug text-muted-foreground">Looks like a meal with {candidate.summary.replace(/^I\s+(had|ate)\s+/i, "").replace(/\.$/, "")}.</p>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">Looks like {conciseMealSummary(candidate.summary)}.</p>
         </div>
         <span className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--surface-brand-soft)] px-4 py-2 text-sm font-semibold text-[var(--foreground)]">
           <Database aria-hidden="true" className="size-4" />
@@ -485,14 +509,25 @@ function MealEstimateCard({
         {items.map((item, index) => (
           <div key={`${item.name ?? "item"}-${index}`} className="flex items-start justify-between gap-4 text-lg">
             <span>{item.name ?? candidate.summary}</span>
-            <span className="text-right text-muted-foreground">{item.household_unit ?? (item.quantity_g ? `${formatNumber(item.quantity_g)}g estimated` : "estimated serving")}</span>
+            <span className="max-w-[52%] text-right text-base leading-snug text-muted-foreground">{itemServingLabel(item)}</span>
           </div>
         ))}
       </div>
 
-      <details className="mt-7 rounded-full bg-[var(--surface-raised)] px-5 py-3 text-lg text-[var(--foreground)] shadow-[var(--shadow-soft)]">
-        <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Assumptions ({candidate.rationale ? 1 : 0})</summary>
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{candidate.rationale || "Estimated from typical home-style portions."}</p>
+      <details className="mt-7 rounded-[1.75rem] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-soft)]">
+        <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Assumptions ({candidate.displayAssumptions?.length ?? (candidate.rationale ? 1 : 0)})</summary>
+        {candidate.displayAssumptions?.length ? (
+          <dl className="mt-4 space-y-3 text-sm leading-relaxed">
+            {candidate.displayAssumptions.map((assumption) => (
+              <div key={`${assumption.label}-${assumption.detail}`}>
+                <dt className="font-semibold text-[var(--foreground)]">{assumption.label}</dt>
+                <dd className="mt-1 text-muted-foreground">{assumption.detail}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{candidate.rationale || "Estimated from typical home-style portions."}</p>
+        )}
       </details>
 
       {candidate.clarificationQuestions.length > 0 ? (

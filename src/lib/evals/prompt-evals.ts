@@ -59,7 +59,7 @@ async function withMockedHealthCoachLlm<T>(run: () => Promise<T>): Promise<T> {
   process.env.NOURISH_LLM_PROVIDER = "openai";
   process.env.OPENAI_API_KEY = "eval-openai-key";
   globalThis.fetch = (async () => new Response(JSON.stringify({
-    output_text: JSON.stringify({ assistantText: "Eval coach response grounded in the current request.", inferredFacts: [], userVisibleMemoryNotes: [] }),
+    output_text: JSON.stringify({ assistantText: "Eval coach response grounded in the current request.", inferredFacts: [], userVisibleMemoryNotes: [], mealEstimatePresentation: null }),
     usage: { input_tokens: 1, output_tokens: 1 },
   }), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch;
 
@@ -204,7 +204,7 @@ export const promptEvalSuites: PromptEvalSuite[] = [
       {
         id: "health-coach-prompt-json-memory-contract",
         description: "health coach prompt requires JSON output and inspectable memory behavior",
-        run: () => includesAll(loadPrompt("HEALTH_COACH"), ["Return exactly one JSON object", "Memory should feel inspectable", "Use the deterministic nutrition/tool baseline"]),
+        run: () => includesAll(loadPrompt("HEALTH_COACH"), ["Return exactly one JSON object", "Memory should feel inspectable", "Use the deterministic nutrition/tool baseline", "mealEstimatePresentation", "rough oil/ghee"]),
       },
       {
         id: "provider-required-without-template-fallback",

@@ -689,3 +689,26 @@ The app is more forgiving, but docs still instruct operators to use clean Vercel
 
 ### Migration path
 If stricter config validation is needed later, keep the normalizer but emit safe warnings through server logs or an admin-only diagnostics surface rather than failing user chat immediately.
+
+
+## 2026-05-30 — Persist chat UI from Supabase messages and separate estimate presentation from nutrition numbers
+
+### Context
+After the LLM provider was connected, `/chat` still behaved like a transient client-only transcript: refreshing the page erased visible chat history and pending estimate context. The estimate card also used the raw user message as oversized display copy and showed vague `estimated serving` item labels and unstructured assumptions.
+
+### Options considered
+1. Keep transcript state client-only and rely on meals as the durable record.
+2. Hydrate the Home chat from the existing `messages` table and persist the full meal-candidate block in assistant metadata.
+3. Add a new conversation/thread table before fixing the UI.
+
+### Decision
+Choose option 2. `/chat` now hydrates recent user/assistant text messages from Supabase and reconstructs the latest pending estimate from assistant metadata. The LLM may provide concise presentation metadata — summary, serving portions, structured assumptions, and clarifying questions — while deterministic nutrition remains the source of calorie/macro numbers.
+
+### Why
+This uses the existing RLS-protected messages table, fixes refresh continuity immediately, and avoids adding a thread system before we know how users use the chat. Separating presentation from nutrition keeps the UI specific and readable without letting the model invent nutrition numbers.
+
+### Tradeoffs
+Only recent text messages are hydrated for now, and older assistant messages created before full candidate metadata was stored cannot fully reconstruct an estimate card. A future thread model may still be needed for search, pagination, or multi-day conversation navigation.
+
+### Migration path
+Add message pagination or explicit conversation threads later if the transcript grows beyond the recent-message window. Continue storing structured estimate metadata on assistant messages so older cards can be reconstructed without re-calling the LLM.

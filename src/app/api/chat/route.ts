@@ -140,6 +140,7 @@ export async function POST(request: Request) {
     agent: agentMetadata,
     mealCandidate: mealCandidate
       ? {
+          candidateBlock: mealCandidate,
           confirmPayload: mealCandidate.confirmPayload,
           safetyFlags: mealCandidate.safetyFlags,
         }

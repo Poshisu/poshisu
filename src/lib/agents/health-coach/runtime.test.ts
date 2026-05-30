@@ -49,7 +49,7 @@ function createSupabaseStub() {
   };
 }
 
-function llmJson(text: string) {
+function llmJson(text: string, mealEstimatePresentation: Record<string, unknown> | null = null) {
   return {
     text: JSON.stringify({
       assistantText: text,
@@ -57,6 +57,7 @@ function llmJson(text: string) {
         { category: "preference", fact: "Prefers lighter dinners.", stability: "stable", source: "assistant_inference" },
       ],
       userVisibleMemoryNotes: ["I’ll remember your lighter-dinner preference."],
+      mealEstimatePresentation,
     }),
     usage: { inputTokens: 100, outputTokens: 40 },
   };
@@ -82,7 +83,18 @@ describe("runHealthCoachAgent", () => {
 
   it("uses OpenAI by default and writes safe inferred preferences to markdown memory", async () => {
     process.env.OPENAI_API_KEY = "test-openai-key";
-    createOpenAITextResponseMock.mockResolvedValueOnce(llmJson("Got it — I can log this and I’ll remember that you prefer lighter dinners."));
+    createOpenAITextResponseMock.mockResolvedValueOnce(llmJson("Got it — I can log this and I’ll remember that you prefer lighter dinners.", {
+      conciseSummary: "dal rice dinner",
+      itemPortions: [
+        { name: "dal", quantityG: 180, quantityMl: null, householdDescription: "1 bowl (~180 g)", prepStyle: "home-style dal with light tadka" },
+        { name: "rice", quantityG: 150, quantityMl: null, householdDescription: "1 cooked katori (~150 g)", prepStyle: "steamed rice" },
+      ],
+      assumptions: [
+        { label: "Portion", detail: "Dal 1 bowl and rice 1 cooked katori." },
+        { label: "Preparation", detail: "Home-style dal with light tadka; no extra ghee assumed." },
+      ],
+      clarificationQuestions: ["Was there extra ghee or oil?"],
+    }));
     const supabase = createSupabaseStub();
 
     const response = await runHealthCoachAgent({
@@ -98,6 +110,15 @@ describe("runHealthCoachAgent", () => {
       text: expect.stringContaining("lighter dinners"),
     });
     expect(response.metadata.inferredFacts.map((fact) => fact.fact)).toContain("Prefers lighter dinners.");
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+    expect(candidate).toMatchObject({
+      summary: "dal rice dinner",
+      displayAssumptions: expect.arrayContaining([{ label: "Portion", detail: "Dal 1 bowl and rice 1 cooked katori." }]),
+      clarificationQuestions: ["Was there extra ghee or oil?"],
+    });
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.confirmPayload?.items).toEqual(expect.arrayContaining([expect.objectContaining({ name: "dal", household_unit: "1 bowl (~180 g)", quantity_g: 180 })]));
+    }
     expect(supabase.upserts.some((row) => row.layer === "patterns" && String(row.content).includes("Prefers lighter dinners"))).toBe(true);
   });
 

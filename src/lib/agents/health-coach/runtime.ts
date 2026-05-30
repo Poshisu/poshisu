@@ -7,7 +7,7 @@ import { inferFactsFromUserText, mergeInferredFacts } from "./responseQuality";
 import { evaluateCoachMessageSafety } from "./safetyPolicy";
 import { recordHealthCoachTrace } from "./traceLogger";
 import { writeCoachMemoryEffects } from "./memoryWriter";
-import type { CoachMessage, CoachResponse, CoachResponseBlock, LlmFailureCode } from "./types";
+import type { CoachEstimateAssumption, CoachItemPortion, CoachMealEstimatePresentation, CoachMessage, CoachResponse, CoachResponseBlock, LlmFailureCode } from "./types";
 
 export class HealthCoachProviderError extends Error {
   constructor(
@@ -34,6 +34,58 @@ function withAssistantText(blocks: CoachResponseBlock[], assistantText: string):
   const hasText = blocks.some((block) => block.type === "text");
   if (!hasText) return [...blocks, { type: "text", text: assistantText }];
   return blocks.map((block) => (block.type === "text" ? { ...block, text: assistantText } : block));
+}
+
+function normalizeItemName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findPresentationItem(items: CoachItemPortion[], name: string) {
+  const normalizedName = normalizeItemName(name);
+  return items.find((item) => {
+    const normalizedItem = normalizeItemName(item.name);
+    return normalizedItem === normalizedName || normalizedItem.includes(normalizedName) || normalizedName.includes(normalizedItem);
+  });
+}
+
+function assumptionRationale(assumptions: CoachEstimateAssumption[], fallback: string) {
+  if (assumptions.length === 0) return fallback;
+  return assumptions.map((assumption) => `${assumption.label}: ${assumption.detail}`).join("\n");
+}
+
+function withMealEstimatePresentation(blocks: CoachResponseBlock[], presentation?: CoachMealEstimatePresentation | null): CoachResponseBlock[] {
+  if (!presentation) return blocks;
+  const p = presentation;
+  const itemPortions = p.itemPortions ?? [];
+  const assumptions = p.assumptions ?? [];
+
+  return blocks.map((block) => {
+    if (block.type !== "meal_log_candidate") return block;
+
+    const updatedConfirmPayload = block.confirmPayload
+      ? {
+          ...block.confirmPayload,
+          items: block.confirmPayload.items.map((item) => {
+            const presented = findPresentationItem(itemPortions, item.name);
+            if (!presented) return item;
+            return {
+              ...item,
+              quantity_g: presented.quantityG ?? item.quantity_g,
+              household_unit: presented.householdDescription,
+            };
+          }),
+        }
+      : undefined;
+
+    return {
+      ...block,
+      summary: p.conciseSummary ?? block.summary,
+      rationale: assumptionRationale(assumptions, block.rationale),
+      displayAssumptions: assumptions.length > 0 ? assumptions : block.displayAssumptions,
+      clarificationQuestions: p.clarificationQuestions?.length ? p.clarificationQuestions.slice(0, 2) : block.clarificationQuestions,
+      confirmPayload: updatedConfirmPayload,
+    };
+  });
 }
 
 function safetyResponse(userId: string, parsedMessage: CoachMessage, reasons: string[], responseText: string): CoachResponse {
@@ -107,7 +159,7 @@ export async function runHealthCoachAgent(args: {
   const inferredFacts = mergeInferredFacts(llmResult.draft.inferredFacts, userFacts);
   const response: CoachResponse = {
     intent: deterministicResponse.intent === "general_fallback_guidance" ? "coach_response" : deterministicResponse.intent,
-    blocks: withAssistantText(deterministicResponse.blocks, llmResult.draft.assistantText),
+    blocks: withMealEstimatePresentation(withAssistantText(deterministicResponse.blocks, llmResult.draft.assistantText), llmResult.draft.mealEstimatePresentation),
     metadata: {
       provider: llmResult.provider,
       model: llmResult.model,

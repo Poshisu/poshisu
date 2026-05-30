@@ -37,7 +37,8 @@ describe("createOpenAITextResponse", () => {
         },
       },
     });
-    expect(body.text.format.schema.required).toEqual(["assistantText", "inferredFacts", "userVisibleMemoryNotes"]);
+    expect(body.text.format.schema.required).toEqual(["assistantText", "inferredFacts", "userVisibleMemoryNotes", "mealEstimatePresentation"]);
+    expect(body.text.format.schema.properties.mealEstimatePresentation).toBeDefined();
   });
 
   it("strips an accidental OPENAI_API_KEY= prefix before sending authorization", async () => {

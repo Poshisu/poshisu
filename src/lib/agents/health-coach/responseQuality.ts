@@ -8,10 +8,27 @@ const inferredFactSchema = z.object({
   source: z.enum(["user_message", "assistant_inference"]),
 });
 
+const mealEstimatePresentationSchema = z.object({
+  conciseSummary: z.string().trim().min(1).max(90),
+  itemPortions: z.array(z.object({
+    name: z.string().trim().min(1).max(80),
+    quantityG: z.number().positive().max(2000).nullish(),
+    quantityMl: z.number().positive().max(3000).nullish(),
+    householdDescription: z.string().trim().min(1).max(120),
+    prepStyle: z.string().trim().min(1).max(120).nullish(),
+  })).max(8).default([]),
+  assumptions: z.array(z.object({
+    label: z.string().trim().min(1).max(50),
+    detail: z.string().trim().min(1).max(180),
+  })).max(5).default([]),
+  clarificationQuestions: z.array(z.string().trim().min(1).max(180)).max(2).default([]),
+});
+
 const llmCoachDraftSchema = z.object({
   assistantText: z.string().trim().min(1).max(1400),
   inferredFacts: z.array(inferredFactSchema).max(5).default([]),
   userVisibleMemoryNotes: z.array(z.string().trim().min(1).max(240)).max(3).default([]),
+  mealEstimatePresentation: mealEstimatePresentationSchema.nullish(),
 });
 
 export function parseLlmCoachDraft(rawText: string): LlmCoachDraft {

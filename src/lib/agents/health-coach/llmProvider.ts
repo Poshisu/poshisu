@@ -112,7 +112,7 @@ export async function smokeTestHealthCoachProvider(): Promise<HealthCoachProvide
       provider,
       model,
       system: "You are a health-coach provider smoke test. Return only valid JSON for the requested schema.",
-      prompt: 'Return exactly this JSON object: {"assistantText":"ok","inferredFacts":[],"userVisibleMemoryNotes":[]}',
+      prompt: 'Return exactly this JSON object: {"assistantText":"ok","inferredFacts":[],"userVisibleMemoryNotes":[],"mealEstimatePresentation":null}',
     });
     parseLlmCoachDraft(result.text);
 

@@ -211,7 +211,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
-- **Home / Chat:** `/chat` now serves as the Home surface and `/api/chat` uses the AI-CHAT-01B health-coach runtime with OpenAI-first provider selection, optional Anthropic switching, deterministic nutrition baselines for estimates, retrieved profile/memory context, markdown memory effects, and structured confirm-save estimate review; PostHog instrumentation and ElevenLabs transcription remain pre-beta follow-ups.
+- **Home / Chat:** `/chat` now serves as the Home surface, hydrates recent persisted chat turns from Supabase on refresh, and `/api/chat` uses the AI-CHAT-01B health-coach runtime with OpenAI-first provider selection, optional Anthropic switching, deterministic nutrition baselines for estimates, retrieved profile/memory context, markdown memory effects, concise estimate cards, structured assumptions/portion display, and structured confirm-save estimate review; PostHog instrumentation and ElevenLabs transcription remain pre-beta follow-ups.
 - **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation.
 - **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state.
 - **Profile memory inspector:** Implemented with memory edit affordances, audit context, privacy export, and guarded delete-account controls.

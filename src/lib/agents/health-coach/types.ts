@@ -5,6 +5,26 @@ export type CoachIntent = "meal_log_candidate" | "coach_response" | "general_fal
 
 export type CoachTextBlock = { type: "text"; text: string };
 
+export type CoachEstimateAssumption = {
+  label: string;
+  detail: string;
+};
+
+export type CoachItemPortion = {
+  name: string;
+  quantityG?: number | null;
+  quantityMl?: number | null;
+  householdDescription: string;
+  prepStyle?: string | null;
+};
+
+export type CoachMealEstimatePresentation = {
+  conciseSummary: string;
+  itemPortions: CoachItemPortion[];
+  assumptions: CoachEstimateAssumption[];
+  clarificationQuestions: string[];
+};
+
 export type CoachMealCandidateBlock = {
   type: "meal_log_candidate";
   summary: string;
@@ -12,6 +32,7 @@ export type CoachMealCandidateBlock = {
   confidence: "high" | "medium" | "low";
   estimate: { kcalMin: number; kcalMax: number; protein: number; carbs: number; fat: number; fiber: number };
   rationale: string;
+  displayAssumptions?: CoachEstimateAssumption[];
   clarificationQuestions: string[];
   safetyFlags: SafetyFlags;
   confirmPayload?: ConfirmableMealEstimate;
@@ -121,6 +142,7 @@ export interface LlmCoachDraft {
   assistantText: string;
   inferredFacts: InferredFact[];
   userVisibleMemoryNotes: string[];
+  mealEstimatePresentation?: CoachMealEstimatePresentation | null;
 }
 
 export type LlmCallResult = {

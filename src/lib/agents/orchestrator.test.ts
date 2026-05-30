@@ -47,8 +47,8 @@ describe("handleMessage", () => {
         confidence: 0.9,
       });
       expect(candidate.confirmPayload?.items).toEqual([
-        { name: "roti", quantity_g: 100, household_unit: "estimated serving" },
-        { name: "paneer", quantity_g: 100, household_unit: "estimated serving" },
+        { name: "roti", quantity_g: 35, household_unit: "1 medium roti (~35 g)" },
+        { name: "paneer", quantity_g: 100, household_unit: "~100 g paneer portion" },
       ]);
       expect(candidate.safetyFlags.allergenFlags).toContain("allergen:dairy");
     }

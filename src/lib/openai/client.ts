@@ -64,8 +64,55 @@ const healthCoachDraftJsonSchema: OpenAIResponseFormat = {
         maxItems: 3,
         items: { type: "string", minLength: 1, maxLength: 240 },
       },
+      mealEstimatePresentation: {
+        anyOf: [
+          {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              conciseSummary: { type: "string", minLength: 1, maxLength: 90 },
+              itemPortions: {
+                type: "array",
+                maxItems: 8,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    name: { type: "string", minLength: 1, maxLength: 80 },
+                    quantityG: { type: ["number", "null"], exclusiveMinimum: 0, maximum: 2000 },
+                    quantityMl: { type: ["number", "null"], exclusiveMinimum: 0, maximum: 3000 },
+                    householdDescription: { type: "string", minLength: 1, maxLength: 120 },
+                    prepStyle: { type: ["string", "null"], minLength: 1, maxLength: 120 },
+                  },
+                  required: ["name", "quantityG", "quantityMl", "householdDescription", "prepStyle"],
+                },
+              },
+              assumptions: {
+                type: "array",
+                maxItems: 5,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    label: { type: "string", minLength: 1, maxLength: 50 },
+                    detail: { type: "string", minLength: 1, maxLength: 180 },
+                  },
+                  required: ["label", "detail"],
+                },
+              },
+              clarificationQuestions: {
+                type: "array",
+                maxItems: 2,
+                items: { type: "string", minLength: 1, maxLength: 180 },
+              },
+            },
+            required: ["conciseSummary", "itemPortions", "assumptions", "clarificationQuestions"],
+          },
+          { type: "null" },
+        ],
+      },
     },
-    required: ["assistantText", "inferredFacts", "userVisibleMemoryNotes"],
+    required: ["assistantText", "inferredFacts", "userVisibleMemoryNotes", "mealEstimatePresentation"],
   },
 };
 

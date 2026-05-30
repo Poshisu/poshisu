@@ -117,6 +117,7 @@ describe("POST /api/chat", () => {
       requestId: "req-123",
       usedFallback: false,
       mealCandidate: {
+        candidateBlock: { type: "meal_log_candidate" },
         confirmPayload: {
           mealSlot: "other",
           sourceText: "I had roti and dal",
