@@ -44,7 +44,10 @@ scopes first.
 | `NEXT_PUBLIC_SUPABASE_URL` | Prod + Preview | Same Supabase project across environments is fine during beta; split once we have real users. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Prod + Preview | Anon key. Safe to expose. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Prod + Preview | **Server-side only.** Never prefix with `NEXT_PUBLIC_`. |
-| `ANTHROPIC_API_KEY` | Prod + Preview | Claude API. Per-env keys recommended long-term so spend is attributable. |
+| `NOURISH_LLM_PROVIDER` | Prod + Preview | Health-coach provider selector. Use `openai` for the MVP default. |
+| `OPENAI_API_KEY` | Prod + Preview | **Server-side only.** Required when `NOURISH_LLM_PROVIDER=openai`. Per-env keys recommended long-term so spend is attributable. |
+| `OPENAI_HEALTH_COACH_MODEL` | Prod + Preview | Optional OpenAI health-coach model override; defaults to `gpt-5.2`. |
+| `ANTHROPIC_API_KEY` | Prod + Preview | **Server-side only.** Required only when `NOURISH_LLM_PROVIDER=anthropic`. |
 | `ELEVENLABS_API_KEY` | Prod + Preview | Voice transcription. |
 | `VAPID_PUBLIC_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Prod + Preview | Same value. Public part of VAPID keypair. |
 | `VAPID_PRIVATE_KEY` | Prod + Preview | Server-side only. |
