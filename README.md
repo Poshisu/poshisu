@@ -2,7 +2,7 @@
 
 **An AI-native preventive health coach for India, starting with food logging.**
 
-Nourish is a Progressive Web App with a chat-first interface powered by a multi-agent system running on the Anthropic Claude API. The product's differentiation is interaction quality: logging a meal should feel like sending a WhatsApp message to a friend who happens to be a nutritionist who already knows everything about you.
+Nourish is a Progressive Web App with a chat-first interface powered by a multi-agent system running on a configurable LLM provider, with OpenAI as the preferred MVP provider. The product's differentiation is interaction quality: logging a meal should feel like sending a WhatsApp message to a friend who happens to be a nutritionist who already knows everything about you.
 
 ## What's in this repository
 
@@ -139,7 +139,7 @@ The original phase-by-phase build plan remains the source of truth for what come
 - Node.js 20+
 - pnpm 10.x
 - Supabase account (free tier is fine)
-- Anthropic API key
+- OpenAI API key (preferred health-coach MVP provider) or Anthropic API key
 - Vercel account (free tier is fine)
 - ElevenLabs account (for voice transcription — Scribe v2)
 
@@ -174,6 +174,10 @@ Any edits to the Forge startup prompt must be versioned like code and accompanie
 
 CI enforces this with the same `db:types:check` command and fails when committed types are stale.
 
+### AI health-coach architecture
+
+AI-CHAT-01B is documented in [`docs/ai-chat-01-architecture.md`](docs/ai-chat-01-architecture.md), including the OpenAI-first multi-provider LLM path, no-template-fallback behavior, memory lifecycle, trace logging, and eval commands.
+
 ### Vercel env + runbook parity
 
 Preview and Production deploys must follow the committed environment matrix, smoke checks, and rollback notes in [RUNBOOK.md#vercel-environment-parity](RUNBOOK.md#vercel-environment-parity).
@@ -187,14 +191,14 @@ Minimum release discipline:
 
 ## Tech stack
 
-Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · Claude API (Haiku/Sonnet/Opus) · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
+Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supabase · OpenAI-first configurable LLM provider · Anthropic optional · ElevenLabs Scribe v2 · Web Push · Vercel · PostHog · Sentry · Vitest · Playwright
 
 
 ## Route implementation status
 
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
-| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated text-only MVP with validation, per-user rate limiting, deterministic fallback, and safe error envelopes. |
+| `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated health-coach runtime with validation, per-user rate limiting, OpenAI-first provider selection, optional Anthropic switching, memory/context metadata, and `503 LLM_UNAVAILABLE` when the selected provider is not configured. |
 | `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | Yes | `src/app/api/memory/route.ts` | Authenticated memory read/write API with safe envelopes, Zod validation, user scoping, and writes restricted to `profile/main` and `patterns/main`. |
 | `/api/push` | Yes | `src/app/api/push/route.ts`, `src/app/api/push/subscribe/route.ts`, `src/app/api/push/unsubscribe/route.ts` | Authenticated push subscription lifecycle with VAPID public-key discovery, HTTPS endpoint validation, user-scoped subscribe/upsert, cross-user endpoint ownership cleanup, and idempotent unsubscribe. |
@@ -206,7 +210,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 
 This snapshot clarifies build maturity so product and engineering planning stay aligned.
 
-- **Home / Chat:** `/chat` now serves as the Home surface, combining daily nutrition summary, today's meals preview, chat transcript, sticky composer, and rich confirm-save estimate review; real LLM-backed chat, PostHog instrumentation, and ElevenLabs transcription remain pre-beta follow-ups.
+- **Home / Chat:** `/chat` now serves as the Home surface and `/api/chat` uses the AI-CHAT-01B health-coach runtime with OpenAI-first provider selection, optional Anthropic switching, deterministic nutrition baselines for estimates, retrieved profile/memory context, markdown memory effects, and structured confirm-save estimate review; PostHog instrumentation and ElevenLabs transcription remain pre-beta follow-ups.
 - **Today:** Productionized with authenticated daily totals, meal cards, correction CTAs, and IST date navigation.
 - **Trends:** Productionized with period tabs, summary cards, chart-style trend panels, streaks, insights, and empty state.
 - **Profile memory inspector:** Implemented with memory edit affordances, audit context, privacy export, and guarded delete-account controls.
