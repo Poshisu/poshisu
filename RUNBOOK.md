@@ -312,11 +312,14 @@ Supabase Edge Function secrets — configure in Supabase, not Vercel:
 
 Use when `/api/chat` returns `503 LLM_UNAVAILABLE`. The API response includes safe diagnostics under `error.details` with `provider`, `model`, and `reason`; it never includes API keys.
 
+Before changing secrets, sign in to the deployed app and open `/api/health/llm` in the same browser. Expected: a JSON response showing `provider`, `model`, `apiKeyConfigured`, and `checkRequested:false`. Then open `/api/health/llm?check=1` to run a tiny live provider smoke test that does not save chat messages. A `404` on this URL means the deployment does not include the diagnostics route yet; redeploy the commit that added `src/app/api/health/llm/route.ts`.
+
 1. If `reason` is `model_unavailable`, set `OPENAI_HEALTH_COACH_MODEL` to an OpenAI model enabled for the project. Avoid display names such as `GPT 5.5`; use an API model id such as `gpt-5.2` or another enabled model id from the OpenAI dashboard. Redeploy after changing the value.
 2. If `reason` is `auth_failed`, rotate `OPENAI_API_KEY`, update the encrypted Vercel env var, and redeploy.
 3. If `reason` is `missing_api_key`, add `OPENAI_API_KEY` in the selected Vercel environment scopes and redeploy.
 4. If `reason` is `rate_limited`, check provider billing/usage limits and retry after limits reset.
-5. If `reason` is `invalid_response`, switch to a known enabled non-preview model and capture the request id plus Vercel function log line for debugging.
+5. If `reason` is `invalid_response`, the provider replied but did not satisfy the health-coach JSON contract. The OpenAI path requests Structured Outputs via `text.format`; confirm the deployed commit includes that change, then capture the request id plus Vercel function log line for debugging.
+6. If `/api/health/llm` returns `apiKeyConfigured:false`, the deployment did not receive the matching encrypted provider key for its environment scope. Add the key to Preview/Production as needed and redeploy.
 
 ### Preview smoke checks
 

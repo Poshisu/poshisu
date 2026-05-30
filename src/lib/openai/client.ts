@@ -22,6 +22,50 @@ type OpenAIResponsesApiResult = {
   };
 };
 
+type OpenAIResponseFormat = {
+  type: "json_schema";
+  name: string;
+  strict: boolean;
+  schema: Record<string, unknown>;
+};
+
+const healthCoachDraftJsonSchema: OpenAIResponseFormat = {
+  type: "json_schema",
+  name: "health_coach_draft",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      assistantText: {
+        type: "string",
+        minLength: 1,
+        maxLength: 1400,
+      },
+      inferredFacts: {
+        type: "array",
+        maxItems: 5,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            category: { type: "string", enum: ["preference", "routine", "correction", "context"] },
+            fact: { type: "string", minLength: 1, maxLength: 240 },
+            stability: { type: "string", enum: ["stable", "tentative"] },
+            source: { type: "string", enum: ["user_message", "assistant_inference"] },
+          },
+          required: ["category", "fact", "stability", "source"],
+        },
+      },
+      userVisibleMemoryNotes: {
+        type: "array",
+        maxItems: 3,
+        items: { type: "string", minLength: 1, maxLength: 240 },
+      },
+    },
+    required: ["assistantText", "inferredFacts", "userVisibleMemoryNotes"],
+  },
+};
 
 export class OpenAIResponseError extends Error {
   constructor(
@@ -40,6 +84,7 @@ export type OpenAITextResponseInput = {
   system: string;
   prompt: string;
   maxOutputTokens: number;
+  responseFormat?: "health_coach_draft_json";
 };
 
 export type OpenAITextResponseResult = {
@@ -56,6 +101,25 @@ function getOpenAIKey() {
     throw new Error("OPENAI_API_KEY is not configured.");
   }
   return key;
+}
+
+async function readOpenAIJson(response: Response): Promise<OpenAIResponsesApiResult> {
+  const raw = await response.text();
+  if (!raw.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(raw) as OpenAIResponsesApiResult;
+  } catch (error) {
+    if (!response.ok) {
+      throw new OpenAIResponseError(
+        `OpenAI returned a non-JSON error response with status ${response.status}.`,
+        response.status,
+      );
+    }
+    throw error;
+  }
 }
 
 function extractResponseText(result: OpenAIResponsesApiResult) {
@@ -75,6 +139,21 @@ function extractResponseText(result: OpenAIResponsesApiResult) {
   return text;
 }
 
+function buildOpenAIRequestBody(input: OpenAITextResponseInput) {
+  const body: Record<string, unknown> = {
+    model: input.model,
+    instructions: input.system,
+    input: input.prompt,
+    max_output_tokens: input.maxOutputTokens,
+  };
+
+  if (input.responseFormat === "health_coach_draft_json") {
+    body.text = { format: healthCoachDraftJsonSchema };
+  }
+
+  return body;
+}
+
 export async function createOpenAITextResponse(input: OpenAITextResponseInput): Promise<OpenAITextResponseResult> {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -82,15 +161,10 @@ export async function createOpenAITextResponse(input: OpenAITextResponseInput): 
       Authorization: `Bearer ${getOpenAIKey()}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: input.model,
-      instructions: input.system,
-      input: input.prompt,
-      max_output_tokens: input.maxOutputTokens,
-    }),
+    body: JSON.stringify(buildOpenAIRequestBody(input)),
   });
 
-  const result = (await response.json()) as OpenAIResponsesApiResult;
+  const result = await readOpenAIJson(response);
   if (!response.ok) {
     throw new OpenAIResponseError(
       result.error?.message ?? `OpenAI request failed with status ${response.status}.`,

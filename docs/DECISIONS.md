@@ -644,3 +644,25 @@ This matches the product requirement that normal chat must be LLM-backed. It als
 
 ### Migration path
 To add another model vendor, add a server-only client wrapper, extend `LlmProviderId`, add provider env validation in `llmProvider.ts`, and add focused provider tests.
+
+## 2026-05-30 — Add authenticated LLM health diagnostics and Structured Outputs for OpenAI
+
+### Context
+The first OpenAI-first deployment failed closed with `503 LLM_UNAVAILABLE`, and the suggested `/api/health/llm` debug URL returned `404` because no such route existed yet. Operators needed a safe way to distinguish missing keys, invalid model access, provider rejection, rate limits, and malformed model output without exposing secrets.
+
+### Options considered
+1. Keep debugging only in Vercel function logs.
+2. Add a public unauthenticated provider health endpoint.
+3. Add an authenticated diagnostics endpoint plus provider smoke test.
+
+### Decision
+Choose option 3. Add authenticated `GET /api/health/llm` for safe configuration diagnostics and `GET /api/health/llm?check=1` for a tiny live provider smoke test. Also request OpenAI Structured Outputs for the health-coach JSON draft instead of relying only on prompt wording.
+
+### Why
+This gives product/ops a deterministic browser-checkable path while keeping API keys server-only and avoiding public endpoints that could burn LLM spend.
+
+### Tradeoffs
+The smoke test still costs a tiny number of provider tokens and requires a signed-in session. It does not replace Vercel function logs for deeper provider outages, but it makes the most common env/model/key failures visible immediately.
+
+### Migration path
+If the app later adds admin roles, restrict `/api/health/llm` to admin users. If the provider SDK is adopted, keep the same route contract and swap the underlying client implementation.

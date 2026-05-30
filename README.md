@@ -199,6 +199,7 @@ Next.js 16.2.4 · TypeScript · Tailwind CSS v4 · shadcn/ui · Recharts · Supa
 | Planned Route | Implemented? | File Path | Notes |
 |---|---|---|---|
 | `/api/chat` | Yes (MVP) | `src/app/api/chat/route.ts` | Authenticated health-coach runtime with validation, per-user rate limiting, OpenAI-first provider selection, optional Anthropic switching, memory/context metadata, and `503 LLM_UNAVAILABLE` when the selected provider is not configured. |
+| `/api/health/llm` | Yes | `src/app/api/health/llm/route.ts` | Authenticated, no-store LLM diagnostics endpoint. `GET` reports safe provider/model/key-presence state; `GET ?check=1` runs a tiny live provider smoke test without exposing secrets or writing chat messages. |
 | `/api/meals` | Yes | `src/app/api/meals/route.ts`, `src/app/api/meals/[id]/route.ts` | Authenticated meals CRUD with safe envelopes, Zod validation, user scoping, and RLS-backed Supabase access. |
 | `/api/memory` | Yes | `src/app/api/memory/route.ts` | Authenticated memory read/write API with safe envelopes, Zod validation, user scoping, and writes restricted to `profile/main` and `patterns/main`. |
 | `/api/push` | Yes | `src/app/api/push/route.ts`, `src/app/api/push/subscribe/route.ts`, `src/app/api/push/unsubscribe/route.ts` | Authenticated push subscription lifecycle with VAPID public-key discovery, HTTPS endpoint validation, user-scoped subscribe/upsert, cross-user endpoint ownership cleanup, and idempotent unsubscribe. |

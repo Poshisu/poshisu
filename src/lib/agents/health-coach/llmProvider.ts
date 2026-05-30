@@ -59,7 +59,8 @@ async function callProvider(args: {
       model: args.model,
       system: args.system,
       prompt: args.prompt,
-      maxOutputTokens: 900,
+      maxOutputTokens: 1400,
+      responseFormat: "health_coach_draft_json",
     });
   }
 
@@ -67,9 +68,72 @@ async function callProvider(args: {
     model: args.model,
     system: args.system,
     prompt: args.prompt,
-    maxTokens: 900,
+    maxTokens: 1400,
     temperature: 0.2,
   });
+}
+
+export type HealthCoachProviderSmokeResult = {
+  ok: true;
+  provider: LlmProviderId;
+  model: string;
+  promptVersion: string;
+  latencyMs: number;
+  outputTextPresent: true;
+} | {
+  ok: false;
+  provider: LlmProviderId;
+  model: string;
+  promptVersion: string;
+  latencyMs: number;
+  error: string;
+  errorCode: LlmFailureCode;
+};
+
+export async function smokeTestHealthCoachProvider(): Promise<HealthCoachProviderSmokeResult> {
+  const started = Date.now();
+  const { provider, model } = resolveHealthCoachProviderConfig();
+
+  if (!isLlmConfigured(provider)) {
+    return {
+      ok: false,
+      provider,
+      model,
+      promptVersion: AI_CHAT_01_PROMPT_VERSION,
+      latencyMs: Date.now() - started,
+      error: `${provider}_api_key_not_configured`,
+      errorCode: "missing_api_key",
+    };
+  }
+
+  try {
+    const result = await callProvider({
+      provider,
+      model,
+      system: "You are a health-coach provider smoke test. Return only valid JSON for the requested schema.",
+      prompt: 'Return exactly this JSON object: {"assistantText":"ok","inferredFacts":[],"userVisibleMemoryNotes":[]}',
+    });
+    parseLlmCoachDraft(result.text);
+
+    return {
+      ok: true,
+      provider,
+      model,
+      promptVersion: AI_CHAT_01_PROMPT_VERSION,
+      latencyMs: Date.now() - started,
+      outputTextPresent: true,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      provider,
+      model,
+      promptVersion: AI_CHAT_01_PROMPT_VERSION,
+      latencyMs: Date.now() - started,
+      error: error instanceof Error ? error.message : "unknown_llm_error",
+      errorCode: classifyLlmError(error),
+    };
+  }
 }
 
 export async function callHealthCoachLlm(args: {

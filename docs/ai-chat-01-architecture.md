@@ -116,7 +116,9 @@ Server-side LLM execution requires one selected provider and its matching server
 - `ANTHROPIC_API_KEY` — server-only Anthropic API key. Required when provider is `anthropic`.
 - `ANTHROPIC_HEALTH_COACH_MODEL` — optional Anthropic model override, defaulting to `claude-3-5-haiku-latest`.
 
-There is intentionally no deterministic chatbot kill switch. If the selected provider key is absent or invalid, `/api/chat` returns `503 LLM_UNAVAILABLE` after saving the user message, and no assistant fallback message is persisted.
+There is intentionally no deterministic chatbot kill switch. If the selected provider key is absent or invalid, `/api/chat` returns `503 LLM_UNAVAILABLE` after saving the user message, and no assistant fallback message is persisted. The OpenAI provider asks the Responses API for Structured Outputs with the health-coach JSON schema so app-side parsing failures are less likely than prompt-only JSON instructions.
+
+Authenticated operators can inspect the deployed provider configuration at `/api/health/llm` and run a tiny live provider smoke test at `/api/health/llm?check=1`. The endpoint reports provider, model, key-presence, reason codes, and latency only; it never returns API keys and does not write chat messages.
 
 Trace logging into `agent_traces` requires the existing server-only Supabase service role configuration:
 
