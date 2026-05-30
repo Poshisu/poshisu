@@ -51,6 +51,29 @@ function includesAll(content: string, requiredFragments: string[]): boolean {
   return requiredFragments.every((fragment) => normalized.includes(fragment.toLowerCase()));
 }
 
+async function withMockedHealthCoachLlm<T>(run: () => Promise<T>): Promise<T> {
+  const previousProvider = process.env.NOURISH_LLM_PROVIDER;
+  const previousOpenAIKey = process.env.OPENAI_API_KEY;
+  const previousFetch = globalThis.fetch;
+
+  process.env.NOURISH_LLM_PROVIDER = "openai";
+  process.env.OPENAI_API_KEY = "eval-openai-key";
+  globalThis.fetch = (async () => new Response(JSON.stringify({
+    output_text: JSON.stringify({ assistantText: "Eval coach response grounded in the current request.", inferredFacts: [], userVisibleMemoryNotes: [] }),
+    usage: { input_tokens: 1, output_tokens: 1 },
+  }), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch;
+
+  try {
+    return await run();
+  } finally {
+    if (previousProvider === undefined) delete process.env.NOURISH_LLM_PROVIDER;
+    else process.env.NOURISH_LLM_PROVIDER = previousProvider;
+    if (previousOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousOpenAIKey;
+    globalThis.fetch = previousFetch;
+  }
+}
+
 export const promptEvalSuites: PromptEvalSuite[] = [
   {
     id: "onboarding-parser",
@@ -85,15 +108,15 @@ export const promptEvalSuites: PromptEvalSuite[] = [
       {
         id: "meal-log-candidate",
         description: "meal descriptions route to meal confirmation candidates",
-        run: async () => {
+        run: async () => withMockedHealthCoachLlm(async () => {
           const response = await handleMessage("eval-user", { text: "I had dal rice and curd for lunch" });
           return response.intent === "meal_log_candidate" && response.blocks[0]?.type === "meal_log_candidate";
-        },
+        }),
       },
       {
         id: "ambiguous-food-clarifies",
         description: "vague food logs remain meal candidates but request clarifications",
-        run: async () => {
+        run: async () => withMockedHealthCoachLlm(async () => {
           const response = await handleMessage("eval-user", { text: "I had some random food" });
           const block = response.blocks[0];
           return (
@@ -102,15 +125,15 @@ export const promptEvalSuites: PromptEvalSuite[] = [
             block.confidence === "low" &&
             block.clarificationQuestions.length > 0
           );
-        },
+        }),
       },
       {
-        id: "non-meal-fallback",
-        description: "non-food chat gets safe fallback guidance in the MVP contract",
-        run: async () => {
+        id: "non-meal-llm-coach-response",
+        description: "non-food chat routes to the configured LLM coach instead of template fallback guidance",
+        run: async () => withMockedHealthCoachLlm(async () => {
           const response = await handleMessage("eval-user", { text: "Can you motivate me today?" });
-          return response.intent === "general_fallback_guidance";
-        },
+          return response.intent === "coach_response" && response.metadata?.provider === "openai";
+        }),
       },
     ],
   },
@@ -184,19 +207,24 @@ export const promptEvalSuites: PromptEvalSuite[] = [
         run: () => includesAll(loadPrompt("HEALTH_COACH"), ["Return exactly one JSON object", "Memory should feel inspectable", "Use the deterministic nutrition/tool baseline"]),
       },
       {
-        id: "deterministic-fallback-without-provider",
-        description: "health coach falls back deterministically when no LLM provider is configured",
+        id: "provider-required-without-template-fallback",
+        description: "health coach fails closed when no selected LLM provider key is configured",
         run: async () => {
-          const previousKey = process.env.ANTHROPIC_API_KEY;
-          const previousDisabled = process.env.NOURISH_LLM_DISABLED;
-          delete process.env.ANTHROPIC_API_KEY;
-          process.env.NOURISH_LLM_DISABLED = "1";
-          const response = await handleMessage("eval-user", { text: "I had dal rice for lunch" });
-          if (previousKey === undefined) delete process.env.ANTHROPIC_API_KEY;
-          else process.env.ANTHROPIC_API_KEY = previousKey;
-          if (previousDisabled === undefined) delete process.env.NOURISH_LLM_DISABLED;
-          else process.env.NOURISH_LLM_DISABLED = previousDisabled;
-          return response.intent === "meal_log_candidate" && response.metadata?.usedDeterministicFallback === true;
+          const previousProvider = process.env.NOURISH_LLM_PROVIDER;
+          const previousOpenAIKey = process.env.OPENAI_API_KEY;
+          process.env.NOURISH_LLM_PROVIDER = "openai";
+          delete process.env.OPENAI_API_KEY;
+          try {
+            await handleMessage("eval-user", { text: "I had dal rice for lunch" });
+            return false;
+          } catch {
+            return true;
+          } finally {
+            if (previousProvider === undefined) delete process.env.NOURISH_LLM_PROVIDER;
+            else process.env.NOURISH_LLM_PROVIDER = previousProvider;
+            if (previousOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+            else process.env.OPENAI_API_KEY = previousOpenAIKey;
+          }
         },
       },
       {
@@ -204,7 +232,7 @@ export const promptEvalSuites: PromptEvalSuite[] = [
         description: "health coach blocks diagnosis/prescription requests before provider execution",
         run: async () => {
           const response = await handleMessage("eval-user", { text: "Can you prescribe a dose of metformin?" });
-          return response.intent === "safety_concern" && response.metadata?.safety.blocked === true;
+          return response.intent === "safety_concern" && response.metadata?.safety.blocked === true && response.metadata.usedDeterministicFallback === false;
         },
       },
     ],

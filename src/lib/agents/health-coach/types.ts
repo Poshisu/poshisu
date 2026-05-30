@@ -19,11 +19,13 @@ export type CoachMealCandidateBlock = {
 
 export type CoachResponseBlock = CoachTextBlock | CoachMealCandidateBlock;
 
+export type LlmProviderId = "openai" | "anthropic";
+
 export interface CoachResponseMetadata {
-  provider: "anthropic" | "deterministic";
+  provider: LlmProviderId | "safety" | "baseline";
   model: string;
   promptVersion: string;
-  usedDeterministicFallback: boolean;
+  usedDeterministicFallback: false;
   fallbackReason?: string;
   contextLoaded: boolean;
   memoryWriteStatus: "skipped" | "attempted" | "succeeded" | "failed";
@@ -113,7 +115,7 @@ export interface LlmCoachDraft {
 
 export type LlmCallResult = {
   ok: true;
-  provider: "anthropic";
+  provider: LlmProviderId;
   model: string;
   promptVersion: string;
   draft: LlmCoachDraft;
@@ -125,7 +127,7 @@ export type LlmCallResult = {
   latencyMs: number;
 } | {
   ok: false;
-  provider: "anthropic" | "deterministic";
+  provider: LlmProviderId;
   model: string;
   promptVersion: string;
   error: string;

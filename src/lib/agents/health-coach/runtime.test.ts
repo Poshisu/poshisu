@@ -2,9 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runHealthCoachAgent } from "./runtime";
 
 const createAnthropicTextMessageMock = vi.fn();
+const createOpenAITextResponseMock = vi.fn();
 
 vi.mock("@/lib/claude/client", () => ({
   createAnthropicTextMessage: (...args: unknown[]) => createAnthropicTextMessageMock(...args),
+}));
+
+vi.mock("@/lib/openai/client", () => ({
+  createOpenAITextResponse: (...args: unknown[]) => createOpenAITextResponseMock(...args),
 }));
 
 function queryResult<T>(data: T | null) {
@@ -44,35 +49,40 @@ function createSupabaseStub() {
   };
 }
 
+function llmJson(text: string) {
+  return {
+    text: JSON.stringify({
+      assistantText: text,
+      inferredFacts: [
+        { category: "preference", fact: "Prefers lighter dinners.", stability: "stable", source: "assistant_inference" },
+      ],
+      userVisibleMemoryNotes: ["I’ll remember your lighter-dinner preference."],
+    }),
+    usage: { inputTokens: 100, outputTokens: 40 },
+  };
+}
+
 describe("runHealthCoachAgent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_HEALTH_COACH_MODEL;
     delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.NOURISH_LLM_DISABLED;
+    delete process.env.ANTHROPIC_HEALTH_COACH_MODEL;
+    delete process.env.NOURISH_LLM_PROVIDER;
   });
 
-  it("uses deterministic fallback without an LLM key while still returning a confirmable meal candidate", async () => {
-    const response = await runHealthCoachAgent({ userId: "user-1", message: { text: "I had dal rice for lunch" } });
-
-    expect(response.intent).toBe("meal_log_candidate");
-    expect(response.metadata.provider).toBe("deterministic");
-    expect(response.metadata.usedDeterministicFallback).toBe(true);
-    expect(response.blocks[0]).toMatchObject({ type: "meal_log_candidate", needsConfirmation: true });
+  it("fails closed when the selected LLM provider is not configured", async () => {
+    await expect(runHealthCoachAgent({ userId: "user-1", message: { text: "I had dal rice for lunch" } })).rejects.toThrow(
+      "Health coach LLM provider unavailable: openai_api_key_not_configured",
+    );
+    expect(createOpenAITextResponseMock).not.toHaveBeenCalled();
     expect(createAnthropicTextMessageMock).not.toHaveBeenCalled();
   });
 
-  it("uses Claude when configured and writes safe inferred preferences to markdown memory", async () => {
-    process.env.ANTHROPIC_API_KEY = "test-key";
-    createAnthropicTextMessageMock.mockResolvedValueOnce({
-      text: JSON.stringify({
-        assistantText: "Got it — I can log this and I’ll remember that you prefer lighter dinners.",
-        inferredFacts: [
-          { category: "preference", fact: "Prefers lighter dinners.", stability: "stable", source: "assistant_inference" },
-        ],
-        userVisibleMemoryNotes: ["I’ll remember your lighter-dinner preference."],
-      }),
-      usage: { inputTokens: 100, outputTokens: 40 },
-    });
+  it("uses OpenAI by default and writes safe inferred preferences to markdown memory", async () => {
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    createOpenAITextResponseMock.mockResolvedValueOnce(llmJson("Got it — I can log this and I’ll remember that you prefer lighter dinners."));
     const supabase = createSupabaseStub();
 
     const response = await runHealthCoachAgent({
@@ -81,8 +91,9 @@ describe("runHealthCoachAgent", () => {
       supabase,
     });
 
-    expect(response.metadata.provider).toBe("anthropic");
+    expect(response.metadata.provider).toBe("openai");
     expect(response.metadata.usedDeterministicFallback).toBe(false);
+    expect(createOpenAITextResponseMock).toHaveBeenCalledWith(expect.objectContaining({ model: "gpt-5.2" }));
     expect(response.blocks.find((block) => block.type === "text")).toMatchObject({
       text: expect.stringContaining("lighter dinners"),
     });
@@ -90,13 +101,30 @@ describe("runHealthCoachAgent", () => {
     expect(supabase.upserts.some((row) => row.layer === "patterns" && String(row.content).includes("Prefers lighter dinners"))).toBe(true);
   });
 
+  it("uses Anthropic when selected by NOURISH_LLM_PROVIDER", async () => {
+    process.env.NOURISH_LLM_PROVIDER = "anthropic";
+    process.env.ANTHROPIC_API_KEY = "test-anthropic-key";
+    createAnthropicTextMessageMock.mockResolvedValueOnce(llmJson("Got it — this looks like a dal rice dinner."));
+
+    const response = await runHealthCoachAgent({
+      userId: "user-1",
+      message: { text: "I had dal rice for dinner" },
+    });
+
+    expect(response.metadata.provider).toBe("anthropic");
+    expect(createAnthropicTextMessageMock).toHaveBeenCalledWith(expect.objectContaining({ model: "claude-3-5-haiku-latest" }));
+    expect(createOpenAITextResponseMock).not.toHaveBeenCalled();
+  });
+
   it("blocks unsafe medical requests before LLM execution", async () => {
-    process.env.ANTHROPIC_API_KEY = "test-key";
+    process.env.OPENAI_API_KEY = "test-key";
     const response = await runHealthCoachAgent({ userId: "user-1", message: { text: "Can you prescribe a dose of metformin?" } });
 
     expect(response.intent).toBe("safety_concern");
     expect(response.metadata.safety.blocked).toBe(true);
+    expect(response.metadata.usedDeterministicFallback).toBe(false);
     expect(response.blocks[0]).toMatchObject({ type: "text", text: expect.stringContaining("can't diagnose") });
+    expect(createOpenAITextResponseMock).not.toHaveBeenCalled();
     expect(createAnthropicTextMessageMock).not.toHaveBeenCalled();
   });
 });

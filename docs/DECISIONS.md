@@ -182,6 +182,8 @@ If future framework primitives provide first-class typed action errors, migrate 
 
 ## 2026-05-04 — `/api/chat` MVP error handling contract
 
+> Superseded for the health-coach LLM path by the 2026-05-30 AI-CHAT-01B decision: selected-provider failures now return `503 LLM_UNAVAILABLE` instead of deterministic assistant fallback text.
+
 ### Context
 The first production-facing chat API needed to ship quickly while limiting abuse and avoiding unsafe error leakage.
 
@@ -596,7 +598,7 @@ This moves faster, avoids route-migration churn, preserves existing confirm-save
 ### Migration path
 If `/home` becomes necessary, add `/home` as a route alias or redirect target after the Home UX stabilizes, then gradually migrate deep links and redirects away from `/chat`.
 
-## 2026-05-29 — AI-CHAT-01 health-coach runtime with deterministic fallback
+## 2026-05-29 — AI-CHAT-01 health-coach runtime foundation
 
 ### Context
 Nourish needs a real agentic health-coach foundation before closed beta. The prior chat path persisted messages and produced deterministic meal estimates, but it did not call an LLM, retrieve user memory/profile context, write safe inferred memory, or extend prompt evals for the health-coach runtime.
@@ -604,17 +606,41 @@ Nourish needs a real agentic health-coach foundation before closed beta. The pri
 ### Options considered
 1. Replace the deterministic orchestrator with direct Claude calls.
 2. Keep deterministic chat only and defer LLM integration.
-3. Add a health-coach runtime that retrieves context, calls Claude when configured, preserves deterministic nutrition/safety fallback, writes limited markdown memory effects, and records traces when service-role env is available.
+3. Add a health-coach runtime that retrieves context, calls an LLM provider when configured, preserves deterministic nutrition/safety baselines, writes limited markdown memory effects, and records traces when service-role env is available.
 
 ### Decision
-Choose option 3. AI-CHAT-01 introduces a health-coach runtime under `src/lib/agents/health-coach/` while preserving deterministic estimates as the source of numeric meal data and as the no-provider fallback.
+Choose option 3. AI-CHAT-01 introduces a health-coach runtime under `src/lib/agents/health-coach/` while preserving deterministic estimates as the source of numeric meal data.
 
 ### Why
-This gives Nourish a real LLM-backed chat foundation without letting the model invent nutrition numbers or unsafe health advice. It also keeps local tests deterministic and allows previews without an Anthropic key to keep functioning.
+This gives Nourish a real LLM-backed chat foundation without letting the model invent nutrition numbers or unsafe health advice.
 
 ### Tradeoffs
-- **Gain:** safer LLM rollout, memory/context foundation, eval coverage, trace path, and graceful no-key behavior.
+- **Gain:** safer LLM rollout, memory/context foundation, eval coverage, and trace path.
 - **Cost:** more runtime modules and a two-layer response model where deterministic tools own numeric estimates while the LLM owns coaching language.
 
 ### Migration path
 Future PRs can add tool execution, voice/photo intake, proactive check-ins, server-side analytics, and richer memory promotion behind the same runtime instead of adding parallel agent paths.
+
+
+## 2026-05-30 — AI-CHAT-01B OpenAI-first provider switching with no chatbot fallback
+
+### Context
+The MVP needs a real chatbot before beta. The prior AI-CHAT-01 implementation still allowed deterministic/template assistant responses when no LLM provider was configured, and it only supported Anthropic for real model calls. Product direction is OpenAI-first while preserving a clean provider switch for Anthropic and future providers.
+
+### Options considered
+1. Keep Anthropic-only and add OpenAI later.
+2. Add OpenAI as a fallback behind Anthropic.
+3. Add explicit provider selection (`openai` or `anthropic`) and fail closed when the selected provider is unavailable.
+
+### Decision
+Choose option 3. `NOURISH_LLM_PROVIDER` selects the provider, defaults to `openai`, and `/api/chat` returns `503 LLM_UNAVAILABLE` instead of persisting template assistant fallback text when the selected provider key is missing or the provider call fails.
+
+### Why
+This matches the product requirement that normal chat must be LLM-backed. It also prevents hidden provider fallback behavior from masking broken production configuration. Deterministic nutrition logic remains an internal baseline for estimates and confirm payloads, not a replacement chatbot.
+
+### Tradeoffs
+- **Gain:** OpenAI-first MVP path, clear provider switch, easier future provider additions, and visible misconfiguration failures.
+- **Cost:** local/dev chat requires an API key or mocked tests; preview deployments without provider env vars show an explicit unavailable state instead of a degraded assistant reply.
+
+### Migration path
+To add another model vendor, add a server-only client wrapper, extend `LlmProviderId`, add provider env validation in `llmProvider.ts`, and add focused provider tests.

@@ -9,6 +9,18 @@ import { recordHealthCoachTrace } from "./traceLogger";
 import { writeCoachMemoryEffects } from "./memoryWriter";
 import type { CoachMessage, CoachResponse, CoachResponseBlock } from "./types";
 
+export class HealthCoachProviderError extends Error {
+  constructor(
+    message: string,
+    readonly provider: string,
+    readonly model: string,
+    readonly promptVersion: string,
+  ) {
+    super(message);
+    this.name = "HealthCoachProviderError";
+  }
+}
+
 const messageSchema = z
   .object({
     text: z.string().trim().min(1),
@@ -28,10 +40,10 @@ function safetyResponse(userId: string, parsedMessage: CoachMessage, reasons: st
     intent: "safety_concern",
     blocks: [{ type: "text", text: responseText }],
     metadata: {
-      provider: "deterministic",
-      model: "deterministic-safety-policy",
+      provider: "safety",
+      model: "pre-provider-safety-policy",
       promptVersion: "ai-chat-01-safety-v1",
-      usedDeterministicFallback: true,
+      usedDeterministicFallback: false,
       fallbackReason: "safety_policy_block",
       contextLoaded: false,
       memoryWriteStatus: "skipped",
@@ -75,39 +87,37 @@ export async function runHealthCoachAgent(args: {
   const llmResult = await callHealthCoachLlm({ message: enrichedMessage, context, deterministicResponse });
   const userFacts = inferFactsFromUserText(enrichedMessage.text);
 
-  let response: CoachResponse;
-  if (llmResult.ok) {
-    const inferredFacts = mergeInferredFacts(llmResult.draft.inferredFacts, userFacts);
-    response = {
-      intent: deterministicResponse.intent === "general_fallback_guidance" ? "coach_response" : deterministicResponse.intent,
-      blocks: withAssistantText(deterministicResponse.blocks, llmResult.draft.assistantText),
-      metadata: {
-        provider: "anthropic",
-        model: llmResult.model,
-        promptVersion: llmResult.promptVersion,
-        usedDeterministicFallback: false,
-        contextLoaded: context.contextWarnings.length === 0,
-        memoryWriteStatus: "attempted",
-        inferredFacts,
-        safety: { blocked: false, reasons: [] },
-        latencyMs: llmResult.latencyMs,
-      },
-    };
-  } else {
-    const inferredFacts = userFacts;
-    response = {
-      ...deterministicResponse,
-      metadata: {
-        ...deterministicResponse.metadata,
-        fallbackReason: llmResult.error,
-        contextLoaded: context.contextWarnings.length === 0,
-        memoryWriteStatus: "attempted",
-        inferredFacts,
-        safety: { blocked: false, reasons: [] },
-        latencyMs: llmResult.latencyMs,
-      },
-    };
+  if (!llmResult.ok) {
+    await recordHealthCoachTrace({
+      userId: safeUserId,
+      intent: "provider_error",
+      requestText: enrichedMessage.text,
+      llmResult,
+    });
+    throw new HealthCoachProviderError(
+      `Health coach LLM provider unavailable: ${llmResult.error}`,
+      llmResult.provider,
+      llmResult.model,
+      llmResult.promptVersion,
+    );
   }
+
+  const inferredFacts = mergeInferredFacts(llmResult.draft.inferredFacts, userFacts);
+  const response: CoachResponse = {
+    intent: deterministicResponse.intent === "general_fallback_guidance" ? "coach_response" : deterministicResponse.intent,
+    blocks: withAssistantText(deterministicResponse.blocks, llmResult.draft.assistantText),
+    metadata: {
+      provider: llmResult.provider,
+      model: llmResult.model,
+      promptVersion: llmResult.promptVersion,
+      usedDeterministicFallback: false,
+      contextLoaded: context.contextWarnings.length === 0,
+      memoryWriteStatus: "attempted",
+      inferredFacts,
+      safety: { blocked: false, reasons: [] },
+      latencyMs: llmResult.latencyMs,
+    },
+  };
 
   const memoryWriteStatus = await writeCoachMemoryEffects({
     supabase: args.supabase,

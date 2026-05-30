@@ -10,9 +10,6 @@ const chatRequestSchema = z.object({
   conditions: z.array(z.string()).optional(),
 });
 
-const FALLBACK_RESPONSE =
-  "I had trouble processing that right now. Please try again in a moment, and I can still help log your meal.";
-
 function jsonError(status: number, code: string, message: string, requestId: string) {
   return Response.json({ ok: false, error: { code, message }, requestId }, { status });
 }
@@ -81,30 +78,25 @@ export async function POST(request: Request) {
     return jsonError(500, "MESSAGE_PERSIST_FAILED", "Could not save your message. Please try again.", requestId);
   }
 
-  let assistantText = FALLBACK_RESPONSE;
-  let intent = "general_fallback_guidance";
-  let usedFallback = false;
-  let blocks: Awaited<ReturnType<typeof handleMessage>>["blocks"] = [];
-  let agentMetadata: Awaited<ReturnType<typeof handleMessage>>["metadata"] | undefined;
-
+  let orchestrated: Awaited<ReturnType<typeof handleMessage>>;
   try {
-    const orchestrated = await handleMessage(user.id, {
+    orchestrated = await handleMessage(user.id, {
       text: parsed.data.text,
       allergies: parsed.data.allergies,
       conditions: parsed.data.conditions,
     }, { supabase });
-    intent = orchestrated.intent;
-    blocks = orchestrated.blocks;
-    agentMetadata = orchestrated.metadata;
-    usedFallback = Boolean(agentMetadata?.usedDeterministicFallback);
-    const firstTextBlock = blocks.find((block) => block.type === "text");
-    if (firstTextBlock && firstTextBlock.text.trim()) {
-      assistantText = firstTextBlock.text;
-    } else {
-      usedFallback = true;
-    }
   } catch {
-    usedFallback = true;
+    return jsonError(503, "LLM_UNAVAILABLE", "The Nourish health coach is temporarily unavailable. Please check the LLM provider configuration and try again.", requestId);
+  }
+
+  const intent = orchestrated.intent;
+  const blocks = orchestrated.blocks;
+  const agentMetadata = orchestrated.metadata;
+  const usedFallback = false;
+  const firstTextBlock = blocks.find((block) => block.type === "text");
+  const assistantText = firstTextBlock?.text.trim();
+  if (!assistantText) {
+    return jsonError(502, "LLM_EMPTY_RESPONSE", "The health coach did not return a usable reply. Please try again.", requestId);
   }
 
   const mealCandidate = blocks.find((block) => block.type === "meal_log_candidate");
