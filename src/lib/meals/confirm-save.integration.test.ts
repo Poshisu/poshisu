@@ -62,6 +62,10 @@ describe("confirm-save meal flow integration", () => {
       kcalLow: 400,
       kcalHigh: 500,
       kcalLead: 450,
+      protein: 18,
+      carbs: 64,
+      fat: 9,
+      fiber: 11,
       confidence: 0.9,
     });
 
@@ -70,6 +74,10 @@ describe("confirm-save meal flow integration", () => {
     expect(result.meals).toHaveLength(1);
     expect(result.meals[0]?.source_text).toBe("2 rotis and dal");
     expect(result.meals[0]?.kcal_low).toBe(400);
+    expect(result.meals[0]?.protein_g_low).toBe(18);
+    expect(result.meals[0]?.carbs_g_low).toBe(64);
+    expect(result.meals[0]?.fat_g_low).toBe(9);
+    expect(result.meals[0]?.fiber_g_low).toBe(11);
   });
 
   it("ignores duplicate confirmations within dedupe window", async () => {

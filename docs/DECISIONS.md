@@ -712,3 +712,26 @@ Only recent text messages are hydrated for now, and older assistant messages cre
 
 ### Migration path
 Add message pagination or explicit conversation threads later if the transcript grows beyond the recent-message window. Continue storing structured estimate metadata on assistant messages so older cards can be reconstructed without re-calling the LLM.
+
+
+## 2026-05-30 — Keep daily nutrition context visible and carry pending estimates through corrections
+
+### Context
+After chat persistence landed, the Home chat still had four product-quality gaps: all in-flight messages used “Estimating your meal…”, daily macros disappeared while scrolling, newly confirmed meals did not carry macro/micro fields into Home totals, and user corrections to a pending estimate did not provide the model with the current confirmation-card context.
+
+### Options considered
+1. Leave the Home chat as a simple transcript and defer polish until the full RDX-06 redesign.
+2. Add a small UI/runtime polish slice: contextual thinking copy, sticky compact nutrition summary, auto-scroll-to-latest, macro persistence on confirm, and pending-estimate context for corrections.
+3. Add a full conversation/thread model with editable historical meal cards.
+
+### Decision
+Choose option 2. The app now keeps a compact kcal/macro strip sticky on mobile while the user scrolls, uses contextual non-template thinking copy, scrolls toward the latest transcript turn, saves macro/micro fields with confirmed meal estimates, and passes pending estimate context into `/api/chat` when the user adjusts an unconfirmed estimate.
+
+### Why
+This directly fixes the observed UX failures without introducing a new data model before beta learning. It also keeps the existing safety boundary: the LLM can refine language, portions, and assumptions, while deterministic nutrition fields remain the persisted source for totals.
+
+### Tradeoffs
+The sticky summary is currently a mobile-focused compact strip, not a full desktop rail redesign. Pending estimate corrections reuse current estimate context and deterministic parsing, so very complex edits may still need a clarifying question rather than perfect recalculation.
+
+### Migration path
+If beta usage shows long multi-day conversations or frequent edits to already confirmed meals, add explicit conversation threads and a first-class meal revision workflow.

@@ -75,10 +75,21 @@ export interface CoachResponse {
   metadata: CoachResponseMetadata;
 }
 
+export type PendingMealCandidateContext = {
+  summary: string;
+  mealSlot?: ConfirmableMealEstimate["mealSlot"];
+  items?: Array<{
+    name?: string;
+    householdUnit?: string;
+    quantityG?: number;
+  }>;
+};
+
 export type CoachMessage = {
   text: string;
   allergies?: string[];
   conditions?: string[];
+  pendingCandidate?: PendingMealCandidateContext;
 };
 
 export type UserProfileContext = {

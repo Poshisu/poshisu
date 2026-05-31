@@ -22,11 +22,29 @@ export class HealthCoachProviderError extends Error {
   }
 }
 
+const pendingCandidateSchema = z
+  .object({
+    summary: z.string().trim().min(1).max(500),
+    mealSlot: z.enum(["breakfast", "lunch", "dinner", "snack", "beverage", "other"]).optional(),
+    items: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1).max(120).optional(),
+          householdUnit: z.string().trim().min(1).max(120).optional(),
+          quantityG: z.number().nonnegative().optional(),
+        }),
+      )
+      .max(12)
+      .optional(),
+  })
+  .strict();
+
 const messageSchema = z
   .object({
     text: z.string().trim().min(1),
     allergies: z.array(z.string()).optional(),
     conditions: z.array(z.string()).optional(),
+    pendingCandidate: pendingCandidateSchema.optional(),
   })
   .strict();
 
@@ -134,6 +152,7 @@ export async function runHealthCoachAgent(args: {
     text: message.text,
     allergies: Array.from(new Set([...(message.allergies ?? []), ...contextAllergies])),
     conditions: Array.from(new Set([...(message.conditions ?? []), ...contextConditions])),
+    pendingCandidate: message.pendingCandidate,
   };
 
   const deterministicResponse = await buildDeterministicCoachResponse(safeUserId, enrichedMessage);

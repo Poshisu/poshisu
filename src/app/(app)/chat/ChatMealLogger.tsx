@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, Database, FlameKindling, Mic, Pencil, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -127,6 +127,37 @@ function itemServingLabel(item: { household_unit?: string; quantity_g?: number }
   return "estimated portion";
 }
 
+const REGULAR_THINKING_COPY = [
+  "Stirring up a thoughtful reply…",
+  "Letting the tadka bloom…",
+  "Plating a careful answer…",
+];
+
+function isLikelyMealMessage(text: string | null) {
+  if (!text) return false;
+  if (/\b(remember|recall|what did i have|what have i eaten)\b/i.test(text)) return false;
+  return /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|plate|bowl|roti|rice|dal|paneer|chicken|fish|curd|beer|coffee|tea|kcal|protein|carbs|fat|portion|serving|grams?|g|ml)\b/i.test(text);
+}
+
+function thinkingCopy(text: string | null) {
+  if (isLikelyMealMessage(text)) return "Checking portions and prep style…";
+  const index = Math.abs(text?.length ?? 0) % REGULAR_THINKING_COPY.length;
+  return REGULAR_THINKING_COPY[index];
+}
+
+function pendingCandidateContext(candidate: MealCandidateBlock | null, selectedSlot: MealSlot) {
+  if (!candidate) return undefined;
+  return {
+    summary: candidate.summary,
+    mealSlot: selectedSlot,
+    items: getCandidateItems(candidate).map((item) => ({
+      name: item.name,
+      householdUnit: item.household_unit,
+      quantityG: item.quantity_g,
+    })),
+  };
+}
+
 function dailyTotals(meals: TodayMeal[]) {
   return meals.reduce(
     (acc, meal) => {
@@ -159,23 +190,35 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
   const [candidate, setCandidate] = useState<MealCandidateBlock | null>(initialCandidate);
   const [selectedSlot, setSelectedSlot] = useState<MealSlot>(getCandidateMealSlot(initialCandidate));
   const [isSending, setIsSending] = useState(false);
+  const [pendingMessageText, setPendingMessageText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mediaNotice, setMediaNotice] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   const totals = useMemo(() => dailyTotals(initialMeals), [initialMeals]);
   const canSend = input.trim().length > 0 && !isSending;
   const latestMeal = initialMeals[0];
   const mealCountLabel = initialMeals.length === 1 ? "1 meal logged today." : `${initialMeals.length} meals logged today.`;
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      transcriptEndRef.current?.scrollIntoView?.({ block: "end" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages.length, isSending, candidate?.assistantMessageId]);
+
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
     if (!text || isSending) return;
 
+    const candidateBeforeSend = candidate;
+
     setIsSending(true);
+    setPendingMessageText(text);
     setError(null);
     setCandidate(null);
     setInput("");
@@ -190,7 +233,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, pendingCandidate: pendingCandidateContext(candidateBeforeSend, selectedSlot) }),
       });
       const payload = (await response.json()) as ChatApiResponse;
 
@@ -217,6 +260,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "Could not send message. Please try again.");
     } finally {
+      setPendingMessageText(null);
       setIsSending(false);
     }
   }
@@ -269,16 +313,15 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
 
           <TodayMealsPreview meals={initialMeals} latestMeal={latestMeal} />
 
+          <StickyDailySummary totals={totals} />
+
           <section aria-label="Chat transcript" className="space-y-4">
             <h1 className="sr-only">Home</h1>
             {messages.map((message) => (
               <ChatBubble key={message.id} message={message} />
             ))}
-            {isSending ? (
-              <div role="status" className="mr-auto max-w-[86%] rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-card)]">
-                Estimating your meal…
-              </div>
-            ) : null}
+            {isSending ? <ThinkingBubble text={thinkingCopy(pendingMessageText)} /> : null}
+            <div ref={transcriptEndRef} aria-hidden="true" />
           </section>
 
           {candidate ? (
@@ -420,6 +463,41 @@ function MacroStat({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--foreground-on-dark-muted)] sm:text-sm">{label}</dt>
       <dd className="mt-1 font-display text-2xl leading-none tracking-tight sm:text-3xl">{value}</dd>
+    </div>
+  );
+}
+
+function StickyDailySummary({ totals }: { totals: ReturnType<typeof dailyTotals> }) {
+  return (
+    <section
+      aria-label="Sticky daily nutrition summary"
+      className="sticky top-3 z-10 rounded-[1.75rem] border border-[var(--border-soft)] bg-[var(--surface-canvas)]/95 p-3 shadow-[var(--shadow-card)] backdrop-blur supports-[backdrop-filter]:bg-[var(--surface-canvas)]/85 lg:hidden"
+    >
+      <dl className="grid grid-cols-5 gap-2 text-center">
+        <CompactMacroStat label="Kcal" value={formatRange(totals.kcalLow, totals.kcalHigh)} />
+        <CompactMacroStat label="Carbs" value={formatGrams(totals.carbs)} />
+        <CompactMacroStat label="Protein" value={formatGrams(totals.protein)} />
+        <CompactMacroStat label="Fat" value={formatGrams(totals.fat)} />
+        <CompactMacroStat label="Fibre" value={formatGrams(totals.fiber)} />
+      </dl>
+    </section>
+  );
+}
+
+function CompactMacroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-[1rem] bg-[var(--surface-brand-soft)] px-2 py-2">
+      <dt className="truncate text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
+      <dd className="mt-1 truncate text-sm font-semibold leading-none text-[var(--foreground)]">{value}</dd>
+    </div>
+  );
+}
+
+function ThinkingBubble({ text }: { text: string }) {
+  return (
+    <div role="status" className="mr-auto max-w-[86%] rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-card)]">
+      <span className="sr-only">Nourish is replying.</span>
+      {text}
     </div>
   );
 }

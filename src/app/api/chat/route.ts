@@ -5,10 +5,28 @@ import { HealthCoachProviderError } from "@/lib/agents/health-coach/runtime";
 import { enforceChatRateLimit } from "@/lib/rate-limit/chat";
 import { createClient } from "@/lib/supabase/server";
 
+const pendingCandidateSchema = z
+  .object({
+    summary: z.string().trim().min(1).max(500),
+    mealSlot: z.enum(["breakfast", "lunch", "dinner", "snack", "beverage", "other"]).optional(),
+    items: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1).max(120).optional(),
+          householdUnit: z.string().trim().min(1).max(120).optional(),
+          quantityG: z.number().nonnegative().optional(),
+        }),
+      )
+      .max(12)
+      .optional(),
+  })
+  .strict();
+
 const chatRequestSchema = z.object({
   text: z.string().trim().min(1).max(4000),
   allergies: z.array(z.string()).optional(),
   conditions: z.array(z.string()).optional(),
+  pendingCandidate: pendingCandidateSchema.optional(),
 });
 
 type JsonErrorDetails = Record<string, string | number | boolean | undefined>;
@@ -106,6 +124,7 @@ export async function POST(request: Request) {
       text: parsed.data.text,
       allergies: parsed.data.allergies,
       conditions: parsed.data.conditions,
+      pendingCandidate: parsed.data.pendingCandidate,
     }, { supabase });
   } catch (error) {
     if (error instanceof HealthCoachProviderError) {

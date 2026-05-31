@@ -43,7 +43,8 @@ function summarizeMealCandidate(text: string): string {
   return normalized.length <= 160 ? normalized : `${normalized.slice(0, 157)}...`;
 }
 
-function inferMealSlot(text: string): ConfirmableMealEstimate["mealSlot"] {
+function inferMealSlot(text: string, preferredSlot?: ConfirmableMealEstimate["mealSlot"]): ConfirmableMealEstimate["mealSlot"] {
+  if (preferredSlot) return preferredSlot;
   const lower = text.toLowerCase();
   if (/\bbreakfast\b/.test(lower)) return "breakfast";
   if (/\blunch\b/.test(lower)) return "lunch";
@@ -68,10 +69,11 @@ function buildConfirmPayload(args: {
   items: string[];
   nutrition: Awaited<ReturnType<typeof runPipeline>>;
   confidence: "high" | "medium" | "low";
+  mealSlot?: ConfirmableMealEstimate["mealSlot"];
 }): ConfirmableMealEstimate | undefined {
   if (args.items.length === 0) return undefined;
   return {
-    mealSlot: inferMealSlot(args.text),
+    mealSlot: inferMealSlot(args.text, args.mealSlot),
     sourceText: normalizedSourceText(args.text),
     items: args.items.map((name) => {
       const portion = portionForItem(name);
@@ -80,6 +82,10 @@ function buildConfirmPayload(args: {
     kcalLow: args.nutrition.kcalMin,
     kcalHigh: args.nutrition.kcalMax,
     kcalLead: Math.round((args.nutrition.kcalMin + args.nutrition.kcalMax) / 2),
+    protein: args.nutrition.protein,
+    carbs: args.nutrition.carbs,
+    fat: args.nutrition.fat,
+    fiber: args.nutrition.fiber,
     confidence: confidenceScore(args.confidence),
   };
 }
@@ -92,20 +98,29 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
   }
 
   const text = message.text.trim();
+  const isPendingCandidateCorrection = Boolean(message.pendingCandidate);
+  const effectiveMealText = isPendingCandidateCorrection ? `${message.pendingCandidate?.summary ?? ""}. ${text}`.trim() : text;
+  const sourceText = isPendingCandidateCorrection ? `${message.pendingCandidate?.summary ?? "Previous estimate"}; update: ${text}` : text;
 
-  if (mealLogPattern.test(text)) {
-    const parsed = parseItemsFromText(text);
+  if (mealLogPattern.test(text) || isPendingCandidateCorrection) {
+    const parsed = parseItemsFromText(effectiveMealText);
     const nutrition = await runPipeline(parsed.items);
-    const safetyFoods = Array.from(new Set([...parsed.items, text]));
+    const safetyFoods = Array.from(new Set([...parsed.items, effectiveMealText]));
     const safetyFlags = evaluateMealSafety({ foods: safetyFoods, allergies: message.allergies ?? [], conditions: message.conditions ?? [] });
     const clarificationQuestions = parsed.isAmbiguous ? nutrition.clarificationQuestions.slice(0, 2) : nutrition.clarificationQuestions;
     const candidateConfidence = parsed.isAmbiguous ? "low" : nutrition.confidence;
-    const confirmPayload = buildConfirmPayload({ text, items: parsed.items, nutrition, confidence: candidateConfidence });
+    const confirmPayload = buildConfirmPayload({
+      text: sourceText,
+      items: parsed.items,
+      nutrition,
+      confidence: candidateConfidence,
+      mealSlot: message.pendingCandidate?.mealSlot,
+    });
 
     const blocks: CoachResponseBlock[] = [
       {
         type: "meal_log_candidate",
-        summary: summarizeMealCandidate(text),
+        summary: summarizeMealCandidate(effectiveMealText),
         needsConfirmation: true,
         confidence: candidateConfidence,
         estimate: {
@@ -126,9 +141,11 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
         type: "text",
         text: safetyFlags.blocked
           ? "I found a safety conflict with your declared allergies or health conditions. Please review the warning before logging this meal."
-          : clarificationQuestions.length > 0
-            ? "I can estimate this, but I need up to two quick clarifications first."
-            : "I can log this meal. Please confirm if the estimate looks right.",
+          : isPendingCandidateCorrection
+            ? "I updated the estimate. Please confirm the revised meal if it looks right."
+            : clarificationQuestions.length > 0
+              ? "I can estimate this, but I need up to two quick clarifications first."
+              : "I can log this meal. Please confirm if the estimate looks right.",
       },
     ];
 
