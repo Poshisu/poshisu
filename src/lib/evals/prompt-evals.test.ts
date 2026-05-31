@@ -14,6 +14,7 @@ describe("prompt eval harness", () => {
       "router",
       "nutrition-estimator",
       "coach",
+      "health-coach-runtime",
       "safety-adversarial",
     ]);
 
@@ -36,6 +37,7 @@ describe("prompt eval harness", () => {
       "router",
       "nutrition-estimator",
       "coach",
+      "health-coach-runtime",
       "safety-adversarial",
     ]);
   });
@@ -63,6 +65,7 @@ describe("prompt eval harness", () => {
     expect(summary).toContain("router:");
     expect(summary).toContain("nutrition-estimator:");
     expect(summary).toContain("coach:");
+    expect(summary).toContain("health-coach-runtime:");
     expect(summary).toContain("safety-adversarial:");
     expect(summary).toContain("Overall:");
   });
