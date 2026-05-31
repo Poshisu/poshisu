@@ -735,3 +735,26 @@ The sticky summary is currently a mobile-focused compact strip, not a full deskt
 
 ### Migration path
 If beta usage shows long multi-day conversations or frequent edits to already confirmed meals, add explicit conversation threads and a first-class meal revision workflow.
+
+
+## 2026-05-31 — Use one structured meal candidate for assistant prose and confirmation cards
+
+### Context
+Production screenshots showed the LLM reply correctly understood a detailed breakfast, but the confirmation card showed an unrelated `roti` estimate. That meant assistant prose, deterministic parsing, and the confirmation card could diverge.
+
+### Options considered
+1. Trust LLM prose and keep the current confirmation parser.
+2. Build the full new `meal_estimates` table, local-date aggregation, voice, and photo pipeline in one large PR.
+3. First harden the existing text path so one structured `meal_log_candidate` drives both the visible card and confirm payload, then follow with migrations/media slices.
+
+### Decision
+Choose option 3. The typed parser now recognizes the screenshot breakfast items and quantities, the deterministic candidate carries item details into the card and confirm payload, and regression tests assert no `roti` appears unless the user logs roti. Voice, photo, and full local-date persistence remain follow-up slices documented in the lifecycle note.
+
+### Why
+This fixes the observed trust-breaking bug quickly without hiding another large schema migration inside a UI/LLM patch. It preserves the current safety boundary: provider prose can improve presentation, but persisted nutrition fields come from the structured candidate.
+
+### Tradeoffs
+The current implementation is still a typed estimator, not a complete nutrition database or persisted `meal_estimates` table. It handles the regression and common MVP foods but should evolve into a richer canonical estimate table before broad beta.
+
+### Migration path
+Add a `meal_estimates` table with status, local_date, timezone, source modality, and model metadata. Then route text, voice transcripts, and photo analysis into that table before confirmation.

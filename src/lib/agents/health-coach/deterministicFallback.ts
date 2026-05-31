@@ -1,5 +1,6 @@
 import type { ConfirmableMealEstimate } from "@/lib/meals/confirm";
 import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
+import type { ParsedNutritionItem } from "@/lib/nutrition/pipeline";
 import { evaluateMealSafety } from "@/lib/safety/check";
 import type { CoachMessage, CoachResponse, CoachResponseBlock } from "./types";
 
@@ -66,7 +67,7 @@ function normalizedSourceText(text: string): string {
 
 function buildConfirmPayload(args: {
   text: string;
-  items: string[];
+  items: ParsedNutritionItem[];
   nutrition: Awaited<ReturnType<typeof runPipeline>>;
   confidence: "high" | "medium" | "low";
   mealSlot?: ConfirmableMealEstimate["mealSlot"];
@@ -75,10 +76,11 @@ function buildConfirmPayload(args: {
   return {
     mealSlot: inferMealSlot(args.text, args.mealSlot),
     sourceText: normalizedSourceText(args.text),
-    items: args.items.map((name) => {
-      const portion = portionForItem(name);
-      return { name, quantity_g: portion.quantityG, household_unit: portion.householdUnit };
-    }),
+    items: args.items.map((item) => ({
+      name: item.name,
+      quantity_g: item.quantityG,
+      household_unit: item.householdUnit,
+    })),
     kcalLow: args.nutrition.kcalMin,
     kcalHigh: args.nutrition.kcalMax,
     kcalLead: Math.round((args.nutrition.kcalMin + args.nutrition.kcalMax) / 2),
@@ -105,13 +107,15 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
   if (mealLogPattern.test(text) || isPendingCandidateCorrection) {
     const parsed = parseItemsFromText(effectiveMealText);
     const nutrition = await runPipeline(parsed.items);
-    const safetyFoods = Array.from(new Set([...parsed.items, effectiveMealText]));
+    const parsedFoodNames = parsed.items.map((item) => item.name);
+    const nutritionItemNames = nutrition.itemDetails.map((item) => item.name);
+    const safetyFoods = Array.from(new Set([...parsedFoodNames, ...nutritionItemNames, effectiveMealText]));
     const safetyFlags = evaluateMealSafety({ foods: safetyFoods, allergies: message.allergies ?? [], conditions: message.conditions ?? [] });
     const clarificationQuestions = parsed.isAmbiguous ? nutrition.clarificationQuestions.slice(0, 2) : nutrition.clarificationQuestions;
     const candidateConfidence = parsed.isAmbiguous ? "low" : nutrition.confidence;
     const confirmPayload = buildConfirmPayload({
       text: sourceText,
-      items: parsed.items,
+      items: nutrition.itemDetails,
       nutrition,
       confidence: candidateConfidence,
       mealSlot: message.pendingCandidate?.mealSlot,
@@ -132,7 +136,7 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
           fiber: nutrition.fiber,
         },
         rationale: nutrition.rationale,
-        displayAssumptions: parsed.items.length > 0 ? buildPreparationAssumptions(parsed.items) : undefined,
+        displayAssumptions: nutrition.itemDetails.length > 0 ? buildPreparationAssumptions(nutrition.itemDetails.map((item) => item.name)) : undefined,
         clarificationQuestions,
         safetyFlags,
         confirmPayload,

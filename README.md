@@ -176,7 +176,7 @@ CI enforces this with the same `db:types:check` command and fails when committed
 
 ### AI health-coach architecture
 
-AI-CHAT-01B is documented in [`docs/ai-chat-01-architecture.md`](docs/ai-chat-01-architecture.md), including the OpenAI-first multi-provider LLM path, no-template-fallback behavior, memory lifecycle, trace logging, and eval commands.
+AI-CHAT-01B is documented in [`docs/ai-chat-01-architecture.md`](docs/ai-chat-01-architecture.md), including the OpenAI-first multi-provider LLM path, no-template-fallback behavior, memory lifecycle, trace logging, and eval commands. The canonical meal estimate and confirmation lifecycle is documented in [`docs/meal-estimate-lifecycle.md`](docs/meal-estimate-lifecycle.md), including the screenshot root cause, text confirmation invariants, local-date target model, and voice/photo target flows.
 
 ### Vercel env + runbook parity
 

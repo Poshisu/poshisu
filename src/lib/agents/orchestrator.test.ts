@@ -54,6 +54,48 @@ describe("handleMessage", () => {
     }
   });
 
+
+  it("keeps the screenshot breakfast estimate and confirmation card on the same structured items", async () => {
+    mockCoachReply("Got it—this looks like a high-protein breakfast bowl.");
+    const text =
+      "Breakfast the whole truth unflavoured whey isolate protien 35g True Elements rolled oats 60g. 1 cup is 115g Skyr yogurt 50g Chia and flax 1 tsp each 2 dates / 1 tsp honey 100ml almond milk from So Good 100gm dragonfruit and 60gm mango And 30gm radish kimchi";
+
+    const response = await handleMessage("user-123", { text });
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      const itemNames = candidate.confirmPayload?.items.map((item) => item.name) ?? [];
+      expect(candidate.summary).toContain("whey isolate");
+      expect(itemNames).not.toContain("roti");
+      expect(itemNames).toEqual(
+        expect.arrayContaining([
+          "whey isolate",
+          "rolled oats",
+          "skyr yogurt",
+          "chia seeds",
+          "flax seeds",
+          "dates",
+          "honey",
+          "almond milk",
+          "dragon fruit",
+          "mango",
+          "radish kimchi",
+        ]),
+      );
+      expect(candidate.estimate.kcalMin).toBeGreaterThanOrEqual(500);
+      expect(candidate.estimate.kcalMax).toBeLessThanOrEqual(760);
+      expect(candidate.confirmPayload).toMatchObject({
+        kcalLow: candidate.estimate.kcalMin,
+        kcalHigh: candidate.estimate.kcalMax,
+        protein: candidate.estimate.protein,
+        carbs: candidate.estimate.carbs,
+        fat: candidate.estimate.fat,
+        fiber: candidate.estimate.fiber,
+      });
+    }
+  });
+
   it("preserves raw meal text for safety checks when parser misses unsafe allergen synonyms", async () => {
     const response = await handleMessage("user-123", {
       text: "I had peanut chutney for dinner",

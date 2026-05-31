@@ -136,6 +136,22 @@ describe("ChatMealLogger", () => {
   });
 
 
+
+  it("sends with Enter on desktop-style keyboard input and keeps Shift+Enter as multiline", async () => {
+    render(<ChatMealLogger initialMeals={meals} />);
+    const composer = screen.getByLabelText("Meal message");
+
+    fireEvent.change(composer, { target: { value: "I had 2 idlis and sambar for breakfast" } });
+    fireEvent.keyDown(composer, { key: "Enter", code: "Enter", shiftKey: true });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(composer, { key: "Enter", code: "Enter" });
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("hydrates persisted chat messages and pending estimate after refresh", () => {
     render(
       <ChatMealLogger

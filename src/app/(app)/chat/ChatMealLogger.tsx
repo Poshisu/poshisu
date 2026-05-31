@@ -396,6 +396,11 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
               disabled={isSending}
               rows={2}
               onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }}
               className="max-h-32 min-h-[3.5rem] w-full resize-none border-0 bg-transparent text-lg leading-snug text-[var(--foreground)] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
