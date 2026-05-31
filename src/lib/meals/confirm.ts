@@ -8,6 +8,10 @@ export type ConfirmableMealEstimate = {
   kcalLow: number;
   kcalHigh: number;
   kcalLead: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
   confidence: number;
 };
 
@@ -27,6 +31,10 @@ const estimateSchema = z
     kcalLow: z.number().nonnegative(),
     kcalHigh: z.number().nonnegative(),
     kcalLead: z.number().nonnegative(),
+    protein: z.number().nonnegative().optional(),
+    carbs: z.number().nonnegative().optional(),
+    fat: z.number().nonnegative().optional(),
+    fiber: z.number().nonnegative().optional(),
     confidence: z.number().min(0).max(1),
   })
   .refine((v) => v.kcalLow <= v.kcalLead && v.kcalLead <= v.kcalHigh, {
@@ -94,6 +102,14 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
       kcal_low: parsed.data.kcalLow,
       kcal_high: parsed.data.kcalHigh,
       kcal_lead: parsed.data.kcalLead,
+      protein_g_low: parsed.data.protein,
+      protein_g_high: parsed.data.protein,
+      carbs_g_low: parsed.data.carbs,
+      carbs_g_high: parsed.data.carbs,
+      fat_g_low: parsed.data.fat,
+      fat_g_high: parsed.data.fat,
+      fiber_g_low: parsed.data.fiber,
+      fiber_g_high: parsed.data.fiber,
       confidence: parsed.data.confidence,
       user_confirmed: true,
     } as never)

@@ -4,6 +4,7 @@ import { ChatMealLogger } from "./ChatMealLogger";
 import type { TodayMeal } from "@/lib/meals/today";
 
 const originalFetch = globalThis.fetch;
+const originalScrollIntoView = Element.prototype.scrollIntoView;
 
 const meals: TodayMeal[] = [
   {
@@ -30,6 +31,7 @@ const meals: TodayMeal[] = [
 
 describe("ChatMealLogger", () => {
   beforeEach(() => {
+    Element.prototype.scrollIntoView = vi.fn();
     globalThis.fetch = vi.fn(async () =>
       new Response(
         JSON.stringify({
@@ -58,6 +60,10 @@ describe("ChatMealLogger", () => {
                 },
                 estimate: { kcalMin: 185, kcalMax: 251, protein: 11, carbs: 35, fat: 3, fiber: 8 },
                 rationale: "Assumed typical Indian home-style prep.",
+                displayAssumptions: [
+                  { label: "Portion", detail: "idli: 2 medium pieces; sambar: 1 bowl" },
+                  { label: "Preparation", detail: "Steamed idli with home-style sambar and light tempering" },
+                ],
                 clarificationQuestions: [],
                 safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
               },
@@ -77,6 +83,7 @@ describe("ChatMealLogger", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    Element.prototype.scrollIntoView = originalScrollIntoView;
   });
 
   it("renders the combined Home summary, meal preview, and accessible composer", () => {
@@ -87,6 +94,9 @@ describe("ChatMealLogger", () => {
     expect(screen.getByText("1 meal logged today.")).toBeInTheDocument();
     expect(screen.getAllByText("180–240")[0]).toBeInTheDocument();
     expect(screen.getAllByText("25g")[0]).toBeInTheDocument();
+    const stickySummary = screen.getByRole("region", { name: "Sticky daily nutrition summary" });
+    expect(within(stickySummary).getByText("180–240")).toBeInTheDocument();
+    expect(within(stickySummary).getByText("11g")).toBeInTheDocument();
     expect(screen.getByText("Today's meals (1)")).toBeInTheDocument();
     expect(screen.getByText("Ate 1 grilled chicken breast with broccoli and beans")).toBeInTheDocument();
     expect(screen.getByLabelText("Meal message")).toBeInTheDocument();
@@ -119,8 +129,45 @@ describe("ChatMealLogger", () => {
     expect(within(estimate).getByText("35g")).toBeInTheDocument();
     expect(within(estimate).getByText("idli")).toBeInTheDocument();
     expect(within(estimate).getByText("2 pieces")).toBeInTheDocument();
+    expect(within(estimate).getByText("Portion")).toBeInTheDocument();
+    expect(within(estimate).getByText("idli: 2 medium pieces; sambar: 1 bowl")).toBeInTheDocument();
     expect(within(estimate).getByRole("button", { name: "Breakfast" })).toHaveAttribute("aria-pressed", "true");
     expect(within(estimate).getByRole("button", { name: "Looks right" })).toBeInTheDocument();
+  });
+
+
+  it("hydrates persisted chat messages and pending estimate after refresh", () => {
+    render(
+      <ChatMealLogger
+        initialMessages={[
+          { id: "msg-user-old", role: "user", content: "I had paneer and roti" },
+          { id: "msg-assistant-old", role: "assistant", content: "Got it — I estimated this meal." },
+        ]}
+        initialCandidate={{
+          type: "meal_log_candidate",
+          summary: "paneer and roti",
+          needsConfirmation: true,
+          confidence: "high",
+          mealSlot: "dinner",
+          assistantMessageId: "msg-assistant-old",
+          confirmPayload: {
+            mealSlot: "dinner",
+            items: [{ name: "paneer", quantity_g: 100, household_unit: "~100 g paneer portion" }],
+          },
+          estimate: { kcalMin: 320, kcalMax: 430, protein: 22, carbs: 24, fat: 20, fiber: 3 },
+          rationale: "Portion: paneer ~100 g",
+          displayAssumptions: [{ label: "Preparation", detail: "Medium-spice paneer with moderate oil" }],
+          clarificationQuestions: [],
+          safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("I had paneer and roti")).toBeInTheDocument();
+    expect(screen.getByText("Got it — I estimated this meal.")).toBeInTheDocument();
+    expect(screen.queryByText(/Tell me what you ate/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Meal estimate" })).toBeInTheDocument();
+    expect(screen.getByText("~100 g paneer portion")).toBeInTheDocument();
   });
 
   it("does not render a broken save form when the assistant has no confirm payload", async () => {
@@ -160,5 +207,90 @@ describe("ChatMealLogger", () => {
 
     expect(await screen.findByText("I need one quick clarification before I can save this.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Looks right" })).not.toBeInTheDocument();
+  });
+
+  it("uses non-estimate thinking copy for general chat while waiting", async () => {
+    let resolveResponse: (value: Response) => void = () => {};
+    globalThis.fetch = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveResponse = resolve;
+        }),
+    ) as typeof fetch;
+
+    render(<ChatMealLogger />);
+
+    fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "Do you remember what I had for dinner?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/Stirring up|tadka|Plating/);
+    expect(screen.queryByText("Estimating your meal…")).not.toBeInTheDocument();
+
+    resolveResponse(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          requestId: "req-general",
+          data: {
+            blocks: [{ type: "text", text: "You logged a dinner earlier today." }],
+            assistantMessage: { id: "msg-general", content: "You logged a dinner earlier today." },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    expect(await screen.findByText("You logged a dinner earlier today.")).toBeInTheDocument();
+  });
+
+  it("sends pending estimate context when the user adjusts a confirmation card", async () => {
+    render(
+      <ChatMealLogger
+        initialCandidate={{
+          type: "meal_log_candidate",
+          summary: "paneer tikka and rice",
+          needsConfirmation: true,
+          confidence: "medium",
+          mealSlot: "dinner",
+          assistantMessageId: "msg-candidate",
+          confirmPayload: {
+            mealSlot: "dinner",
+            items: [
+              { name: "paneer", quantity_g: 100, household_unit: "~100 g paneer tikka" },
+              { name: "rice", quantity_g: 150, household_unit: "~1 bowl cooked rice" },
+            ],
+          },
+          estimate: { kcalMin: 420, kcalMax: 560, protein: 24, carbs: 58, fat: 18, fiber: 4 },
+          rationale: "Portion estimate",
+          clarificationQuestions: [],
+          safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "Make that half the rice" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            text: "Make that half the rice",
+            pendingCandidate: {
+              summary: "paneer tikka and rice",
+              mealSlot: "dinner",
+              items: [
+                { name: "paneer", householdUnit: "~100 g paneer tikka", quantityG: 100 },
+                { name: "rice", householdUnit: "~1 bowl cooked rice", quantityG: 150 },
+              ],
+            },
+          }),
+        }),
+      );
+    });
+
+    expect(await screen.findByRole("region", { name: "Meal estimate" })).toBeInTheDocument();
   });
 });
