@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Check, Database, FlameKindling, Mic, Pencil, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import type { TodayMeal } from "@/lib/meals/today";
 
 type ChatRole = "user" | "assistant";
 
-type ChatMessage = {
+export type ChatMessage = {
   id: string;
   role: ChatRole;
   content: string;
@@ -16,7 +16,9 @@ type ChatMessage = {
 
 type MealSlot = "breakfast" | "lunch" | "dinner" | "snack" | "beverage" | "other";
 
-type MealCandidateBlock = {
+type DailyTotals = ReturnType<typeof dailyTotals>;
+
+export type MealCandidateBlock = {
   type: "meal_log_candidate";
   summary: string;
   needsConfirmation: true;
@@ -26,6 +28,7 @@ type MealCandidateBlock = {
   rationale: string;
   clarificationQuestions: string[];
   safetyFlags: { blocked: boolean; allergenFlags: string[]; conditionFlags: string[]; blockingReasons: string[] };
+  displayAssumptions?: Array<{ label: string; detail: string }>;
   confirmPayload?: { mealSlot?: MealSlot; items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | unknown;
   assistantMessageId?: string;
 };
@@ -47,6 +50,8 @@ type ChatApiResponse =
 type ChatMealLoggerProps = {
   dateLabel?: string;
   initialMeals?: TodayMeal[];
+  initialMessages?: ChatMessage[];
+  initialCandidate?: MealCandidateBlock | null;
   saveStatus?: string;
   userName?: string;
 };
@@ -88,6 +93,14 @@ function formatGrams(value: number) {
   return `${formatNumber(value)}g`;
 }
 
+function formatKcalLead(value: number) {
+  return `${formatNumber(Math.round(value))} kcal`;
+}
+
+function estimateLead(estimate: MealCandidateBlock["estimate"]) {
+  return Math.round(midpoint(estimate.kcalMin, estimate.kcalMax));
+}
+
 function greeting() {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -104,7 +117,69 @@ function getCandidateMealSlot(candidate: MealCandidateBlock | null): MealSlot {
 function getCandidateItems(candidate: MealCandidateBlock) {
   const payload = candidate.confirmPayload as { items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | undefined;
   if (payload?.items?.length) return payload.items;
-  return [{ name: candidate.summary, household_unit: "estimated serving" }];
+  return [{ name: candidate.summary, household_unit: "estimated portion" }];
+}
+
+function conciseMealSummary(summary: string) {
+  const cleaned = summary
+    .replace(/^for\s+(breakfast|lunch|dinner|snack)\s+i\s+(had|ate|drank)[:\s-]*/i, "")
+    .replace(/^i\s+(had|ate|drank)\s+/i, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.。]+$/, "")
+    .trim();
+  if (!cleaned) return "this meal";
+  return cleaned.length <= 72 ? cleaned : `${cleaned.slice(0, 69).trim()}…`;
+}
+
+function itemServingLabel(item: { household_unit?: string; quantity_g?: number }) {
+  if (item.household_unit && item.household_unit !== "estimated serving") return item.household_unit;
+  if (typeof item.quantity_g === "number") return `~${formatNumber(item.quantity_g)} g`;
+  return "estimated portion";
+}
+
+const REGULAR_THINKING_COPY = [
+  "Stirring up a thoughtful reply…",
+  "Letting the tadka bloom…",
+  "Plating a careful answer…",
+];
+
+function isDailyTotalsQuestion(text: string | null) {
+  if (!text) return false;
+  const hasTotalsIntent = /\b(total|totals|summary|dva|dri|daily value|recommended intake|macro|macros|micro|micros|nutrients?|nutrition)\b/i.test(text);
+  const hasDayIntent = /\b(today|day|daily|so far|dva|dri|recommended|intake|versus|vs\.?)\b/i.test(text);
+  return hasTotalsIntent && hasDayIntent;
+}
+
+function isPendingEstimateCorrection(text: string | null) {
+  if (!text || isDailyTotalsQuestion(text)) return false;
+  return /\b(actually|instead|make that|change|correct|correction|adjust|remove|add|swap|replace|half|double|extra|less|more|slightly|oily|oil|ghee|butter|sauce|fried|portion|serving|grams?|g|ml|sweetened|unsweetened)\b/i.test(text);
+}
+
+function isLikelyMealMessage(text: string | null) {
+  if (!text) return false;
+  if (/\b(remember|recall|what did i have|what have i eaten)\b/i.test(text)) return false;
+  if (isDailyTotalsQuestion(text)) return false;
+  return /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|plate|bowl|roti|rice|dal|paneer|chicken|fish|curd|beer|coffee|tea|kcal|protein|carbs|fat|portion|serving|grams?|g|ml)\b/i.test(text);
+}
+
+function thinkingCopy(text: string | null) {
+  if (isLikelyMealMessage(text)) return "Checking portions and prep style…";
+  const index = Math.abs(text?.length ?? 0) % REGULAR_THINKING_COPY.length;
+  return REGULAR_THINKING_COPY[index];
+}
+
+function pendingCandidateContext(candidate: MealCandidateBlock | null, selectedSlot: MealSlot, text: string) {
+  if (!candidate || !isPendingEstimateCorrection(text)) return undefined;
+  return {
+    summary: candidate.summary,
+    mealSlot: selectedSlot,
+    estimate: candidate.estimate,
+    items: getCandidateItems(candidate).map((item) => ({
+      name: item.name,
+      householdUnit: item.household_unit,
+      quantityG: item.quantity_g,
+    })),
+  };
 }
 
 function dailyTotals(meals: TodayMeal[]) {
@@ -123,35 +198,52 @@ function dailyTotals(meals: TodayMeal[]) {
   );
 }
 
-export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveStatus, userName = "there" }: ChatMealLoggerProps) {
+export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initialMessages = [], initialCandidate = null, saveStatus, userName = "there" }: ChatMealLoggerProps) {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "assistant-welcome",
-      role: "assistant",
-      content: "Tell me what you ate. I’ll estimate it, show assumptions, and only save after you confirm.",
-    },
-  ]);
-  const [candidate, setCandidate] = useState<MealCandidateBlock | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<MealSlot>("breakfast");
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages.length > 0
+      ? initialMessages
+      : [
+          {
+            id: "assistant-welcome",
+            role: "assistant",
+            content: "Tell me what you ate. I’ll estimate it, show assumptions, and only save after you confirm.",
+          },
+        ],
+  );
+  const [candidate, setCandidate] = useState<MealCandidateBlock | null>(initialCandidate);
+  const [selectedSlot, setSelectedSlot] = useState<MealSlot>(getCandidateMealSlot(initialCandidate));
   const [isSending, setIsSending] = useState(false);
+  const [pendingMessageText, setPendingMessageText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mediaNotice, setMediaNotice] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isDailySheetOpen, setIsDailySheetOpen] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   const totals = useMemo(() => dailyTotals(initialMeals), [initialMeals]);
   const canSend = input.trim().length > 0 && !isSending;
   const latestMeal = initialMeals[0];
   const mealCountLabel = initialMeals.length === 1 ? "1 meal logged today." : `${initialMeals.length} meals logged today.`;
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      transcriptEndRef.current?.scrollIntoView?.({ block: "end" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages.length, isSending, candidate?.assistantMessageId]);
+
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
     if (!text || isSending) return;
 
+    const candidateBeforeSend = candidate;
+
     setIsSending(true);
+    setPendingMessageText(text);
     setError(null);
     setCandidate(null);
     setInput("");
@@ -163,10 +255,11 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveSta
     setMessages((current) => [...current, localUserMessage]);
 
     try {
+      const pendingCandidate = pendingCandidateContext(candidateBeforeSend, selectedSlot, text);
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(pendingCandidate ? { text, pendingCandidate } : { text }),
       });
       const payload = (await response.json()) as ChatApiResponse;
 
@@ -193,6 +286,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveSta
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "Could not send message. Please try again.");
     } finally {
+      setPendingMessageText(null);
       setIsSending(false);
     }
   }
@@ -245,16 +339,15 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveSta
 
           <TodayMealsPreview meals={initialMeals} latestMeal={latestMeal} />
 
+          <StickyDailySummary totals={totals} onOpen={() => setIsDailySheetOpen(true)} />
+
           <section aria-label="Chat transcript" className="space-y-4">
             <h1 className="sr-only">Home</h1>
             {messages.map((message) => (
               <ChatBubble key={message.id} message={message} />
             ))}
-            {isSending ? (
-              <div role="status" className="mr-auto max-w-[86%] rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-card)]">
-                Estimating your meal…
-              </div>
-            ) : null}
+            {isSending ? <ThinkingBubble text={thinkingCopy(pendingMessageText)} /> : null}
+            <div ref={transcriptEndRef} aria-hidden="true" />
           </section>
 
           {candidate ? (
@@ -268,6 +361,8 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveSta
 
           {error ? <p role="alert" className="rounded-2xl bg-[var(--error-surface)] p-4 text-sm font-medium text-[var(--error-foreground)]">{error}</p> : null}
         </section>
+
+        <DailyNutritionSheet open={isDailySheetOpen} onClose={() => setIsDailySheetOpen(false)} totals={totals} meals={initialMeals} dateLabel={dateLabel} />
 
         <aside className="hidden space-y-4 lg:block" aria-label="Home details">
           <div className="rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-card)]">
@@ -329,6 +424,11 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], saveSta
               disabled={isSending}
               rows={2}
               onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }}
               className="max-h-32 min-h-[3.5rem] w-full resize-none border-0 bg-transparent text-lg leading-snug text-[var(--foreground)] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
@@ -400,6 +500,142 @@ function MacroStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function StickyDailySummary({ totals, onOpen }: { totals: DailyTotals; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Open daily nutrition details"
+      onClick={onOpen}
+      className="sticky top-3 z-10 w-full rounded-[1.85rem] border border-[var(--border-soft)] bg-[var(--surface-canvas)]/95 p-3 text-left shadow-[var(--shadow-card)] backdrop-blur transition hover:bg-[var(--surface-brand-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring supports-[backdrop-filter]:bg-[var(--surface-canvas)]/90 lg:hidden"
+    >
+      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Today so far · tap for details</span>
+      <dl className="grid grid-cols-5 gap-2 text-center">
+        <CompactMacroStat label="Kcal" value={formatKcalLead(totals.kcalLead)} emphasis />
+        <CompactMacroStat label="Carbs" value={formatGrams(totals.carbs)} />
+        <CompactMacroStat label="Protein" value={formatGrams(totals.protein)} />
+        <CompactMacroStat label="Fat" value={formatGrams(totals.fat)} />
+        <CompactMacroStat label="Fibre" value={formatGrams(totals.fiber)} />
+      </dl>
+    </button>
+  );
+}
+
+function CompactMacroStat({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
+  return (
+    <div className="min-w-0 rounded-[1.15rem] bg-[var(--surface-brand-soft)] px-2 py-2.5">
+      <dt className="truncate text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
+      <dd className={cn("mt-1 truncate font-semibold leading-none text-[var(--foreground)]", emphasis ? "text-[0.95rem]" : "text-base")}>{value}</dd>
+    </div>
+  );
+}
+
+const DAILY_VALUE_TARGETS = {
+  kcal: 2000,
+  carbs: 275,
+  protein: 50,
+  fat: 78,
+  fiber: 28,
+};
+
+function percentOfDailyValue(value: number, target: number) {
+  if (!target) return "—";
+  return `${formatNumber(Math.round((value / target) * 100))}%`;
+}
+
+function dailyValueRows(totals: DailyTotals) {
+  return [
+    { label: "Calories", current: formatKcalLead(totals.kcalLead), target: "2,000 kcal", percent: percentOfDailyValue(totals.kcalLead, DAILY_VALUE_TARGETS.kcal) },
+    { label: "Carbs", current: formatGrams(totals.carbs), target: "275g", percent: percentOfDailyValue(totals.carbs, DAILY_VALUE_TARGETS.carbs) },
+    { label: "Protein", current: formatGrams(totals.protein), target: "50g", percent: percentOfDailyValue(totals.protein, DAILY_VALUE_TARGETS.protein) },
+    { label: "Fat", current: formatGrams(totals.fat), target: "78g", percent: percentOfDailyValue(totals.fat, DAILY_VALUE_TARGETS.fat) },
+    { label: "Fibre", current: formatGrams(totals.fiber), target: "28g", percent: percentOfDailyValue(totals.fiber, DAILY_VALUE_TARGETS.fiber) },
+  ];
+}
+
+function DailyNutritionSheet({ open, onClose, totals, meals, dateLabel }: { open: boolean; onClose: () => void; totals: DailyTotals; meals: TodayMeal[]; dateLabel: string }) {
+  if (!open) return null;
+
+  const rows = dailyValueRows(totals);
+
+  return (
+    <div className="fixed inset-0 z-40" role="presentation">
+      <button type="button" aria-label="Close daily nutrition details" className="absolute inset-0 bg-black/20" onClick={onClose} />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Daily nutrition details"
+        className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-50 max-h-[82svh] overflow-y-auto rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-canvas)] p-5 shadow-[var(--shadow-lifted)] md:inset-auto md:left-1/2 md:top-1/2 md:w-[min(42rem,calc(100vw-3rem))] md:-translate-x-1/2 md:-translate-y-1/2"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{dateLabel}</p>
+            <h2 className="mt-1 font-display text-3xl leading-tight tracking-tight">Daily nutrition details</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Confirmed meals only. Micronutrients stay blank until Nourish captures reliable source data.</p>
+          </div>
+          <button type="button" aria-label="Close details" onClick={onClose} className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--surface-raised)] text-[var(--foreground)] shadow-[var(--shadow-soft)] transition hover:bg-[var(--surface-brand-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X aria-hidden="true" className="size-5" />
+          </button>
+        </div>
+
+        <section className="mt-6" aria-labelledby="daily-dishes-heading">
+          <h3 id="daily-dishes-heading" className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dishes eaten</h3>
+          {meals.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {meals.map((meal) => (
+                <li key={meal.id} className="rounded-[1.25rem] bg-[var(--surface-raised)] px-4 py-3 text-sm leading-relaxed shadow-[var(--shadow-soft)]">
+                  {meal.source_text ?? `${meal.meal_slot ?? "Meal"} · ${formatRange(meal.kcal_low, meal.kcal_high, "kcal")}`}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 rounded-[1.25rem] bg-[var(--surface-raised)] px-4 py-3 text-sm text-muted-foreground">No confirmed meals yet today.</p>
+          )}
+        </section>
+
+        <section className="mt-6" aria-labelledby="daily-value-heading">
+          <h3 id="daily-value-heading" className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">Macros vs daily value</h3>
+          <div className="mt-3 overflow-hidden rounded-[1.5rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] shadow-[var(--shadow-soft)]">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[var(--surface-brand-soft)] text-xs uppercase tracking-[0.12em] text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-semibold">Nutrient</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Today</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">DV</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.label} className="border-t border-[var(--border-soft)]">
+                    <th scope="row" className="px-4 py-3 font-medium">{row.label}</th>
+                    <td className="px-4 py-3">{row.current}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.target}</td>
+                    <td className="px-4 py-3 font-semibold">{row.percent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[1.5rem] bg-[var(--surface-brand-soft)] p-4 text-sm leading-relaxed" aria-labelledby="micros-heading">
+          <h3 id="micros-heading" className="font-semibold">Micronutrients</h3>
+          <p className="mt-2 text-muted-foreground">Not enough reliable micronutrient data is stored yet for sodium, calcium, iron, vitamins, or potassium. Nourish will show these here once each confirmed estimate includes source-backed micronutrients.</p>
+        </section>
+      </section>
+    </div>
+  );
+}
+
+function ThinkingBubble({ text }: { text: string }) {
+  return (
+    <div role="status" className="mr-auto max-w-[86%] rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-card)]">
+      <span className="sr-only">Nourish is replying.</span>
+      {text}
+    </div>
+  );
+}
+
 function TodayMealsPreview({ meals, latestMeal }: { meals: TodayMeal[]; latestMeal?: TodayMeal }) {
   return (
     <section aria-label="Today's meals" className="space-y-4">
@@ -453,6 +689,7 @@ function MealEstimateCard({
 }) {
   const items = getCandidateItems(candidate);
   const canSave = !candidate.safetyFlags.blocked;
+  const leadKcal = estimateLead(candidate.estimate);
 
   return (
     <section
@@ -463,9 +700,10 @@ function MealEstimateCard({
         <div>
           <div className="flex items-center gap-3">
             <FlameKindling aria-hidden="true" className="size-7 text-[var(--brand)]" />
-            <h2 className="font-display text-4xl leading-none tracking-tight">{formatRange(candidate.estimate.kcalMin, candidate.estimate.kcalMax, "kcal")}</h2>
+            <h2 className="font-display text-4xl leading-none tracking-tight">{formatNumber(leadKcal)} kcal</h2>
           </div>
-          <p className="mt-4 max-w-md text-2xl leading-snug text-muted-foreground">Looks like a meal with {candidate.summary.replace(/^I\s+(had|ate)\s+/i, "").replace(/\.$/, "")}.</p>
+          <p className="mt-2 text-sm font-medium text-muted-foreground">Likely range {formatRange(candidate.estimate.kcalMin, candidate.estimate.kcalMax, "kcal")}</p>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">Looks like {conciseMealSummary(candidate.summary)}.</p>
         </div>
         <span className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--surface-brand-soft)] px-4 py-2 text-sm font-semibold text-[var(--foreground)]">
           <Database aria-hidden="true" className="size-4" />
@@ -485,14 +723,25 @@ function MealEstimateCard({
         {items.map((item, index) => (
           <div key={`${item.name ?? "item"}-${index}`} className="flex items-start justify-between gap-4 text-lg">
             <span>{item.name ?? candidate.summary}</span>
-            <span className="text-right text-muted-foreground">{item.household_unit ?? (item.quantity_g ? `${formatNumber(item.quantity_g)}g estimated` : "estimated serving")}</span>
+            <span className="max-w-[52%] text-right text-base leading-snug text-muted-foreground">{itemServingLabel(item)}</span>
           </div>
         ))}
       </div>
 
-      <details className="mt-7 rounded-full bg-[var(--surface-raised)] px-5 py-3 text-lg text-[var(--foreground)] shadow-[var(--shadow-soft)]">
-        <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Assumptions ({candidate.rationale ? 1 : 0})</summary>
-        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{candidate.rationale || "Estimated from typical home-style portions."}</p>
+      <details className="mt-7 rounded-[1.75rem] bg-[var(--surface-raised)] px-5 py-4 text-base text-[var(--foreground)] shadow-[var(--shadow-soft)]">
+        <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Assumptions ({candidate.displayAssumptions?.length ?? (candidate.rationale ? 1 : 0)})</summary>
+        {candidate.displayAssumptions?.length ? (
+          <dl className="mt-4 space-y-3 text-sm leading-relaxed">
+            {candidate.displayAssumptions.map((assumption) => (
+              <div key={`${assumption.label}-${assumption.detail}`}>
+                <dt className="font-semibold text-[var(--foreground)]">{assumption.label}</dt>
+                <dd className="mt-1 text-muted-foreground">{assumption.detail}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{candidate.rationale || "Estimated from typical home-style portions."}</p>
+        )}
       </details>
 
       {candidate.clarificationQuestions.length > 0 ? (

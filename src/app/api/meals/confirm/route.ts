@@ -9,6 +9,10 @@ const payloadSchema = z.object({
   kcalLow: z.number().nonnegative(),
   kcalHigh: z.number().nonnegative(),
   kcalLead: z.number().nonnegative(),
+  protein: z.number().nonnegative().optional(),
+  carbs: z.number().nonnegative().optional(),
+  fat: z.number().nonnegative().optional(),
+  fiber: z.number().nonnegative().optional(),
   confidence: z.number().min(0).max(1),
 });
 

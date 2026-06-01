@@ -1,8 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { handleMessage } from "./orchestrator";
 
+const createOpenAITextResponseMock = vi.fn();
+
+vi.mock("@/lib/openai/client", () => ({
+  createOpenAITextResponse: (...args: unknown[]) => createOpenAITextResponseMock(...args),
+}));
+
+function mockCoachReply(text = "Got it — I can help with that.") {
+  createOpenAITextResponseMock.mockResolvedValue({
+    text: JSON.stringify({ assistantText: text, inferredFacts: [], userVisibleMemoryNotes: [] }),
+    usage: { inputTokens: 50, outputTokens: 20 },
+  });
+}
+
 describe("handleMessage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    delete process.env.NOURISH_LLM_PROVIDER;
+    mockCoachReply("Got it — I can log this meal.");
+  });
+
   it("routes meal logging candidate messages with estimate + confidence", async () => {
     const response = await handleMessage("user-123", {
       text: "I had paneer and roti for dinner",
@@ -10,6 +30,7 @@ describe("handleMessage", () => {
     });
 
     expect(response.intent).toBe("meal_log_candidate");
+    expect(response.metadata?.provider).toBe("openai");
     const candidate = response.blocks[0];
     expect(candidate).toMatchObject({
       type: "meal_log_candidate",
@@ -26,10 +47,52 @@ describe("handleMessage", () => {
         confidence: 0.9,
       });
       expect(candidate.confirmPayload?.items).toEqual([
-        { name: "roti", quantity_g: 100, household_unit: "estimated serving" },
-        { name: "paneer", quantity_g: 100, household_unit: "estimated serving" },
+        { name: "roti", quantity_g: 35, household_unit: "1 medium roti (~35 g)" },
+        { name: "paneer", quantity_g: 100, household_unit: "~100 g paneer portion" },
       ]);
       expect(candidate.safetyFlags.allergenFlags).toContain("allergen:dairy");
+    }
+  });
+
+
+  it("keeps the screenshot breakfast estimate and confirmation card on the same structured items", async () => {
+    mockCoachReply("Got it—this looks like a high-protein breakfast bowl.");
+    const text =
+      "Breakfast the whole truth unflavoured whey isolate protien 35g True Elements rolled oats 60g. 1 cup is 115g Skyr yogurt 50g Chia and flax 1 tsp each 2 dates / 1 tsp honey 100ml almond milk from So Good 100gm dragonfruit and 60gm mango And 30gm radish kimchi";
+
+    const response = await handleMessage("user-123", { text });
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      const itemNames = candidate.confirmPayload?.items.map((item) => item.name) ?? [];
+      expect(candidate.summary).toContain("whey isolate");
+      expect(itemNames).not.toContain("roti");
+      expect(itemNames).toEqual(
+        expect.arrayContaining([
+          "whey isolate",
+          "rolled oats",
+          "skyr yogurt",
+          "chia seeds",
+          "flax seeds",
+          "dates",
+          "honey",
+          "almond milk",
+          "dragon fruit",
+          "mango",
+          "radish kimchi",
+        ]),
+      );
+      expect(candidate.estimate.kcalMin).toBeGreaterThanOrEqual(500);
+      expect(candidate.estimate.kcalMax).toBeLessThanOrEqual(760);
+      expect(candidate.confirmPayload).toMatchObject({
+        kcalLow: candidate.estimate.kcalMin,
+        kcalHigh: candidate.estimate.kcalMax,
+        protein: candidate.estimate.protein,
+        carbs: candidate.estimate.carbs,
+        fat: candidate.estimate.fat,
+        fiber: candidate.estimate.fiber,
+      });
     }
   });
 
@@ -50,7 +113,7 @@ describe("handleMessage", () => {
 
     expect(response.blocks[1]).toEqual({
       type: "text",
-      text: expect.stringContaining("safety conflict"),
+      text: expect.stringContaining("Got it"),
     });
   });
 
@@ -80,18 +143,70 @@ describe("handleMessage", () => {
     }
   });
 
-  it("routes non-meal messages to fallback guidance", async () => {
+  it("routes non-meal messages to LLM coach responses instead of template fallback guidance", async () => {
+    mockCoachReply("Small win: take a 10-minute walk after dinner and log your next meal when ready.");
     const response = await handleMessage("user-123", {
       text: "Can you motivate me today?",
     });
 
-    expect(response.intent).toBe("general_fallback_guidance");
+    expect(response.intent).toBe("coach_response");
+    expect(response.metadata?.provider).toBe("openai");
     expect(response.blocks).toEqual([
       {
         type: "text",
-        text: expect.stringContaining("meal logging"),
+        text: expect.stringContaining("10-minute walk"),
       },
     ]);
+  });
+
+
+  it("does not turn daily macro or micro total questions into meal candidates", async () => {
+    mockCoachReply("Here is today&apos;s macro summary from confirmed meals.");
+
+    const response = await handleMessage("user-123", {
+      text: "What are my totals on macros and micros for the day vs DVA?",
+      pendingCandidate: {
+        summary: "chicken krapow, rice, egg",
+        mealSlot: "dinner",
+        estimate: { kcalMin: 430, kcalMax: 582, protein: 37, carbs: 42, fat: 19, fiber: 1 },
+        items: [
+          { name: "chicken", quantityG: 150 },
+          { name: "rice", quantityG: 100 },
+          { name: "egg", quantityG: 50 },
+        ],
+      },
+    });
+
+    expect(response.intent).toBe("coach_response");
+    expect(response.blocks.some((block) => block.type === "meal_log_candidate")).toBe(false);
+  });
+
+  it("keeps oily corrections directionally higher than the previous pending estimate", async () => {
+    mockCoachReply("Noted — I nudged the estimate upward for oil.");
+
+    const response = await handleMessage("user-123", {
+      text: "slightly oily",
+      pendingCandidate: {
+        summary: "chicken krapow, rice, egg",
+        mealSlot: "dinner",
+        estimate: { kcalMin: 430, kcalMax: 582, protein: 37, carbs: 42, fat: 19, fiber: 1 },
+        items: [
+          { name: "chicken", quantityG: 150 },
+          { name: "rice", quantityG: 100 },
+          { name: "egg", quantityG: 50 },
+        ],
+      },
+    });
+
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.estimate.kcalMin).toBeGreaterThan(430);
+      expect(candidate.estimate.kcalMax).toBeGreaterThan(582);
+      expect(candidate.estimate.fat).toBeGreaterThan(19);
+      expect(candidate.estimate.protein).toBeGreaterThanOrEqual(37);
+      expect(candidate.confirmPayload?.kcalLow).toBe(candidate.estimate.kcalMin);
+    }
   });
 
   it("throws for malformed payload", async () => {

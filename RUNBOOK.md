@@ -158,15 +158,17 @@ Use for broken UI/API behavior when the previous Vercel deployment is known-good
 
 ### Environment rollback checklist
 
-Use when a Vercel env variable, GitHub Actions variable/secret, or Supabase Edge Function secret is suspected.
+Use when a Vercel env variable, GitHub Actions variable/secret, Supabase Edge Function secret, or LLM provider key is suspected.
 
-1. Identify changed key names and affected scopes: Preview, Production, GitHub Actions, or Supabase Edge Function secrets.
-2. Never paste secret values into PRs, chats, screenshots, or logs; refer to key names only.
-3. Restore the prior known-good value in the owning system.
-4. Trigger **Redeploy** for the affected Vercel deployment; env edits do not affect already-built deployments by themselves.
-5. Re-run the smallest smoke path that exercises that env key.
-6. If auth redirects are involved, confirm `NEXT_PUBLIC_APP_URL` is Production-only and Preview uses Vercel-injected branch/deploy URLs.
-7. Record the decision timestamp, changed key names, redeploy URL/SHA, smoke result, and owner.
+1. Identify changed key names and affected scopes: Preview, Production, GitHub Actions, Vercel, Supabase Edge Function secrets, or provider dashboards.
+2. Never paste secret values into PRs, chats, screenshots, logs, docs, or committed env files; refer to key names only.
+3. If a real OpenAI/Anthropic/API key was pasted into any chat, PR, issue, screenshot, log, or tracked file, treat it as compromised immediately even if it was not committed.
+4. Revoke/delete the exposed key in the provider dashboard, create a replacement key, update encrypted Vercel/Supabase/GitHub secrets, and redeploy affected environments.
+5. Restore the prior known-good value in the owning system when rollback is safer than rotation.
+6. Trigger **Redeploy** for the affected Vercel deployment; env edits do not affect already-built deployments by themselves.
+7. Re-run the smallest smoke path that exercises that env key.
+8. If auth redirects are involved, confirm `NEXT_PUBLIC_APP_URL` is Production-only and Preview uses Vercel-injected branch/deploy URLs.
+9. Record the decision timestamp, changed key names, redeploy URL/SHA, smoke result, and owner.
 
 ### Database forward-fix checklist
 
@@ -275,7 +277,10 @@ Conditional public browser/runtime values — set in Preview and Production when
 
 Server-only/runtime secrets — set in both **Preview** and **Production** as encrypted Vercel env vars:
 - `SUPABASE_SERVICE_ROLE_KEY`: Server/admin Supabase key. Never prefix with `NEXT_PUBLIC_`; never expose in client bundles, logs, PR bodies, screenshots, or chat.
-- `ANTHROPIC_API_KEY`: Claude API key for agent/parser/orchestrator paths.
+- `NOURISH_LLM_PROVIDER`: Health-coach provider selector. Use `openai` for the MVP default; use `anthropic` only when intentionally testing Claude. In Vercel, enter **Name** = `NOURISH_LLM_PROVIDER` and **Value** = `openai`; do not put `NOURISH_LLM_PROVIDER=openai` in the value field.
+- `OPENAI_API_KEY`: OpenAI API key for the default health-coach provider. Required when `NOURISH_LLM_PROVIDER=openai`. In Vercel, enter **Name** = `OPENAI_API_KEY` and **Value** = the secret key only; do not include `OPENAI_API_KEY=` in the value field.
+- `OPENAI_HEALTH_COACH_MODEL`: Optional OpenAI health-coach model override; defaults to `gpt-5.2`. In Vercel, enter **Name** = `OPENAI_HEALTH_COACH_MODEL` and **Value** = the API model id only, for example `gpt-5.2`.
+- `ANTHROPIC_API_KEY`: Claude API key for Anthropic-selected agent/parser/orchestrator paths. Required when `NOURISH_LLM_PROVIDER=anthropic`.
 - `ELEVENLABS_API_KEY`: ElevenLabs Scribe key for voice transcription when voice is in-scope.
 - `VAPID_PRIVATE_KEY`: Web Push private key. Must pair with the public VAPID key.
 - `VAPID_SUBJECT`: Contact subject for web-push, for example `mailto:<support-email>` or app URL.
@@ -295,10 +300,28 @@ Vercel-provided values — do not set manually unless debugging a platform issue
 Supabase Edge Function secrets — configure in Supabase, not Vercel:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `NOURISH_LLM_PROVIDER`
+- `OPENAI_API_KEY`
+- `OPENAI_HEALTH_COACH_MODEL`
 - `ANTHROPIC_API_KEY`
 - `VAPID_PUBLIC_KEY`
 - `VAPID_PRIVATE_KEY`
 - `VAPID_SUBJECT`
+
+### Health coach LLM unavailable triage
+
+Use when `/api/chat` returns `503 LLM_UNAVAILABLE`. The API response includes safe diagnostics under `error.details` with `provider`, `model`, and `reason`; it never includes API keys.
+
+Before changing secrets, sign in to the deployed app and open `/api/health/llm` in the same browser. Expected: a JSON response showing `provider`, `model`, `apiKeyConfigured`, and `checkRequested:false`. Then open `/api/health/llm?check=1` to run a tiny live provider smoke test that does not save chat messages. A `404` on this URL means the deployment does not include the diagnostics route yet; redeploy the commit that added `src/app/api/health/llm/route.ts`.
+
+Common Vercel setup mistake: each env var has a separate **Name** and **Value** field. If the app reports `Unsupported NOURISH_LLM_PROVIDER: nourish_llm_provider=openai`, the value was pasted as `NOURISH_LLM_PROVIDER=openai` instead of just `openai`. Current code defensively strips a matching `NAME=` prefix, but the Vercel value should still be corrected for clarity.
+
+1. If `reason` is `model_unavailable`, set `OPENAI_HEALTH_COACH_MODEL` to an OpenAI model enabled for the project. Avoid display names such as `GPT 5.5`; use an API model id such as `gpt-5.2` or another enabled model id from the OpenAI dashboard. Redeploy after changing the value.
+2. If `reason` is `auth_failed`, rotate `OPENAI_API_KEY`, update the encrypted Vercel env var, and redeploy.
+3. If `reason` is `missing_api_key`, add `OPENAI_API_KEY` in the selected Vercel environment scopes and redeploy.
+4. If `reason` is `rate_limited`, check provider billing/usage limits and retry after limits reset.
+5. If `reason` is `invalid_response`, the provider replied but did not satisfy the health-coach JSON contract. The OpenAI path requests Structured Outputs via `text.format`; confirm the deployed commit includes that change, then capture the request id plus Vercel function log line for debugging.
+6. If `/api/health/llm` returns `apiKeyConfigured:false`, the deployment did not receive the matching encrypted provider key for its environment scope. Add the key to Preview/Production as needed and redeploy.
 
 ### Preview smoke checks
 
