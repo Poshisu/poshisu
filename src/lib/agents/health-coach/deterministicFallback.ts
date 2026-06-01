@@ -39,6 +39,49 @@ function buildPreparationAssumptions(items: string[]) {
 
 const mealLogPattern = /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|calories|protein|carbs|fat|kcal)\b/i;
 
+function isDailyTotalsQuestion(text: string) {
+  const hasTotalsIntent = /\b(total|totals|summary|dva|dri|daily value|recommended intake|macro|macros|micro|micros|nutrients?|nutrition)\b/i.test(text);
+  const hasDayIntent = /\b(today|day|daily|so far|dva|dri|recommended|intake|versus|vs\.?)\b/i.test(text);
+  return hasTotalsIntent && hasDayIntent;
+}
+
+function isOilOrSauceCorrection(text: string) {
+  return /\b(slightly oily|oily|oil|extra oil|more oil|ghee|butter|sauce|fried|restaurant-style|restaurant style)\b/i.test(text);
+}
+
+function pendingCandidateMealText(message: CoachMessage) {
+  const itemText = message.pendingCandidate?.items
+    ?.map((item) => {
+      const quantity = typeof item.quantityG === "number" && item.quantityG > 0 ? `${item.quantityG}g ` : "";
+      return `${quantity}${item.name ?? ""}`.trim();
+    })
+    .filter(Boolean)
+    .join(", ");
+
+  return itemText || message.pendingCandidate?.summary || "";
+}
+
+function applyCorrectionAdjustments(nutrition: Awaited<ReturnType<typeof runPipeline>>, message: CoachMessage) {
+  if (!message.pendingCandidate || !isOilOrSauceCorrection(message.text)) return nutrition;
+
+  const previous = message.pendingCandidate.estimate;
+  const kcalMin = nutrition.kcalMin + 40;
+  const kcalMax = nutrition.kcalMax + 90;
+  const fat = nutrition.fat + 5;
+
+  return {
+    ...nutrition,
+    kcalMin: previous ? Math.max(kcalMin, previous.kcalMin + 30) : kcalMin,
+    kcalMax: previous ? Math.max(kcalMax, previous.kcalMax + 60) : kcalMax,
+    protein: previous ? Math.max(nutrition.protein, previous.protein) : nutrition.protein,
+    carbs: previous ? Math.max(nutrition.carbs, previous.carbs) : nutrition.carbs,
+    fat: previous ? Math.max(fat, previous.fat + 4) : fat,
+    fiber: previous ? Math.max(nutrition.fiber, previous.fiber) : nutrition.fiber,
+    confidence: nutrition.confidence === "low" ? "medium" : nutrition.confidence,
+    rationale: `${nutrition.rationale} Adjusted upward for oil-rich or sauce-heavy preparation based on the user's correction.`,
+  };
+}
+
 function summarizeMealCandidate(text: string): string {
   const normalized = text.replace(/\s+/g, " ").trim();
   return normalized.length <= 160 ? normalized : `${normalized.slice(0, 157)}...`;
@@ -100,13 +143,38 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
   }
 
   const text = message.text.trim();
+
+  if (isDailyTotalsQuestion(text)) {
+    return {
+      intent: "general_fallback_guidance",
+      blocks: [
+        {
+          type: "text",
+          text: "I can summarize today's confirmed meals and compare macros to daily values. I won't create a meal card for this question.",
+        },
+      ],
+      metadata: {
+        provider: "baseline",
+        model: "deterministic-coach-fallback",
+        promptVersion: "ai-chat-01-deterministic-v1",
+        usedDeterministicFallback: false,
+        fallbackReason: "baseline_daily_totals_intent",
+        contextLoaded: false,
+        memoryWriteStatus: "skipped",
+        inferredFacts: [],
+        safety: { blocked: false, reasons: [] },
+      },
+    };
+  }
+
   const isPendingCandidateCorrection = Boolean(message.pendingCandidate);
-  const effectiveMealText = isPendingCandidateCorrection ? `${message.pendingCandidate?.summary ?? ""}. ${text}`.trim() : text;
-  const sourceText = isPendingCandidateCorrection ? `${message.pendingCandidate?.summary ?? "Previous estimate"}; update: ${text}` : text;
+  const pendingMealText = pendingCandidateMealText(message);
+  const effectiveMealText = isPendingCandidateCorrection ? `${pendingMealText}. ${text}`.trim() : text;
+  const sourceText = isPendingCandidateCorrection ? `${pendingMealText || "Previous estimate"}; update: ${text}` : text;
 
   if (mealLogPattern.test(text) || isPendingCandidateCorrection) {
     const parsed = parseItemsFromText(effectiveMealText);
-    const nutrition = await runPipeline(parsed.items);
+    const nutrition = applyCorrectionAdjustments(await runPipeline(parsed.items), message);
     const parsedFoodNames = parsed.items.map((item) => item.name);
     const nutritionItemNames = nutrition.itemDetails.map((item) => item.name);
     const safetyFoods = Array.from(new Set([...parsedFoodNames, ...nutritionItemNames, effectiveMealText]));

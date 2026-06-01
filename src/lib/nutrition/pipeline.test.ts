@@ -39,4 +39,13 @@ describe("nutrition pipeline", () => {
     expect(result.protein).toBeGreaterThanOrEqual(40);
     expect(result.items).not.toContain("roti");
   });
+
+  it("recognizes a delayed quantity in chicken krapow style text", async () => {
+    const parsed = parseItemsFromText("Thai chicken krapow 150g, a fried egg and 100g white rice for dinner");
+    const chicken = parsed.items.find((item) => item.key === "chicken");
+
+    expect(chicken?.quantityG).toBe(150);
+    expect(parsed.items.map((item) => item.key)).toEqual(expect.arrayContaining(["chicken", "egg", "rice"]));
+  });
+
 });

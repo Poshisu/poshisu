@@ -758,3 +758,25 @@ The current implementation is still a typed estimator, not a complete nutrition 
 
 ### Migration path
 Add a `meal_estimates` table with status, local_date, timezone, source modality, and model metadata. Then route text, voice transcripts, and photo analysis into that table before confirmation.
+
+## 2026-05-31 — Lead meal cards with best estimate and keep totals intent out of confirmation flow
+
+### Context
+User testing showed three trust issues in the chat logging loop: broad calorie ranges looked underconfident when shown as the headline, an oily correction could accidentally lower the pending meal card because the correction was reparsed from weak summary text, and daily macro/micro total questions could inherit a pending meal candidate and open an unrelated confirmation card.
+
+### Options considered
+1. Keep range-first cards and rely on assistant prose to explain uncertainty.
+2. Let the LLM fully recompute corrected nutrition values.
+3. Keep canonical structured nutrition in code, show a best-guess midpoint as the card headline, guard correction directionality, and route daily totals questions away from meal confirmation.
+
+### Decision
+Use option 3. The UI now shows a best-guess kcal headline with the plausible range as supporting copy. Pending-candidate corrections include the prior structured estimate and item list, and oily/sauce-heavy corrections must keep or increase calories/fat. Daily totals/DV questions are treated as coaching/summary intent, not a meal estimate intent.
+
+### Why
+This preserves user trust without pretending precision. It also prevents a disconnected second parser, stale card, or accidental pending-candidate carryover from changing meal data in the wrong direction.
+
+### Tradeoffs
+The DV sheet currently covers calories and available macros/fibre only; micronutrients are explicitly marked unavailable until source-backed micronutrient fields are captured. The correction guard is directional and conservative, not a full recipe database.
+
+### Migration path
+Move pending estimates into a persisted `meal_estimates` table with status and revision history. Add source-backed micronutrients to confirmed meal rows and then promote the daily details sheet from macro-only DV to full macro/micro DRI coverage.

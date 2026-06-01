@@ -33,7 +33,8 @@ flowchart TD
 - `/chat/confirm` reloads the candidate metadata server-side for the authenticated user.
 - Confirmed meals persist only after explicit user confirmation.
 - Unconfirmed candidates do not affect Home/Today totals.
-- Corrections should update the pending candidate before confirmation.
+- Corrections should update the pending candidate before confirmation. Oily, fried, sauce-heavy, ghee, butter, or restaurant-style corrections should not lower calories/fat unless the user also reduces portion size.
+- Daily macro/micro total questions are summary intent, not meal-estimate intent, and must not create or resurrect a confirmation card.
 
 ## Daily local-date aggregation
 
@@ -81,10 +82,11 @@ Provider calls belong in the repo-approved AI client/provider layer (`src/lib/op
 
 1. Log the regression breakfast text from `src/lib/nutrition/pipeline.test.ts`.
 2. Confirm the assistant and card show the same items and no `roti`.
-3. Confirm the kcal/macro values in the card match the values that save.
+3. Confirm the kcal/macro values in the card match the values that save; the card headline should show a best-guess kcal with the range underneath.
 4. Press `Enter` in the desktop composer and verify it sends.
 5. Press `Shift+Enter` and verify it does not send.
-6. Correct a pending estimate and verify the card is refreshed before saving.
-7. Confirm a meal and verify Home totals update only after confirmation.
-8. Open the next local day and verify older meals remain in Trends/history rather than today's total once local-date storage is implemented.
-9. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.
+6. Correct a pending estimate with “slightly oily” and verify the card is refreshed with calories/fat held or increased before saving.
+7. Ask “What are my totals on macros and micros for the day vs DVA?” and verify no meal card opens; use the sticky daily totals pill to open the DV/details sheet.
+8. Confirm a meal and verify Home totals update only after confirmation.
+9. Open the next local day and verify older meals remain in Trends/history rather than today's total once local-date storage is implemented.
+10. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.

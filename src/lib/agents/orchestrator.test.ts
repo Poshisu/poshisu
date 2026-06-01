@@ -159,6 +159,56 @@ describe("handleMessage", () => {
     ]);
   });
 
+
+  it("does not turn daily macro or micro total questions into meal candidates", async () => {
+    mockCoachReply("Here is today&apos;s macro summary from confirmed meals.");
+
+    const response = await handleMessage("user-123", {
+      text: "What are my totals on macros and micros for the day vs DVA?",
+      pendingCandidate: {
+        summary: "chicken krapow, rice, egg",
+        mealSlot: "dinner",
+        estimate: { kcalMin: 430, kcalMax: 582, protein: 37, carbs: 42, fat: 19, fiber: 1 },
+        items: [
+          { name: "chicken", quantityG: 150 },
+          { name: "rice", quantityG: 100 },
+          { name: "egg", quantityG: 50 },
+        ],
+      },
+    });
+
+    expect(response.intent).toBe("coach_response");
+    expect(response.blocks.some((block) => block.type === "meal_log_candidate")).toBe(false);
+  });
+
+  it("keeps oily corrections directionally higher than the previous pending estimate", async () => {
+    mockCoachReply("Noted — I nudged the estimate upward for oil.");
+
+    const response = await handleMessage("user-123", {
+      text: "slightly oily",
+      pendingCandidate: {
+        summary: "chicken krapow, rice, egg",
+        mealSlot: "dinner",
+        estimate: { kcalMin: 430, kcalMax: 582, protein: 37, carbs: 42, fat: 19, fiber: 1 },
+        items: [
+          { name: "chicken", quantityG: 150 },
+          { name: "rice", quantityG: 100 },
+          { name: "egg", quantityG: 50 },
+        ],
+      },
+    });
+
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.estimate.kcalMin).toBeGreaterThan(430);
+      expect(candidate.estimate.kcalMax).toBeGreaterThan(582);
+      expect(candidate.estimate.fat).toBeGreaterThan(19);
+      expect(candidate.estimate.protein).toBeGreaterThanOrEqual(37);
+      expect(candidate.confirmPayload?.kcalLow).toBe(candidate.estimate.kcalMin);
+    }
+  });
+
   it("throws for malformed payload", async () => {
     await expect(handleMessage("user-123", { foo: "bar" })).rejects.toThrow(
       "Invalid message payload",

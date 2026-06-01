@@ -26,6 +26,16 @@ const pendingCandidateSchema = z
   .object({
     summary: z.string().trim().min(1).max(500),
     mealSlot: z.enum(["breakfast", "lunch", "dinner", "snack", "beverage", "other"]).optional(),
+    estimate: z
+      .object({
+        kcalMin: z.number().nonnegative(),
+        kcalMax: z.number().nonnegative(),
+        protein: z.number().nonnegative(),
+        carbs: z.number().nonnegative(),
+        fat: z.number().nonnegative(),
+        fiber: z.number().nonnegative(),
+      })
+      .optional(),
     items: z
       .array(
         z.object({

@@ -94,8 +94,8 @@ describe("ChatMealLogger", () => {
     expect(screen.getByText("1 meal logged today.")).toBeInTheDocument();
     expect(screen.getAllByText("180–240")[0]).toBeInTheDocument();
     expect(screen.getAllByText("25g")[0]).toBeInTheDocument();
-    const stickySummary = screen.getByRole("region", { name: "Sticky daily nutrition summary" });
-    expect(within(stickySummary).getByText("180–240")).toBeInTheDocument();
+    const stickySummary = screen.getByRole("button", { name: "Open daily nutrition details" });
+    expect(within(stickySummary).getByText("210 kcal")).toBeInTheDocument();
     expect(within(stickySummary).getByText("11g")).toBeInTheDocument();
     expect(screen.getByText("Today's meals (1)")).toBeInTheDocument();
     expect(screen.getByText("Ate 1 grilled chicken breast with broccoli and beans")).toBeInTheDocument();
@@ -123,7 +123,8 @@ describe("ChatMealLogger", () => {
 
     expect(await screen.findByText("Got it. Looks like a meal with idli and sambar.")).toBeInTheDocument();
     const estimate = screen.getByRole("region", { name: "Meal estimate" });
-    expect(within(estimate).getByRole("heading", { name: "185–251 kcal" })).toBeInTheDocument();
+    expect(within(estimate).getByRole("heading", { name: "218 kcal" })).toBeInTheDocument();
+    expect(within(estimate).getByText("Likely range 185–251 kcal")).toBeInTheDocument();
     expect(within(estimate).getByText("Based on your logs")).toBeInTheDocument();
     expect(within(estimate).getByText("Carbs")).toBeInTheDocument();
     expect(within(estimate).getByText("35g")).toBeInTheDocument();
@@ -297,6 +298,7 @@ describe("ChatMealLogger", () => {
             pendingCandidate: {
               summary: "paneer tikka and rice",
               mealSlot: "dinner",
+              estimate: { kcalMin: 420, kcalMax: 560, protein: 24, carbs: 58, fat: 18, fiber: 4 },
               items: [
                 { name: "paneer", householdUnit: "~100 g paneer tikka", quantityG: 100 },
                 { name: "rice", householdUnit: "~1 bowl cooked rice", quantityG: 150 },
@@ -309,4 +311,53 @@ describe("ChatMealLogger", () => {
 
     expect(await screen.findByRole("region", { name: "Meal estimate" })).toBeInTheDocument();
   });
+
+  it("opens a readable daily nutrition sheet from the sticky summary", () => {
+    render(<ChatMealLogger dateLabel="29 May 2026" initialMeals={meals} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open daily nutrition details" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Daily nutrition details" });
+    expect(within(dialog).getByText("Dishes eaten")).toBeInTheDocument();
+    expect(within(dialog).getByText("Ate 1 grilled chicken breast with broccoli and beans")).toBeInTheDocument();
+    expect(within(dialog).getByText("Macros vs daily value")).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Protein 25g 50g 50%/ })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Micronutrients" })).toBeInTheDocument();
+  });
+
+  it("does not send a pending estimate when the user asks for daily totals", async () => {
+    render(
+      <ChatMealLogger
+        initialCandidate={{
+          type: "meal_log_candidate",
+          summary: "paneer tikka and rice",
+          needsConfirmation: true,
+          confidence: "medium",
+          mealSlot: "dinner",
+          assistantMessageId: "msg-candidate",
+          confirmPayload: {
+            mealSlot: "dinner",
+            items: [{ name: "paneer", quantity_g: 100, household_unit: "~100 g paneer tikka" }],
+          },
+          estimate: { kcalMin: 420, kcalMax: 560, protein: 24, carbs: 58, fat: 18, fiber: 4 },
+          rationale: "Portion estimate",
+          clarificationQuestions: [],
+          safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "What are my totals on macros and micros for the day vs DVA?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          body: JSON.stringify({ text: "What are my totals on macros and micros for the day vs DVA?" }),
+        }),
+      );
+    });
+  });
+
 });

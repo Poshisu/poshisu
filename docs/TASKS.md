@@ -486,3 +486,9 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 - **Implemented behavior target:** Home shows daily nutrition summary, today's meal preview, chat transcript, rich estimate card, and sticky composer with camera/mic device affordances.
 - **Explicit follow-ups:** PostHog setup, real LLM-backed chat, and ElevenLabs transcription remain required before founder-approved beta; they are not claimed complete by RDX-06A/B.
 - **PRD:** See `docs/RDX_06_HOME_IA_PRD.md` for the living product/design rationale and change process.
+
+## 2026-05-31 — Chat estimate correction + daily totals polish
+
+| ID | Lane | Task | Files likely touched | Acceptance criteria | Verify command | Status |
+|---|---|---|---|---|---|---|
+| CHAT-UX-05 | Chat/AI/Frontend | Make corrections directionally consistent, make estimate cards lead with a best-guess kcal, and expose readable daily totals details | `src/app/(app)/chat/ChatMealLogger.tsx`, `src/lib/agents/health-coach/deterministicFallback.ts`, `src/lib/nutrition/pipeline.ts`, `prompts/agents/HEALTH_COACH.md` | Oily/sauce corrections cannot lower a pending estimate; daily totals questions do not spawn meal cards; sticky summary is readable/clickable; estimate card shows best-guess kcal plus range | `pnpm run test -- src/lib/nutrition/pipeline.test.ts src/lib/agents/orchestrator.test.ts 'src/app/(app)/chat/ChatMealLogger.test.tsx' src/lib/agents/health-coach/runtime.test.ts src/app/api/chat/route.test.ts` | done |

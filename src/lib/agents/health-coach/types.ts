@@ -78,6 +78,7 @@ export interface CoachResponse {
 export type PendingMealCandidateContext = {
   summary: string;
   mealSlot?: ConfirmableMealEstimate["mealSlot"];
+  estimate?: { kcalMin: number; kcalMax: number; protein: number; carbs: number; fat: number; fiber: number };
   items?: Array<{
     name?: string;
     householdUnit?: string;

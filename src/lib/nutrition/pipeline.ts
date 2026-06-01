@@ -73,6 +73,7 @@ function nearbyQuantity(text: string, matchIndex: number, matchEnd: number, fall
   const after = text.slice(matchEnd, Math.min(text.length, matchEnd + 40));
   const directBefore = before.match(/(\d+(?:\.\d+)?)\s*(g|gm|gms|gram|grams|ml|mL)\s*$/i);
   const directAfter = after.match(/^\s*(\d+(?:\.\d+)?)\s*(g|gm|gms|gram|grams|ml|mL)\b/i);
+  const phraseAfter = after.match(/^\s+(?:[a-z]+\s+){0,3}(\d+(?:\.\d+)?)\s*(g|gm|gms|gram|grams|ml|mL)\b(?=\s*[,.;]|\s+(?:and|with|for)\b)/i);
   const tspBefore = before.match(/(\d+(?:\.\d+)?)\s*(tsp|teaspoon|teaspoons)\s*$/i);
   const tspAfter = after.match(/^\s*(\d+(?:\.\d+)?)\s*(tsp|teaspoon|teaspoons)\b/i);
   const tspEachAfter = after.match(/^(?:\s+(?:and|&)?\s*[a-z]+){0,3}\s+(\d+(?:\.\d+)?)\s*(tsp|teaspoon|teaspoons)\s+each\b/i);
@@ -82,6 +83,7 @@ function nearbyQuantity(text: string, matchIndex: number, matchEnd: number, fall
   if (tspAfter) return Number(tspAfter[1]) * 4;
   if (tspEachAfter) return Number(tspEachAfter[1]) * 4;
   if (directAfter) return Number(directAfter[1]);
+  if (phraseAfter) return Number(phraseAfter[1]);
   if (directBefore) return Number(directBefore[1]);
   if (countBefore && fallback <= 40) return Number(countBefore[1]) * fallback;
   return fallback;
@@ -106,7 +108,7 @@ function parseDetails(text: string): ParsedNutritionItem[] {
     const aliases = [...entry.aliases].sort((a, b) => b.length - a.length);
     for (const alias of aliases) {
       const match = aliasPattern(alias).exec(lower);
-      if (!match?.index) continue;
+      if (!match) continue;
       const aliasStart = match.index + match[1].length;
       const aliasEnd = aliasStart + alias.length;
       if (occupied.has(key) || spans.some((span) => aliasStart < span.end && aliasEnd > span.start)) continue;
@@ -124,9 +126,10 @@ function parseDetails(text: string): ParsedNutritionItem[] {
 function normalizeItems(items: Array<string | ParsedNutritionItem>): ParsedNutritionItem[] {
   return items.flatMap((item) => {
     if (typeof item !== "string") return [item];
-    const entry = FOOD_DB[item.toLowerCase()];
-    if (!entry) return [];
-    return [{ key: item.toLowerCase(), name: entry.name, quantityG: entry.defaultQuantityG, householdUnit: entry.householdUnit }];
+    const normalized = item.toLowerCase().trim();
+    const entry = FOOD_DB[normalized];
+    if (!entry) return parseDetails(normalized);
+    return [{ key: normalized, name: entry.name, quantityG: entry.defaultQuantityG, householdUnit: entry.householdUnit }];
   });
 }
 
