@@ -29,7 +29,7 @@ export type MealCandidateBlock = {
   clarificationQuestions: string[];
   safetyFlags: { blocked: boolean; allergenFlags: string[]; conditionFlags: string[]; blockingReasons: string[] };
   displayAssumptions?: Array<{ label: string; detail: string }>;
-  confirmPayload?: { mealSlot?: MealSlot; items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | unknown;
+  confirmPayload?: { mealSlot?: MealSlot; targetLocalDate?: string; items?: Array<{ name?: string; household_unit?: string; quantity_g?: number }> } | unknown;
   assistantMessageId?: string;
 };
 
@@ -54,6 +54,7 @@ type ChatMealLoggerProps = {
   initialCandidate?: MealCandidateBlock | null;
   saveStatus?: string;
   userName?: string;
+  selectedDate?: string;
 };
 
 const QUICK_CHIPS = ["2 rotis, dal, bhindi", "Idli, sambar, chutney", "Coffee with milk", "Chicken and sabzi"];
@@ -112,6 +113,17 @@ function getCandidateMealSlot(candidate: MealCandidateBlock | null): MealSlot {
   if (!candidate) return "breakfast";
   const payload = candidate.confirmPayload as { mealSlot?: MealSlot } | undefined;
   return candidate.mealSlot ?? payload?.mealSlot ?? "breakfast";
+}
+
+
+function getCandidateTargetLocalDate(candidate: MealCandidateBlock | null, fallbackDate: string) {
+  const payload = candidate?.confirmPayload as { targetLocalDate?: string } | undefined;
+  return payload?.targetLocalDate ?? fallbackDate;
+}
+
+function formatDateInputLabel(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00+05:30`));
 }
 
 function getCandidateItems(candidate: MealCandidateBlock) {
@@ -198,7 +210,7 @@ function dailyTotals(meals: TodayMeal[]) {
   );
 }
 
-export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initialMessages = [], initialCandidate = null, saveStatus, userName = "there" }: ChatMealLoggerProps) {
+export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initialMessages = [], initialCandidate = null, saveStatus, userName = "there", selectedDate = new Date().toISOString().slice(0, 10) }: ChatMealLoggerProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages.length > 0
@@ -213,6 +225,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
   );
   const [candidate, setCandidate] = useState<MealCandidateBlock | null>(initialCandidate);
   const [selectedSlot, setSelectedSlot] = useState<MealSlot>(getCandidateMealSlot(initialCandidate));
+  const [targetLocalDate, setTargetLocalDate] = useState(getCandidateTargetLocalDate(initialCandidate, selectedDate));
   const [isSending, setIsSending] = useState(false);
   const [pendingMessageText, setPendingMessageText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -283,6 +296,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
       ]);
       setCandidate(persistedCandidate);
       setSelectedSlot(getCandidateMealSlot(persistedCandidate));
+      setTargetLocalDate(getCandidateTargetLocalDate(persistedCandidate, selectedDate));
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "Could not send message. Please try again.");
     } finally {
@@ -355,6 +369,9 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
               candidate={candidate}
               selectedSlot={selectedSlot}
               onSelectedSlotChange={setSelectedSlot}
+              targetLocalDate={targetLocalDate}
+              onTargetLocalDateChange={setTargetLocalDate}
+              currentDate={selectedDate}
               onDismiss={() => setCandidate(null)}
             />
           ) : null}
@@ -680,16 +697,23 @@ function MealEstimateCard({
   candidate,
   selectedSlot,
   onSelectedSlotChange,
+  targetLocalDate,
+  onTargetLocalDateChange,
+  currentDate,
   onDismiss,
 }: {
   candidate: MealCandidateBlock;
   selectedSlot: MealSlot;
   onSelectedSlotChange: (slot: MealSlot) => void;
+  targetLocalDate: string;
+  onTargetLocalDateChange: (date: string) => void;
+  currentDate: string;
   onDismiss: () => void;
 }) {
   const items = getCandidateItems(candidate);
   const canSave = !candidate.safetyFlags.blocked;
   const leadKcal = estimateLead(candidate.estimate);
+  const isDifferentTargetDate = targetLocalDate !== currentDate;
 
   return (
     <section
@@ -759,6 +783,22 @@ function MealEstimateCard({
         </p>
       ) : null}
 
+      <div className="mt-7 grid gap-3 rounded-[1.75rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-4">
+        <label htmlFor="meal-target-date" className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Log date
+        </label>
+        <input
+          id="meal-target-date"
+          type="date"
+          value={targetLocalDate}
+          onChange={(event) => onTargetLocalDateChange(event.target.value)}
+          className="min-h-12 rounded-full border border-[var(--border-soft)] bg-[var(--surface-canvas)] px-4 text-base text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          This confirmation will update totals for {isDifferentTargetDate ? formatDateInputLabel(targetLocalDate) : "today"}. Use this for late-night logging after midnight.
+        </p>
+      </div>
+
       <div className="mt-7 flex flex-wrap gap-3" role="group" aria-label="Meal slot">
         {MEAL_SLOTS.map((slot) => (
           <button
@@ -783,6 +823,7 @@ function MealEstimateCard({
           <form action="/chat/confirm" method="post">
             <input type="hidden" name="candidateId" value={candidate.assistantMessageId} />
             <input type="hidden" name="mealSlot" value={selectedSlot} />
+            <input type="hidden" name="targetLocalDate" value={targetLocalDate} />
             <Button type="submit" className="h-14 w-full rounded-full text-lg">
               <Check aria-hidden="true" className="size-5" />
               Looks right

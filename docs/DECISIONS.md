@@ -780,3 +780,25 @@ The DV sheet currently covers calories and available macros/fibre only; micronut
 
 ### Migration path
 Move pending estimates into a persisted `meal_estimates` table with status and revision history. Add source-backed micronutrients to confirmed meal rows and then promote the daily details sheet from macro-only DV to full macro/micro DRI coverage.
+
+## 2026-06-01 — Explicit target dates for late-night meal confirmations
+
+### Context
+Dogfooding found that logging dinner after midnight could only save against the current day, even when the user explicitly said the meal was for the previous day. The confirmation card also did not expose a clear date control, so users could not confidently update prior-day totals.
+
+### Options considered
+1. Keep using `logged_at = now()` and ask users to edit history later.
+2. Add a first-class `local_date` column and correction/event tables in one large migration.
+3. Add an incremental target-date field to the existing confirmation payload, write a representative IST `logged_at` for the selected local date, and keep the larger raw-intake/correction schema as follow-up.
+
+### Decision
+Choose option 3 for this slice. Meal candidates now carry `targetLocalDate`, the Home confirmation card exposes a Log date input, `/chat/confirm` reloads the server-stored candidate and applies the selected meal slot/date, and `confirmMealEstimate` persists a representative IST timestamp for that selected day.
+
+### Why
+This directly fixes the trust-breaking late-night logging path without hiding a broader schema migration inside the chat UX patch. It preserves the existing secure confirmation boundary: the browser still posts only the assistant candidate id plus user-selected slot/date overrides, while server code reloads the canonical estimate from authenticated message metadata.
+
+### Tradeoffs
+This is still not the final Hermes-style event-sourced meal architecture. Raw chat messages are preserved in `messages`, but there is not yet a dedicated immutable `raw_intake_events` table, correction chain, or per-user timezone column on meal entries.
+
+### Migration path
+Add `raw_intake_events`, `meal_estimates`, `correction_events`, and a stored `local_date`/`timezone` pair in a later migration. Backfill `local_date` from existing `logged_at` and user timezone, then switch Home/Today/Trends to query the stored local date instead of deriving day bounds from `logged_at`.

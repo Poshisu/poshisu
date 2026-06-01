@@ -14,6 +14,7 @@ const payloadSchema = z.object({
   fat: z.number().nonnegative().optional(),
   fiber: z.number().nonnegative().optional(),
   confidence: z.number().min(0).max(1),
+  targetLocalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export async function POST(request: Request) {

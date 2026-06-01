@@ -96,6 +96,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps = {}) {
       initialMessages={buildInitialMessages(messages)}
       initialMeals={meals}
       saveStatus={params?.status}
+      selectedDate={selectedDate}
       userName={displayNameFromUser(user)}
     />
   );

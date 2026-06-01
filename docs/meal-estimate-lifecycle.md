@@ -20,25 +20,26 @@ flowchart TD
   E --> F
   F --> G[Assistant message metadata stores candidate block]
   G --> H[Confirmation card renders same candidate]
-  H --> I[Looks right posts candidate id]
+  H --> I[Looks right posts candidate id + selected slot/date]
   I --> J[/chat/confirm loads assistant metadata]
-  J --> K[confirmMealEstimate persists canonical kcal/macros/items]
+  J --> K[confirmMealEstimate persists canonical kcal/macros/items for target local date]
   K --> L[Home daily totals refresh from confirmed meals]
 ```
 
 ## Confirmation invariants
 
 - The card must render from the `meal_log_candidate` block returned by `/api/chat`.
-- The confirm form sends the assistant message/candidate id, not free-text nutrition fields.
-- `/chat/confirm` reloads the candidate metadata server-side for the authenticated user.
+- The confirm form sends the assistant message/candidate id plus user-selected meal slot and target local date, not free-text nutrition fields.
+- `/chat/confirm` reloads the candidate metadata server-side for the authenticated user and applies only validated slot/date overrides.
 - Confirmed meals persist only after explicit user confirmation.
 - Unconfirmed candidates do not affect Home/Today totals.
 - Corrections should update the pending candidate before confirmation. Oily, fried, sauce-heavy, ghee, butter, or restaurant-style corrections should not lower calories/fat unless the user also reduces portion size.
 - Daily macro/micro total questions are summary intent, not meal-estimate intent, and must not create or resurrect a confirmation card.
+- Late-night logs that mention “yesterday”, “previous day”, or “last night” seed `targetLocalDate` to the previous IST date; the card exposes an editable Log date before saving.
 
 ## Daily local-date aggregation
 
-The repo currently uses IST helpers for the Home/Today query. The product requirement is broader: use each user's IANA timezone, store UTC timestamps, and derive/query the user's local date at log time. This is not fully implemented in this slice and remains tracked as follow-up work.
+The repo currently uses IST helpers for the Home/Today query. Confirmed chat estimates can now carry an explicit `targetLocalDate`; when present, `confirmMealEstimate` writes a representative UTC `logged_at` for that IST calendar day (for example dinner uses 21:00 IST). The broader product requirement is still to use each user's IANA timezone, store UTC timestamps, and store/query an explicit local date. That full schema is not implemented in this slice and remains tracked as follow-up work.
 
 Target rules:
 
@@ -88,5 +89,6 @@ Provider calls belong in the repo-approved AI client/provider layer (`src/lib/op
 6. Correct a pending estimate with “slightly oily” and verify the card is refreshed with calories/fat held or increased before saving.
 7. Ask “What are my totals on macros and micros for the day vs DVA?” and verify no meal card opens; use the sticky daily totals pill to open the DV/details sheet.
 8. Confirm a meal and verify Home totals update only after confirmation.
-9. Open the next local day and verify older meals remain in Trends/history rather than today's total once local-date storage is implemented.
-10. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.
+9. After midnight IST, log “previous day dinner was …”, verify the card Log date is yesterday, confirm it, then open `/today?date=YYYY-MM-DD` for yesterday and verify the meal appears there rather than today.
+10. Open the next local day and verify older meals remain in Trends/history rather than today's total once full local-date storage is implemented.
+11. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.

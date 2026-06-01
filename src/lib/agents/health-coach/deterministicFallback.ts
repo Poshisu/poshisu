@@ -1,6 +1,7 @@
 import type { ConfirmableMealEstimate } from "@/lib/meals/confirm";
 import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
 import type { ParsedNutritionItem } from "@/lib/nutrition/pipeline";
+import { getIstCalendarDate, getRelativeIstCalendarDate } from "@/lib/meals/targetDate";
 import { evaluateMealSafety } from "@/lib/safety/check";
 import type { CoachMessage, CoachResponse, CoachResponseBlock } from "./types";
 
@@ -38,6 +39,17 @@ function buildPreparationAssumptions(items: string[]) {
 }
 
 const mealLogPattern = /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|calories|protein|carbs|fat|kcal)\b/i;
+
+function inferTargetLocalDate(text: string) {
+  const lower = text.toLowerCase();
+  if (/\b(yesterday|previous day|prev day|last night)\b/.test(lower)) return getRelativeIstCalendarDate(-1);
+  if (/\btoday\b/.test(lower)) return getIstCalendarDate();
+
+  const isoDate = lower.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (isoDate?.[1]) return isoDate[1];
+
+  return getIstCalendarDate();
+}
 
 function isDailyTotalsQuestion(text: string) {
   const hasTotalsIntent = /\b(total|totals|summary|dva|dri|daily value|recommended intake|macro|macros|micro|micros|nutrients?|nutrition)\b/i.test(text);
@@ -132,6 +144,7 @@ function buildConfirmPayload(args: {
     fat: args.nutrition.fat,
     fiber: args.nutrition.fiber,
     confidence: confidenceScore(args.confidence),
+    targetLocalDate: inferTargetLocalDate(args.text),
   };
 }
 

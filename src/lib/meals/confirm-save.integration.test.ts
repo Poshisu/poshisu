@@ -80,6 +80,24 @@ describe("confirm-save meal flow integration", () => {
     expect(result.meals[0]?.fiber_g_low).toBe(11);
   });
 
+  it("persists previous-day confirmations with a representative IST logged_at", async () => {
+    const { confirmMealEstimate } = await import("./confirm");
+
+    await confirmMealEstimate({
+      mealSlot: "dinner",
+      sourceText: "Previous day dinner was dosa",
+      items: [{ name: "dosa", quantity_g: 120 }],
+      kcalLow: 250,
+      kcalHigh: 350,
+      kcalLead: 300,
+      confidence: 0.75,
+      targetLocalDate: "2026-05-31",
+    });
+
+    expect(state.meals).toHaveLength(1);
+    expect(state.meals[0]?.logged_at).toBe("2026-05-31T15:30:00.000Z");
+  });
+
   it("ignores duplicate confirmations within dedupe window", async () => {
     const { confirmMealEstimate } = await import("./confirm");
 
