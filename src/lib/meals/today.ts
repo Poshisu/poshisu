@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getIstCalendarDate, getSelectedIstCalendarDate, isValidIstCalendarDate } from "./targetDate";
 
 export type TodayMeal = {
   id: string;
@@ -42,13 +43,6 @@ const todayMealColumns = [
   "logged_at",
 ].join(", ");
 
-const istCalendarFormatter = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Kolkata",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
 const istLabelFormatter = new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata",
   day: "numeric",
@@ -56,19 +50,7 @@ const istLabelFormatter = new Intl.DateTimeFormat("en-IN", {
   year: "numeric",
 });
 
-export function getIstCalendarDate(date: Date = new Date()) {
-  return istCalendarFormatter.format(date);
-}
-
-export function isValidIstCalendarDate(value: string | undefined): value is string {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = new Date(`${value}T12:00:00+05:30`);
-  return !Number.isNaN(parsed.getTime()) && getIstCalendarDate(parsed) === value;
-}
-
-export function getSelectedIstCalendarDate(dateParam: string | undefined, fallbackDate: Date = new Date()) {
-  return isValidIstCalendarDate(dateParam) ? dateParam : getIstCalendarDate(fallbackDate);
-}
+export { getIstCalendarDate, getSelectedIstCalendarDate, isValidIstCalendarDate };
 
 export function formatIstDateLabel(calendarDate: string) {
   return istLabelFormatter.format(new Date(`${calendarDate}T12:00:00+05:30`));

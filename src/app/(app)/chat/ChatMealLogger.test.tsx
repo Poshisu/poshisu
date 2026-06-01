@@ -57,6 +57,7 @@ describe("ChatMealLogger", () => {
                   kcalHigh: 251,
                   kcalLead: 218,
                   confidence: 0.9,
+                  targetLocalDate: "2026-05-31",
                 },
                 estimate: { kcalMin: 185, kcalMax: 251, protein: 11, carbs: 35, fat: 3, fiber: 8 },
                 rationale: "Assumed typical Indian home-style prep.",
@@ -133,6 +134,8 @@ describe("ChatMealLogger", () => {
     expect(within(estimate).getByText("Portion")).toBeInTheDocument();
     expect(within(estimate).getByText("idli: 2 medium pieces; sambar: 1 bowl")).toBeInTheDocument();
     expect(within(estimate).getByRole("button", { name: "Breakfast" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(estimate).getByLabelText("Log date")).toHaveValue("2026-05-31");
+    expect(within(estimate).getByText(/totals for 31 May 2026/)).toBeInTheDocument();
     expect(within(estimate).getByRole("button", { name: "Looks right" })).toBeInTheDocument();
   });
 

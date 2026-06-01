@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { confirmMealEstimate } from "@/lib/meals/confirm";
+import type { ConfirmableMealEstimate } from "@/lib/meals/confirm";
 import { createClient } from "@/lib/supabase/server";
 
 const payloadSchema = z.object({
@@ -15,6 +16,7 @@ const payloadSchema = z.object({
   fat: z.number().nonnegative().optional(),
   fiber: z.number().nonnegative().optional(),
   confidence: z.number().min(0).max(1),
+  targetLocalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 const safetyFlagsSchema = z.object({
@@ -74,7 +76,19 @@ export async function POST(request: Request) {
     return redirectTo(request, "/chat?error=safety_blocked");
   }
 
-  const result = await confirmMealEstimate(parsed.data.mealCandidate.confirmPayload);
+  const targetLocalDate = formData.get("targetLocalDate");
+  const mealSlot = formData.get("mealSlot");
+  const mealSlotOverride =
+    typeof mealSlot === "string" && ["breakfast", "lunch", "dinner", "snack", "beverage", "other"].includes(mealSlot)
+      ? (mealSlot as ConfirmableMealEstimate["mealSlot"])
+      : undefined;
+  const confirmPayload: ConfirmableMealEstimate = {
+    ...parsed.data.mealCandidate.confirmPayload,
+    ...(mealSlotOverride ? { mealSlot: mealSlotOverride } : {}),
+    ...(typeof targetLocalDate === "string" && targetLocalDate.trim() ? { targetLocalDate: targetLocalDate.trim() } : {}),
+  };
+
+  const result = await confirmMealEstimate(confirmPayload);
   const destination = result.status === "duplicate_ignored" ? "/chat?status=duplicate_ignored" : "/chat?status=saved";
   return redirectTo(request, destination);
 }

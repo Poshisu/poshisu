@@ -492,3 +492,9 @@ This queue is the working backlog for the redesign brief. It is intentionally PR
 | ID | Lane | Task | Files likely touched | Acceptance criteria | Verify command | Status |
 |---|---|---|---|---|---|---|
 | CHAT-UX-05 | Chat/AI/Frontend | Make corrections directionally consistent, make estimate cards lead with a best-guess kcal, and expose readable daily totals details | `src/app/(app)/chat/ChatMealLogger.tsx`, `src/lib/agents/health-coach/deterministicFallback.ts`, `src/lib/nutrition/pipeline.ts`, `prompts/agents/HEALTH_COACH.md` | Oily/sauce corrections cannot lower a pending estimate; daily totals questions do not spawn meal cards; sticky summary is readable/clickable; estimate card shows best-guess kcal plus range | `pnpm run test -- src/lib/nutrition/pipeline.test.ts src/lib/agents/orchestrator.test.ts 'src/app/(app)/chat/ChatMealLogger.test.tsx' src/lib/agents/health-coach/runtime.test.ts src/app/api/chat/route.test.ts` | done |
+
+## 2026-06-01 — Late-night previous-day meal logging
+
+| ID | Lane | Task | Files likely touched | Acceptance criteria | Verify command | Status |
+|---|---|---|---|---|---|---|
+| CHAT-UX-06 | Chat/Meal logging | Let confirmation cards save to an explicit local target date for late-night/prior-day logs | `src/lib/meals/targetDate.ts`, `src/lib/meals/confirm.ts`, `src/app/chat/confirm/route.ts`, `src/app/(app)/chat/ChatMealLogger.tsx`, `src/lib/agents/health-coach/deterministicFallback.ts`, `prompts/agents/HEALTH_COACH.md`, `docs/meal-estimate-lifecycle.md` | User text such as “previous day”/“last night” seeds a prior IST date; the card shows an editable Log date; confirm-save uses the server-stored candidate with selected slot/date; prior-day dinner saves under that day’s Home/Today totals instead of today | `pnpm run test -- src/app/chat/confirm/route.test.ts src/lib/meals/confirm-save.integration.test.ts 'src/app/(app)/chat/ChatMealLogger.test.tsx' && pnpm run typecheck && pnpm run eval:prompts` | done |

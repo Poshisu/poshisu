@@ -75,6 +75,17 @@ describe("POST /chat/confirm", () => {
     expect(response.headers.get("location")).toBe("http://localhost/chat?status=saved");
   });
 
+  it("applies user-selected slot and target date from the confirmation form", async () => {
+    const response = await POST(formRequest({ candidateId: "assistant-1", mealSlot: "dinner", targetLocalDate: "2026-05-31" }));
+
+    expect(confirmMealEstimateMock).toHaveBeenCalledWith({
+      ...confirmPayload,
+      mealSlot: "dinner",
+      targetLocalDate: "2026-05-31",
+    });
+    expect(response.status).toBe(303);
+  });
+
   it("rejects direct or malformed client payloads without throwing", async () => {
     const response = await POST(formRequest({ payload: "{not-json" }));
 

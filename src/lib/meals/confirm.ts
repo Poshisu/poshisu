@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { isValidIstCalendarDate, targetLoggedAtForIstDate } from "./targetDate";
 
 export type ConfirmableMealEstimate = {
   mealSlot: "breakfast" | "lunch" | "dinner" | "snack" | "beverage" | "other";
@@ -13,6 +14,7 @@ export type ConfirmableMealEstimate = {
   fat?: number;
   fiber?: number;
   confidence: number;
+  targetLocalDate?: string;
 };
 
 const estimateSchema = z
@@ -36,6 +38,7 @@ const estimateSchema = z
     fat: z.number().nonnegative().optional(),
     fiber: z.number().nonnegative().optional(),
     confidence: z.number().min(0).max(1),
+    targetLocalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   })
   .refine((v) => v.kcalLow <= v.kcalLead && v.kcalLead <= v.kcalHigh, {
     message: "Expected kcalLow <= kcalLead <= kcalHigh",
@@ -56,6 +59,10 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
     throw new Error("Unauthorized");
   }
 
+  if (parsed.data.targetLocalDate && !isValidIstCalendarDate(parsed.data.targetLocalDate)) {
+    throw new Error("Invalid meal confirmation target date");
+  }
+
   const normalizedSource = parsed.data.sourceText.trim().toLowerCase();
   const normalizedItems = JSON.stringify(parsed.data.items.map((i) => ({ ...i, name: i.name.trim().toLowerCase() })));
 
@@ -63,7 +70,7 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
   const mealsTable = supabase.from("meals" as never);
 
   const { data: recentMeals, error: recentMealsError } = await mealsTable
-    .select("id, meal_slot, source_text, items, kcal_low, kcal_high, kcal_lead, confidence, created_at" as never)
+    .select("id, meal_slot, source_text, items, kcal_low, kcal_high, kcal_lead, confidence, created_at, logged_at" as never)
     .eq("user_id", user.id)
     .gte("created_at", dedupeWindowStart)
     .order("created_at", { ascending: false })
@@ -85,7 +92,8 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
       Number(meal.kcal_high ?? -1) === parsed.data.kcalHigh &&
       Number(meal.kcal_lead ?? -1) === parsed.data.kcalLead &&
       Number(meal.confidence ?? -1) === parsed.data.confidence &&
-      mealItems === normalizedItems
+      mealItems === normalizedItems &&
+      (!parsed.data.targetLocalDate || String(meal.logged_at ?? "") === targetLoggedAtForIstDate(parsed.data.targetLocalDate, parsed.data.mealSlot))
     );
   });
 
@@ -111,6 +119,7 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
       fiber_g_low: parsed.data.fiber,
       fiber_g_high: parsed.data.fiber,
       confidence: parsed.data.confidence,
+      logged_at: parsed.data.targetLocalDate ? targetLoggedAtForIstDate(parsed.data.targetLocalDate, parsed.data.mealSlot) : undefined,
       user_confirmed: true,
     } as never)
     .select("id" as never)
