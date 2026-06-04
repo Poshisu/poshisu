@@ -73,6 +73,7 @@ Where to look:
 | Poor tone | Adjust the "Tone" section | Nudge felt preachy |
 | Wrong structure | Tighten the tool schema | Output missing a required field |
 | Too many questions | Add a rule or example | Agent asked 3 questions in one turn |
+| Confirmation friction | Add a pending-estimate rule and client context test | User says “please log this meal” but agent restarts meal discovery |
 
 ### 3. Make the change
 

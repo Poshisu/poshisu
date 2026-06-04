@@ -802,3 +802,26 @@ This is still not the final Hermes-style event-sourced meal architecture. Raw ch
 
 ### Migration path
 Add `raw_intake_events`, `meal_estimates`, `correction_events`, and a stored `local_date`/`timezone` pair in a later migration. Backfill `local_date` from existing `logged_at` and user timezone, then switch Home/Today/Trends to query the stored local date instead of deriving day bounds from `logged_at`.
+
+
+## 2026-06-04 — Prefer confirmation-ready best guesses over repeated meal clarifications
+
+### Context
+Dogfooding showed the meal logger had swung too far from under-asking to over-asking: after the user had already clarified sauce details and then asked to log the meal, the assistant restarted with more questions instead of using the current estimate. This made simple logging feel slow and untrustworthy.
+
+### Options considered
+1. Keep asking for more details whenever any uncertainty remains.
+2. Auto-save meals from chat text like “please log this meal.”
+3. Keep explicit confirmation as the save boundary, but make the agent default to a best-guess estimate once the main foods are identifiable and carry pending estimate context through “log/save/confirm” follow-up messages.
+
+### Decision
+Choose option 3. The health-coach prompt now instructs the model to log with assumptions instead of interrogating for exact recipes, and the chat client sends the visible pending estimate back to `/api/chat` when the user says “log this,” “save this,” “confirm,” “looks right,” or similar. The assistant should keep the confirmation card alive and avoid more food questions unless the meal is genuinely too vague or a safety/allergy issue needs review.
+
+### Why
+This preserves the current safety and data-quality boundary — confirmed meals still require the explicit confirmation action — while removing the conversational dead-end where the model asks for details after the user has already accepted an estimate.
+
+### Tradeoffs
+A best guess can be less precise than an exhaustive recipe interrogation, especially for restaurant sauces and oil-heavy dishes. The product accepts that tradeoff for beta because fast, transparent logging with assumptions is more valuable than pseudo-precision.
+
+### Migration path
+If beta users strongly prefer chat-only saving, add a dedicated authenticated confirm endpoint that can save the current candidate by assistant message id after an explicit text confirmation. Until then, keep the visible “Looks right” action as the authoritative save step.

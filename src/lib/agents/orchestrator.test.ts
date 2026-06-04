@@ -181,6 +181,33 @@ describe("handleMessage", () => {
     expect(response.blocks.some((block) => block.type === "meal_log_candidate")).toBe(false);
   });
 
+
+  it("keeps pending estimate confirmation requests on the current card without more questions", async () => {
+    mockCoachReply("Yes — I’ll keep this best guess ready to confirm.");
+
+    const response = await handleMessage("user-123", {
+      text: "cool please log this meal",
+      pendingCandidate: {
+        summary: "paneer tikka and rice",
+        mealSlot: "lunch",
+        estimate: { kcalMin: 420, kcalMax: 560, protein: 24, carbs: 58, fat: 18, fiber: 4 },
+        items: [
+          { name: "paneer", quantityG: 100 },
+          { name: "rice", quantityG: 150 },
+        ],
+      },
+    });
+
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.confidence).not.toBe("low");
+      expect(candidate.clarificationQuestions).toHaveLength(0);
+      expect(candidate.confirmPayload?.mealSlot).toBe("lunch");
+      expect(candidate.confirmPayload?.items.map((item) => item.name)).toEqual(expect.arrayContaining(["paneer", "rice"]));
+    }
+  });
+
   it("keeps oily corrections directionally higher than the previous pending estimate", async () => {
     mockCoachReply("Noted — I nudged the estimate upward for oil.");
 
