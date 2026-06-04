@@ -315,6 +315,57 @@ describe("ChatMealLogger", () => {
     expect(await screen.findByRole("region", { name: "Meal estimate" })).toBeInTheDocument();
   });
 
+
+  it("sends pending estimate context when the user asks to log the visible estimate", async () => {
+    render(
+      <ChatMealLogger
+        initialCandidate={{
+          type: "meal_log_candidate",
+          summary: "fish sauce and Vietnamese sweet dipping sauce lunch",
+          needsConfirmation: true,
+          confidence: "medium",
+          mealSlot: "lunch",
+          assistantMessageId: "msg-candidate",
+          confirmPayload: {
+            mealSlot: "lunch",
+            items: [
+              { name: "rice paper rolls", quantity_g: 180, household_unit: "~2 medium rolls" },
+              { name: "fish sauce", quantity_g: 15, household_unit: "~1 tbsp thin fish sauce" },
+            ],
+          },
+          estimate: { kcalMin: 310, kcalMax: 610, protein: 22, carbs: 58, fat: 14, fiber: 4 },
+          rationale: "Best guess from the current confirmation card.",
+          clarificationQuestions: [],
+          safetyFlags: { blocked: false, allergenFlags: [], conditionFlags: [], blockingReasons: [] },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Meal message"), { target: { value: "cool please log this meal" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send meal message" }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/chat",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            text: "cool please log this meal",
+            pendingCandidate: {
+              summary: "fish sauce and Vietnamese sweet dipping sauce lunch",
+              mealSlot: "lunch",
+              estimate: { kcalMin: 310, kcalMax: 610, protein: 22, carbs: 58, fat: 14, fiber: 4 },
+              items: [
+                { name: "rice paper rolls", householdUnit: "~2 medium rolls", quantityG: 180 },
+                { name: "fish sauce", householdUnit: "~1 tbsp thin fish sauce", quantityG: 15 },
+              ],
+            },
+          }),
+        }),
+      );
+    });
+  });
+
   it("opens a readable daily nutrition sheet from the sticky summary", () => {
     render(<ChatMealLogger dateLabel="29 May 2026" initialMeals={meals} />);
 
