@@ -54,6 +54,20 @@ describe("nutrition pipeline", () => {
     expect(result.itemDetails[0]).toMatchObject({ name: "bánh xèo", householdUnit: "1 medium bánh xèo (~250 g)" });
   });
 
+  it("recognizes the screenshot restaurant breakfast items with realistic portions", async () => {
+    const parsed = parseItemsFromText("Breakfast was bun bo hue 1 bowl, bacon 2 strips, 2 small pieces of smoked salmon and a hash brown");
+
+    expect(parsed.items.map((item) => item.key)).toEqual(expect.arrayContaining(["bun bo hue", "smoked salmon", "hash brown", "bacon"]));
+    expect(parsed.items.find((item) => item.key === "bacon")?.quantityG).toBe(32);
+    expect(parsed.isAmbiguous).toBe(false);
+
+    const result = await runPipeline(parsed.items);
+    expect(result.kcalMin).toBeGreaterThanOrEqual(760);
+    expect(result.kcalMax).toBeLessThanOrEqual(1100);
+    expect(result.protein).toBeGreaterThanOrEqual(40);
+    expect(result.fat).toBeGreaterThanOrEqual(30);
+  });
+
   it("recognizes a delayed quantity in chicken krapow style text", async () => {
     const parsed = parseItemsFromText("Thai chicken krapow 150g, a fried egg and 100g white rice for dinner");
     const chicken = parsed.items.find((item) => item.key === "chicken");

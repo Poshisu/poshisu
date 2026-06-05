@@ -153,6 +153,50 @@ describe("runHealthCoachAgent", () => {
     expect(createOpenAITextResponseMock).not.toHaveBeenCalled();
   });
 
+  it("answers daily nutrition breakdowns from confirmed meals without asking the LLM for the date", async () => {
+    const meals = [
+      {
+        meal_slot: "breakfast",
+        source_text: "bún bò huế, bacon, smoked salmon, hash brown",
+        kcal_lead: 920,
+        protein_g_low: 49,
+        protein_g_high: 49,
+        carbs_g_low: 91,
+        carbs_g_high: 91,
+        fat_g_low: 39,
+        fat_g_high: 39,
+        fiber_g_low: 4.5,
+        fiber_g_high: 4.5,
+        logged_at: "2026-06-05T03:00:00.000Z",
+      },
+    ];
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "users") return queryResult({ display_name: "Atu", timezone: "Asia/Kolkata", estimation_preference: "midpoint", nudge_tone: "friendly" });
+        if (table === "user_profiles") return queryResult({ conditions: [], allergies: [], daily_kcal_target: 1900, daily_protein_target: 90, daily_carbs_target: 220, daily_fat_target: 65, daily_fiber_target: 30 });
+        if (table === "meals") return queryResult(meals);
+        if (table === "memories") return queryResult([]);
+        return queryResult(null);
+      }),
+    };
+
+    const response = await runHealthCoachAgent({
+      userId: "user-1",
+      message: { text: "Can you give me the June 5 breakdown of dishes and nutrition profile in a table?" },
+      supabase,
+    });
+
+    expect(response.intent).toBe("coach_response");
+    expect(response.metadata.model).toBe("deterministic-daily-ledger");
+    expect(response.blocks[0]).toMatchObject({
+      type: "text",
+      text: expect.stringContaining("bún bò huế, bacon, smoked salmon, hash brown"),
+    });
+    expect(response.blocks[0]).toMatchObject({ type: "text", text: expect.stringContaining("| Total | 1 confirmed log | 920 | 49g | 91g | 39g | 5g |") });
+    expect(createOpenAITextResponseMock).not.toHaveBeenCalled();
+    expect(createAnthropicTextMessageMock).not.toHaveBeenCalled();
+  });
+
   it("blocks unsafe medical requests before LLM execution", async () => {
     process.env.OPENAI_API_KEY = "test-key";
     const response = await runHealthCoachAgent({ userId: "user-1", message: { text: "Can you prescribe a dose of metformin?" } });
