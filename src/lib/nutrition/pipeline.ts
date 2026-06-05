@@ -38,6 +38,10 @@ const FOOD_DB: Record<string, FoodEntry> = {
   mango: { name: "mango", aliases: ["mango", "mangoes"], defaultQuantityG: 60, householdUnit: "60 g mango", nutrientsPer100g: { kcal: 60, protein: 0.8, carbs: 15, fat: 0.4, fiber: 1.6 } },
   kimchi: { name: "radish kimchi", aliases: ["radish kimchi", "kimchi"], defaultQuantityG: 30, householdUnit: "30 g radish kimchi", nutrientsPer100g: { kcal: 20, protein: 1.1, carbs: 3.6, fat: 0.4, fiber: 1.6 } },
   "banh xeo": { name: "bánh xèo", aliases: ["banh xeo", "bánh xèo", "vietnamese crepe", "vietnamese pancake"], defaultQuantityG: 250, householdUnit: "1 medium bánh xèo (~250 g)", nutrientsPer100g: { kcal: 190, protein: 8.5, carbs: 22, fat: 11, fiber: 2 } },
+  "bun bo hue": { name: "bún bò huế", aliases: ["bun bo hue", "bún bò huế", "bun bo", "bún bò"], defaultQuantityG: 500, householdUnit: "1 restaurant bowl bún bò huế (~500 g)", nutrientsPer100g: { kcal: 105, protein: 5.8, carbs: 13, fat: 3.8, fiber: 0.8 } },
+  bacon: { name: "bacon", aliases: ["bacon", "bacon strip", "bacon strips"], defaultQuantityG: 16, householdUnit: "1 cooked bacon strip (~16 g)", nutrientsPer100g: { kcal: 541, protein: 37, carbs: 1.4, fat: 42, fiber: 0 } },
+  "smoked salmon": { name: "smoked salmon", aliases: ["smoked salmon", "salmon"], defaultQuantityG: 30, householdUnit: "2 small pieces smoked salmon (~30 g)", nutrientsPer100g: { kcal: 117, protein: 18.3, carbs: 0, fat: 4.3, fiber: 0 } },
+  "hash brown": { name: "hash brown", aliases: ["hash brown", "hashbrown", "hash browns"], defaultQuantityG: 60, householdUnit: "1 standard hash brown patty (~60 g)", nutrientsPer100g: { kcal: 326, protein: 3, carbs: 35, fat: 20, fiber: 3 } },
 };
 
 const AMBIGUOUS_PATTERN = /\b(some|few|bit|little|maybe|depends|random|snack|food|or|\/|either)\b/i;
@@ -79,6 +83,7 @@ function nearbyQuantity(text: string, matchIndex: number, matchEnd: number, fall
   const tspAfter = after.match(/^\s*(\d+(?:\.\d+)?)\s*(tsp|teaspoon|teaspoons)\b/i);
   const tspEachAfter = after.match(/^(?:\s+(?:and|&)?\s*[a-z]+){0,3}\s+(\d+(?:\.\d+)?)\s*(tsp|teaspoon|teaspoons)\s+each\b/i);
   const countBefore = before.match(/(\d+(?:\.\d+)?)\s*$/i);
+  const countServingAfter = after.match(/^\s*(\d+(?:\.\d+)?)\s*(?:piece|pieces|strip|strips|slice|slices|patty|patties|bowl|bowls|cup|cups)\b/i);
 
   if (tspBefore) return Number(tspBefore[1]) * 4;
   if (tspAfter) return Number(tspAfter[1]) * 4;
@@ -86,6 +91,7 @@ function nearbyQuantity(text: string, matchIndex: number, matchEnd: number, fall
   if (directAfter) return Number(directAfter[1]);
   if (phraseAfter) return Number(phraseAfter[1]);
   if (directBefore) return Number(directBefore[1]);
+  if (countServingAfter && fallback <= 120) return Number(countServingAfter[1]) * fallback;
   if (countBefore && fallback <= 40) return Number(countBefore[1]) * fallback;
   return fallback;
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { buildCoachContext } from "./contextBuilder";
 import type { AgentSupabaseClient } from "./contextBuilder";
 import { buildDeterministicCoachResponse } from "./deterministicFallback";
+import { buildDailyNutritionSummaryResponse } from "./dailySummary";
 import { callHealthCoachLlm } from "./llmProvider";
 import { inferFactsFromUserText, mergeInferredFacts } from "./responseQuality";
 import { evaluateCoachMessageSafety } from "./safetyPolicy";
@@ -201,6 +202,13 @@ export async function runHealthCoachAgent(args: {
     conditions: Array.from(new Set([...(message.conditions ?? []), ...contextConditions])),
     pendingCandidate: message.pendingCandidate,
   };
+
+  const dailySummaryResponse = buildDailyNutritionSummaryResponse({
+    userId: safeUserId,
+    text: enrichedMessage.text,
+    context,
+  });
+  if (dailySummaryResponse) return dailySummaryResponse;
 
   const deterministicResponse = await buildDeterministicCoachResponse(safeUserId, enrichedMessage);
   const llmResult = await callHealthCoachLlm({ message: enrichedMessage, context, deterministicResponse });

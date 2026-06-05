@@ -275,3 +275,7 @@ Design tokens live in `src/app/globals.css` and are the default source for color
 This architecture assumes Next.js 16 App Router conventions (server components by default, route handlers under `app/api`, and server-first data fetching patterns). Avoid introducing legacy Pages Router-only patterns in new work.
 
 Documentation note: treat `package.json` as the canonical source of runtime versions (Next.js, React, and related framework runtime dependencies).
+
+## Implemented delta — chat daily nutrition ledger (2026-06-05)
+
+Daily nutrition totals are treated as ledger/accounting answers, not free-form model memory. When `/api/chat` receives a daily/table/macro summary intent, `runHealthCoachAgent` builds context through the existing Supabase-backed context loader and then short-circuits to `src/lib/agents/health-coach/dailySummary.ts` before any LLM provider call. The deterministic summary filters confirmed recent meals by the requested/default IST local date, totals kcal/protein/carbs/fat/fibre from persisted meal fields, and returns a table that should reconcile with Home/Today counters. Micronutrients remain out of scope until a persisted micronutrient ledger exists.

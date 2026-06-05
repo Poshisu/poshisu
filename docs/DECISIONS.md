@@ -848,3 +848,25 @@ This reduces some conversational nuance in meal-log replies because grounded pro
 
 ### Migration path
 Move pending estimates into a first-class `meal_estimates` table with immutable candidate ids and revision history. Require any future model-supplied presentation to reference that candidate id and item ids before it can alter visible card fields.
+
+## 2026-06-05 — Answer daily nutrition questions from the confirmed meal ledger
+
+### Context
+A founder smoke test showed that chat asked for a date or gave incomplete context when the user requested a same-day dish/macronutrient table, while the Home counter already showed saved kcal/macros. This broke trust because the chat did not behave like it was connected to the app's own ledger.
+
+### Options considered
+1. Rely on the LLM to infer the date and total recent meals from prompt context.
+2. Add a separate long-term chat memory/thread system before fixing summaries.
+3. Short-circuit daily total/table intents to a deterministic confirmed-meals ledger response.
+
+### Decision
+Choose option 3. Daily nutrition summary/table questions now default to the relevant local date, read confirmed meals from retrieved context, compute kcal/macros from the same saved meal fields used by Today/Home summaries, and return a deterministic table without creating a meal card or asking the LLM for a date.
+
+### Why
+Daily totals are accounting, not creative chat. The user expects the chat and top counter to reconcile exactly from confirmed meal rows. A deterministic ledger response is safer, cheaper, faster, and easier to test than hoping the model uses recent-meal context correctly.
+
+### Tradeoffs
+This still only summarizes persisted confirmed meal fields. Micronutrients remain directional because the current meal schema does not persist a reliable micronutrient ledger.
+
+### Migration path
+When a canonical `meal_estimates`/nutrition facts table exists, extend the deterministic summary builder to include item-level micronutrients and confidence bands from that table while keeping the LLM limited to explanation/coaching.
