@@ -40,6 +40,20 @@ describe("nutrition pipeline", () => {
     expect(result.items).not.toContain("roti");
   });
 
+
+  it("recognizes bánh xèo as its own meal instead of falling back to an unrelated card", async () => {
+    const parsed = parseItemsFromText("I had a banh xeo for lunch");
+
+    expect(parsed.items.map((item) => item.key)).toEqual(["banh xeo"]);
+    expect(parsed.isAmbiguous).toBe(false);
+
+    const result = await runPipeline(parsed.items);
+    expect(result.confidence).toBe("medium");
+    expect(result.kcalMin).toBeGreaterThanOrEqual(350);
+    expect(result.kcalMax).toBeLessThanOrEqual(650);
+    expect(result.itemDetails[0]).toMatchObject({ name: "bánh xèo", householdUnit: "1 medium bánh xèo (~250 g)" });
+  });
+
   it("recognizes a delayed quantity in chicken krapow style text", async () => {
     const parsed = parseItemsFromText("Thai chicken krapow 150g, a fried egg and 100g white rice for dinner");
     const chicken = parsed.items.find((item) => item.key === "chicken");

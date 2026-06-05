@@ -8,9 +8,9 @@ vi.mock("@/lib/openai/client", () => ({
   createOpenAITextResponse: (...args: unknown[]) => createOpenAITextResponseMock(...args),
 }));
 
-function mockCoachReply(text = "Got it — I can help with that.") {
+function mockCoachReply(text = "Got it — I can help with that.", mealEstimatePresentation: Record<string, unknown> | null = null) {
   createOpenAITextResponseMock.mockResolvedValue({
-    text: JSON.stringify({ assistantText: text, inferredFacts: [], userVisibleMemoryNotes: [] }),
+    text: JSON.stringify({ assistantText: text, inferredFacts: [], userVisibleMemoryNotes: [], mealEstimatePresentation }),
     usage: { inputTokens: 50, outputTokens: 20 },
   });
 }
@@ -96,6 +96,43 @@ describe("handleMessage", () => {
     }
   });
 
+
+  it("keeps assistant prose and card grounded to the current bánh xèo candidate", async () => {
+    mockCoachReply("Got it — logging **bánh xèo** for lunch at **~400 kcal**. Answer these: old question?", {
+      conciseSummary: "Pumpkin soup + papaya + whey + high-protein soy + toast w/ olive oil",
+      itemPortions: [
+        { name: "pumpkin soup", quantityG: 200, quantityMl: null, householdDescription: "1 bowl pumpkin soup", prepStyle: "soup" },
+        { name: "papaya", quantityG: 100, quantityMl: null, householdDescription: "1 cup papaya", prepStyle: "fruit" },
+      ],
+      assumptions: [{ label: "Portion", detail: "Unrelated previous meal presentation." }],
+      clarificationQuestions: ["Was this the old meal?"],
+    });
+
+    const response = await handleMessage("user-123", { text: "I had a banh xeo for lunch" });
+    const text = response.blocks.find((block) => block.type === "text");
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+
+    expect(text?.type).toBe("text");
+    if (text?.type === "text") {
+      expect(text.text).toContain("bánh xèo");
+      expect(text.text).not.toContain("**");
+      expect(text.text).not.toContain("Pumpkin soup");
+      expect(text.text).not.toContain("Answer these");
+    }
+
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.summary).toContain("banh xeo");
+      expect(candidate.summary).not.toContain("Pumpkin soup");
+      expect(candidate.confirmPayload?.items).toEqual([
+        { name: "bánh xèo", quantity_g: 250, household_unit: "1 medium bánh xèo (~250 g)" },
+      ]);
+      expect(candidate.estimate.kcalMin).toBeGreaterThanOrEqual(350);
+      expect(candidate.estimate.kcalMax).toBeLessThanOrEqual(650);
+      expect(candidate.clarificationQuestions).toHaveLength(0);
+    }
+  });
+
   it("preserves raw meal text for safety checks when parser misses unsafe allergen synonyms", async () => {
     const response = await handleMessage("user-123", {
       text: "I had peanut chutney for dinner",
@@ -113,7 +150,7 @@ describe("handleMessage", () => {
 
     expect(response.blocks[1]).toEqual({
       type: "text",
-      text: expect.stringContaining("Got it"),
+      text: expect.stringContaining("safety conflict"),
     });
   });
 
@@ -179,6 +216,33 @@ describe("handleMessage", () => {
 
     expect(response.intent).toBe("coach_response");
     expect(response.blocks.some((block) => block.type === "meal_log_candidate")).toBe(false);
+  });
+
+
+  it("keeps pending estimate confirmation requests on the current card without more questions", async () => {
+    mockCoachReply("Yes — I’ll keep this best guess ready to confirm.");
+
+    const response = await handleMessage("user-123", {
+      text: "cool please log this meal",
+      pendingCandidate: {
+        summary: "paneer tikka and rice",
+        mealSlot: "lunch",
+        estimate: { kcalMin: 420, kcalMax: 560, protein: 24, carbs: 58, fat: 18, fiber: 4 },
+        items: [
+          { name: "paneer", quantityG: 100 },
+          { name: "rice", quantityG: 150 },
+        ],
+      },
+    });
+
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.confidence).not.toBe("low");
+      expect(candidate.clarificationQuestions).toHaveLength(0);
+      expect(candidate.confirmPayload?.mealSlot).toBe("lunch");
+      expect(candidate.confirmPayload?.items.map((item) => item.name)).toEqual(expect.arrayContaining(["paneer", "rice"]));
+    }
   });
 
   it("keeps oily corrections directionally higher than the previous pending estimate", async () => {

@@ -29,11 +29,14 @@ flowchart TD
 ## Confirmation invariants
 
 - The card must render from the `meal_log_candidate` block returned by `/api/chat`.
+- Assistant meal-log prose, card fields, and confirm payload must be grounded to the same final candidate block; model presentation that does not overlap candidate items is discarded.
 - The confirm form sends the assistant message/candidate id plus user-selected meal slot and target local date, not free-text nutrition fields.
 - `/chat/confirm` reloads the candidate metadata server-side for the authenticated user and applies only validated slot/date overrides.
 - Confirmed meals persist only after explicit user confirmation.
 - Unconfirmed candidates do not affect Home/Today totals.
 - Corrections should update the pending candidate before confirmation. Oily, fried, sauce-heavy, ghee, butter, or restaurant-style corrections should not lower calories/fat unless the user also reduces portion size.
+- “Log this”, “save this”, “confirm”, “looks right”, and similar follow-ups while a candidate is visible should carry the pending candidate context and keep the confirmation card alive instead of restarting meal discovery.
+- The assistant should default to a transparent best guess once the main foods are identifiable; clarifying questions are reserved for genuinely vague meals or safety/allergy review.
 - Daily macro/micro total questions are summary intent, not meal-estimate intent, and must not create or resurrect a confirmation card.
 - Late-night logs that mention “yesterday”, “previous day”, or “last night” seed `targetLocalDate` to the previous IST date; the card exposes an editable Log date before saving.
 
@@ -87,8 +90,10 @@ Provider calls belong in the repo-approved AI client/provider layer (`src/lib/op
 4. Press `Enter` in the desktop composer and verify it sends.
 5. Press `Shift+Enter` and verify it does not send.
 6. Correct a pending estimate with “slightly oily” and verify the card is refreshed with calories/fat held or increased before saving.
-7. Ask “What are my totals on macros and micros for the day vs DVA?” and verify no meal card opens; use the sticky daily totals pill to open the DV/details sheet.
-8. Confirm a meal and verify Home totals update only after confirmation.
-9. After midnight IST, log “previous day dinner was …”, verify the card Log date is yesterday, confirm it, then open `/today?date=YYYY-MM-DD` for yesterday and verify the meal appears there rather than today.
-10. Open the next local day and verify older meals remain in Trends/history rather than today's total once full local-date storage is implemented.
-11. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.
+7. With a pending card visible, send “cool please log this meal” and verify the request keeps pending estimate context, returns the same confirmation path, and does not ask for more food details.
+8. Log “I had a banh xeo for lunch” and verify the assistant text, card summary/items, kcal range, and confirm payload all refer to bánh xèo rather than any prior/retrieved meal.
+9. Ask “What are my totals on macros and micros for the day vs DVA?” and verify no meal card opens; use the sticky daily totals pill to open the DV/details sheet.
+10. Confirm a meal and verify Home totals update only after confirmation.
+11. After midnight IST, log “previous day dinner was …”, verify the card Log date is yesterday, confirm it, then open `/today?date=YYYY-MM-DD` for yesterday and verify the meal appears there rather than today.
+12. Open the next local day and verify older meals remain in Trends/history rather than today's total once full local-date storage is implemented.
+13. For future voice/photo slices: record audio/select photo, verify transcript/analysis, and confirm the same card path is used.

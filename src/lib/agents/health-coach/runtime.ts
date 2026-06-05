@@ -58,10 +58,37 @@ const messageSchema = z
   })
   .strict();
 
+function formatEstimateNumber(value: number) {
+  return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Math.round(value));
+}
+
+function stripMarkdownEmphasis(text: string) {
+  return text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1");
+}
+
+function groundedMealAssistantText(block: Extract<CoachResponseBlock, { type: "meal_log_candidate" }>, fallbackText: string) {
+  if (block.safetyFlags.blocked) {
+    return "I found a safety conflict with your declared allergies or health conditions. Please review the warning before logging this meal.";
+  }
+
+  if (!block.confirmPayload) {
+    return stripMarkdownEmphasis(fallbackText);
+  }
+
+  const midpoint = Math.round((block.estimate.kcalMin + block.estimate.kcalMax) / 2);
+  const range = `${formatEstimateNumber(block.estimate.kcalMin)}–${formatEstimateNumber(block.estimate.kcalMax)} kcal`;
+  const questions = block.clarificationQuestions.length > 0 ? ` If you want to tighten it: ${block.clarificationQuestions.slice(0, 2).join(" ")}` : "";
+  const itemNames = block.confirmPayload.items.map((item) => item.name).filter(Boolean);
+  const mealName = itemNames.length > 0 ? itemNames.join(", ") : block.summary;
+  return `Got it — I estimated ${mealName} at ~${formatEstimateNumber(midpoint)} kcal (likely ${range}). Please confirm if it looks right.${questions}`;
+}
+
 function withAssistantText(blocks: CoachResponseBlock[], assistantText: string): CoachResponseBlock[] {
+  const mealCandidate = blocks.find((block): block is Extract<CoachResponseBlock, { type: "meal_log_candidate" }> => block.type === "meal_log_candidate");
+  const groundedText = mealCandidate ? groundedMealAssistantText(mealCandidate, assistantText) : stripMarkdownEmphasis(assistantText);
   const hasText = blocks.some((block) => block.type === "text");
-  if (!hasText) return [...blocks, { type: "text", text: assistantText }];
-  return blocks.map((block) => (block.type === "text" ? { ...block, text: assistantText } : block));
+  if (!hasText) return [...blocks, { type: "text", text: groundedText }];
+  return blocks.map((block) => (block.type === "text" ? { ...block, text: groundedText } : block));
 }
 
 function normalizeItemName(name: string) {
@@ -81,6 +108,12 @@ function assumptionRationale(assumptions: CoachEstimateAssumption[], fallback: s
   return assumptions.map((assumption) => `${assumption.label}: ${assumption.detail}`).join("\n");
 }
 
+function presentationMatchesCandidate(block: Extract<CoachResponseBlock, { type: "meal_log_candidate" }>, itemPortions: CoachItemPortion[]) {
+  const candidateNames = block.confirmPayload?.items.map((item) => item.name) ?? [];
+  if (candidateNames.length === 0 || itemPortions.length === 0) return true;
+  return itemPortions.some((item) => candidateNames.some((candidateName) => findPresentationItem([item], candidateName)));
+}
+
 function withMealEstimatePresentation(blocks: CoachResponseBlock[], presentation?: CoachMealEstimatePresentation | null): CoachResponseBlock[] {
   if (!presentation) return blocks;
   const p = presentation;
@@ -89,6 +122,10 @@ function withMealEstimatePresentation(blocks: CoachResponseBlock[], presentation
 
   return blocks.map((block) => {
     if (block.type !== "meal_log_candidate") return block;
+
+    if (!presentationMatchesCandidate(block, itemPortions)) {
+      return block;
+    }
 
     const updatedConfirmPayload = block.confirmPayload
       ? {
@@ -188,7 +225,7 @@ export async function runHealthCoachAgent(args: {
   const inferredFacts = mergeInferredFacts(llmResult.draft.inferredFacts, userFacts);
   const response: CoachResponse = {
     intent: deterministicResponse.intent === "general_fallback_guidance" ? "coach_response" : deterministicResponse.intent,
-    blocks: withMealEstimatePresentation(withAssistantText(deterministicResponse.blocks, llmResult.draft.assistantText), llmResult.draft.mealEstimatePresentation),
+    blocks: withAssistantText(withMealEstimatePresentation(deterministicResponse.blocks, llmResult.draft.mealEstimatePresentation), llmResult.draft.assistantText),
     metadata: {
       provider: llmResult.provider,
       model: llmResult.model,

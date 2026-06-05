@@ -162,9 +162,9 @@ function isDailyTotalsQuestion(text: string | null) {
   return hasTotalsIntent && hasDayIntent;
 }
 
-function isPendingEstimateCorrection(text: string | null) {
+function isPendingEstimateUpdate(text: string | null) {
   if (!text || isDailyTotalsQuestion(text)) return false;
-  return /\b(actually|instead|make that|change|correct|correction|adjust|remove|add|swap|replace|half|double|extra|less|more|slightly|oily|oil|ghee|butter|sauce|fried|portion|serving|grams?|g|ml|sweetened|unsweetened)\b/i.test(text);
+  return /\b(actually|instead|make that|change|correct|correction|adjust|remove|add|swap|replace|half|double|extra|less|more|slightly|oily|oil|ghee|butter|sauce|fried|portion|serving|grams?|g|ml|sweetened|unsweetened|log this|save this|confirm|confirmed|looks right|yes|yep|yeah|ok|okay)\b/i.test(text);
 }
 
 function isLikelyMealMessage(text: string | null) {
@@ -181,7 +181,7 @@ function thinkingCopy(text: string | null) {
 }
 
 function pendingCandidateContext(candidate: MealCandidateBlock | null, selectedSlot: MealSlot, text: string) {
-  if (!candidate || !isPendingEstimateCorrection(text)) return undefined;
+  if (!candidate || !isPendingEstimateUpdate(text)) return undefined;
   return {
     summary: candidate.summary,
     mealSlot: selectedSlot,

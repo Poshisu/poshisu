@@ -802,3 +802,49 @@ This is still not the final Hermes-style event-sourced meal architecture. Raw ch
 
 ### Migration path
 Add `raw_intake_events`, `meal_estimates`, `correction_events`, and a stored `local_date`/`timezone` pair in a later migration. Backfill `local_date` from existing `logged_at` and user timezone, then switch Home/Today/Trends to query the stored local date instead of deriving day bounds from `logged_at`.
+
+
+## 2026-06-04 — Prefer confirmation-ready best guesses over repeated meal clarifications
+
+### Context
+Dogfooding showed the meal logger had swung too far from under-asking to over-asking: after the user had already clarified sauce details and then asked to log the meal, the assistant restarted with more questions instead of using the current estimate. This made simple logging feel slow and untrustworthy.
+
+### Options considered
+1. Keep asking for more details whenever any uncertainty remains.
+2. Auto-save meals from chat text like “please log this meal.”
+3. Keep explicit confirmation as the save boundary, but make the agent default to a best-guess estimate once the main foods are identifiable and carry pending estimate context through “log/save/confirm” follow-up messages.
+
+### Decision
+Choose option 3. The health-coach prompt now instructs the model to log with assumptions instead of interrogating for exact recipes, and the chat client sends the visible pending estimate back to `/api/chat` when the user says “log this,” “save this,” “confirm,” “looks right,” or similar. The assistant should keep the confirmation card alive and avoid more food questions unless the meal is genuinely too vague or a safety/allergy issue needs review.
+
+### Why
+This preserves the current safety and data-quality boundary — confirmed meals still require the explicit confirmation action — while removing the conversational dead-end where the model asks for details after the user has already accepted an estimate.
+
+### Tradeoffs
+A best guess can be less precise than an exhaustive recipe interrogation, especially for restaurant sauces and oil-heavy dishes. The product accepts that tradeoff for beta because fast, transparent logging with assumptions is more valuable than pseudo-precision.
+
+### Migration path
+If beta users strongly prefer chat-only saving, add a dedicated authenticated confirm endpoint that can save the current candidate by assistant message id after an explicit text confirmation. Until then, keep the visible “Looks right” action as the authoritative save step.
+
+
+## 2026-06-04 — Ground meal chat prose and cards to the same deterministic candidate
+
+### Context
+Dogfooding uncovered a more serious meal-logging integrity bug than over-questioning: the assistant could talk about the current meal while the confirmation card showed stale or unrelated presentation from another meal. In the screenshot case, the user logged bánh xèo, assistant prose discussed bánh xèo, but the card rendered pumpkin soup/papaya-style content with implausible macros.
+
+### Options considered
+1. Keep trusting LLM-generated `mealEstimatePresentation` as long as it matches the JSON schema.
+2. Disable all LLM presentation for meal logs and show only deterministic card data.
+3. Keep LLM presentation only when it overlaps the deterministic candidate items, and generate user-facing meal-log prose from the same candidate block that powers the card.
+
+### Decision
+Choose option 3. Meal-card presentation from the LLM is now ignored when its item portions do not match the deterministic candidate items. For meal candidates with a confirm payload, the assistant text is generated from the final candidate kcal range and item names, so prose, card, and saved payload stay aligned. The deterministic parser also recognizes bánh xèo directly so that common non-Indian dishes do not collapse into unrelated or empty estimates.
+
+### Why
+The trust boundary must be simple: the deterministic candidate is the source of truth for kcal, macros, item identity, and confirm-save payload. The LLM may improve presentation only inside that boundary; it cannot replace the current meal with retrieved context or a stale prior meal.
+
+### Tradeoffs
+This reduces some conversational nuance in meal-log replies because grounded prose is intentionally templated. That is acceptable for beta because correctness and trust are more important than varied copy. We can reintroduce richer prose later with stricter candidate-id/presentation validation.
+
+### Migration path
+Move pending estimates into a first-class `meal_estimates` table with immutable candidate ids and revision history. Require any future model-supplied presentation to reference that candidate id and item ids before it can alter visible card fields.

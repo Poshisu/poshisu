@@ -204,7 +204,16 @@ export const promptEvalSuites: PromptEvalSuite[] = [
       {
         id: "health-coach-prompt-json-memory-contract",
         description: "health coach prompt requires JSON output and inspectable memory behavior",
-        run: () => includesAll(loadPrompt("HEALTH_COACH"), ["Return exactly one JSON object", "Memory should feel inspectable", "Use the deterministic nutrition/tool baseline", "mealEstimatePresentation", "rough oil/ghee"]),
+        run: () =>
+          includesAll(loadPrompt("HEALTH_COACH"), [
+            "Return exactly one JSON object",
+            "Memory should feel inspectable",
+            "Use the deterministic nutrition/tool baseline",
+            "mealEstimatePresentation",
+            "Default to logging with a best-guess estimate",
+            "do not ask more food questions",
+            "Do not use markdown emphasis",
+          ]),
       },
       {
         id: "provider-required-without-template-fallback",
