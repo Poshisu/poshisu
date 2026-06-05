@@ -107,7 +107,7 @@ describe("runHealthCoachAgent", () => {
     expect(response.metadata.usedDeterministicFallback).toBe(false);
     expect(createOpenAITextResponseMock).toHaveBeenCalledWith(expect.objectContaining({ model: "gpt-5.2" }));
     expect(response.blocks.find((block) => block.type === "text")).toMatchObject({
-      text: expect.stringContaining("lighter dinners"),
+      text: expect.stringContaining("dal"),
     });
     expect(response.metadata.inferredFacts.map((fact) => fact.fact)).toContain("Prefers lighter dinners.");
     const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");

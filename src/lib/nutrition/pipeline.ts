@@ -37,6 +37,7 @@ const FOOD_DB: Record<string, FoodEntry> = {
   dragonfruit: { name: "dragon fruit", aliases: ["dragonfruit", "dragon fruit"], defaultQuantityG: 100, householdUnit: "100 g dragon fruit", nutrientsPer100g: { kcal: 57, protein: 0.4, carbs: 13, fat: 0.1, fiber: 3 } },
   mango: { name: "mango", aliases: ["mango", "mangoes"], defaultQuantityG: 60, householdUnit: "60 g mango", nutrientsPer100g: { kcal: 60, protein: 0.8, carbs: 15, fat: 0.4, fiber: 1.6 } },
   kimchi: { name: "radish kimchi", aliases: ["radish kimchi", "kimchi"], defaultQuantityG: 30, householdUnit: "30 g radish kimchi", nutrientsPer100g: { kcal: 20, protein: 1.1, carbs: 3.6, fat: 0.4, fiber: 1.6 } },
+  "banh xeo": { name: "bánh xèo", aliases: ["banh xeo", "bánh xèo", "vietnamese crepe", "vietnamese pancake"], defaultQuantityG: 250, householdUnit: "1 medium bánh xèo (~250 g)", nutrientsPer100g: { kcal: 190, protein: 8.5, carbs: 22, fat: 11, fiber: 2 } },
 };
 
 const AMBIGUOUS_PATTERN = /\b(some|few|bit|little|maybe|depends|random|snack|food|or|\/|either)\b/i;
