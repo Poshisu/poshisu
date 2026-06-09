@@ -870,3 +870,25 @@ This still only summarizes persisted confirmed meal fields. Micronutrients remai
 
 ### Migration path
 When a canonical `meal_estimates`/nutrition facts table exists, extend the deterministic summary builder to include item-level micronutrients and confidence bands from that table while keeping the LLM limited to explanation/coaching.
+
+## 2026-06-09 — Log-first meal chat and end-user memory surface
+
+### Context
+Founder feedback showed the chat flow had drifted into over-clarifying before creating a meal estimate, missed food-only logging messages, had weak time-of-day context, allowed accidental duplicate confirmations, and exposed builder-centric memory wording on the Profile page.
+
+### Options considered
+1. Keep the current clarification-first assistant behavior and tune only copy.
+2. Rebuild meal logging as a fully automatic save-on-message flow.
+3. Restore a log-first confirmation-card loop: estimate first when foods are identifiable, make clarifications optional, require explicit confirmation to save, and improve date/dedupe guardrails.
+
+### Decision
+Choose option 3. Food-only messages now enter the meal estimate path, optional clarifications no longer block confirmation, prompt context includes current IST date/hour/time, natural explicit dates are recognized, duplicate confirmation checks use a longer target-day window, and Profile copy is reframed around user-facing Nourish notes.
+
+### Why
+This preserves the low-friction chat feel the product needs while keeping a safety/control point before nutrition data is persisted. It is also smaller and safer than changing persistence semantics to auto-save every user message.
+
+### Tradeoffs
+The estimator is still deterministic and limited by the current food database. Photo/voice analysis, richer micronutrients, and automatic one-message save remain separate product slices.
+
+### Migration path
+When estimator confidence and edit tooling improve, Nourish can introduce an opt-in “auto-save with undo” mode while keeping this confirmation card as the safe fallback.

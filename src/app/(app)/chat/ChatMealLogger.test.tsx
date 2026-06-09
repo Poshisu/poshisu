@@ -126,7 +126,7 @@ describe("ChatMealLogger", () => {
     const estimate = screen.getByRole("region", { name: "Meal estimate" });
     expect(within(estimate).getByRole("heading", { name: "218 kcal" })).toBeInTheDocument();
     expect(within(estimate).getByText("Likely range 185–251 kcal")).toBeInTheDocument();
-    expect(within(estimate).getByText("Based on your logs")).toBeInTheDocument();
+    expect(within(estimate).getByText("Best guess")).toBeInTheDocument();
     expect(within(estimate).getByText("Carbs")).toBeInTheDocument();
     expect(within(estimate).getByText("35g")).toBeInTheDocument();
     expect(within(estimate).getByText("idli")).toBeInTheDocument();

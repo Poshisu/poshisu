@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Database, FlameKindling, Mic, Pencil, Send, Sparkles, X } from "lucide-react";
+import { Camera, Check, FlameKindling, Mic, Pencil, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TodayMeal } from "@/lib/meals/today";
@@ -219,7 +219,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
           {
             id: "assistant-welcome",
             role: "assistant",
-            content: "Tell me what you ate. I’ll estimate it, show assumptions, and only save after you confirm.",
+            content: "Tell me what you ate. I’ll make a best-guess estimate first, then you can confirm or correct it.",
           },
         ],
   );
@@ -240,6 +240,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
   const canSend = input.trim().length > 0 && !isSending;
   const latestMeal = initialMeals[0];
   const mealCountLabel = initialMeals.length === 1 ? "1 meal logged today." : `${initialMeals.length} meals logged today.`;
+  const hasActiveEstimate = Boolean(candidate);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -336,7 +337,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
 
   return (
     <div className="min-h-[calc(100svh-3.5rem)] bg-[var(--surface-canvas)] text-[var(--foreground)] md:min-h-svh">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-44 pt-5 sm:px-6 md:max-w-5xl md:pb-12 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-44 pt-5 sm:px-6 md:max-w-6xl md:pb-12 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:gap-8 xl:max-w-7xl">
         <section className="space-y-6" aria-label="Home meal logging">
           <DailySummaryHero
             dateLabel={dateLabel}
@@ -355,13 +356,22 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
 
           <StickyDailySummary totals={totals} onOpen={() => setIsDailySheetOpen(true)} />
 
-          <section aria-label="Chat transcript" className="space-y-4">
+          <section aria-label="Chat transcript" className="rounded-[2.5rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-card)] sm:p-6 lg:min-h-[52svh]">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Nourish chat</p>
+                <p className="mt-1 text-sm text-muted-foreground">Log naturally. Confirm the card when the estimate looks right.</p>
+              </div>
+              {hasActiveEstimate ? <span className="rounded-full bg-[var(--surface-brand-soft)] px-3 py-1 text-sm font-semibold text-[var(--brand)]">Estimate ready</span> : null}
+            </div>
+            <div className="space-y-4">
             <h1 className="sr-only">Home</h1>
             {messages.map((message) => (
               <ChatBubble key={message.id} message={message} />
             ))}
             {isSending ? <ThinkingBubble text={thinkingCopy(pendingMessageText)} /> : null}
-            <div ref={transcriptEndRef} aria-hidden="true" />
+              <div ref={transcriptEndRef} aria-hidden="true" />
+            </div>
           </section>
 
           {candidate ? (
@@ -385,7 +395,7 @@ export function ChatMealLogger({ dateLabel = "Today", initialMeals = [], initial
           <div className="rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-card)]">
             <p className="text-sm font-medium uppercase tracking-[0.16em] text-[var(--foreground-on-dark-muted)]">Today</p>
             <p className="mt-3 text-3xl font-semibold tracking-tight">{formatRange(totals.kcalLow, totals.kcalHigh, "kcal")}</p>
-            <p className="mt-2 text-sm text-muted-foreground">Daily range from confirmed meals. Keep logging naturally to refine the picture.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Confirmed meals only. Corrections should update the visible estimate before you save.</p>
           </div>
           <div className="rounded-[2rem] border border-[var(--border-soft)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-card)]">
             <p className="text-sm font-semibold">Quick prompts</p>
@@ -727,11 +737,10 @@ function MealEstimateCard({
             <h2 className="font-display text-4xl leading-none tracking-tight">{formatNumber(leadKcal)} kcal</h2>
           </div>
           <p className="mt-2 text-sm font-medium text-muted-foreground">Likely range {formatRange(candidate.estimate.kcalMin, candidate.estimate.kcalMax, "kcal")}</p>
-          <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">Looks like {conciseMealSummary(candidate.summary)}.</p>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">Looks like {conciseMealSummary(candidate.summary)}. Confirm now, or type a correction like “less rice” or “extra ghee”.</p>
         </div>
-        <span className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--surface-brand-soft)] px-4 py-2 text-sm font-semibold text-[var(--foreground)]">
-          <Database aria-hidden="true" className="size-4" />
-          Based on your logs
+        <span className="inline-flex min-h-11 items-center rounded-full bg-[var(--surface-brand-soft)] px-4 py-2 text-sm font-semibold text-[var(--foreground)]">
+          Best guess
         </span>
       </div>
 
@@ -770,7 +779,7 @@ function MealEstimateCard({
 
       {candidate.clarificationQuestions.length > 0 ? (
         <div className="mt-5 rounded-2xl bg-[var(--surface-brand-soft)] p-4 text-sm text-[var(--foreground)]">
-          <p className="font-semibold">One quick clarification may improve this:</p>
+          <p className="font-semibold">Optional clarification — you can still confirm now:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {candidate.clarificationQuestions.map((question) => <li key={question}>{question}</li>)}
           </ul>
@@ -795,7 +804,7 @@ function MealEstimateCard({
           className="min-h-12 rounded-full border border-[var(--border-soft)] bg-[var(--surface-canvas)] px-4 text-base text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <p className="text-sm leading-relaxed text-muted-foreground">
-          This confirmation will update totals for {isDifferentTargetDate ? formatDateInputLabel(targetLocalDate) : "today"}. Use this for late-night logging after midnight.
+          This confirmation will update totals for {isDifferentTargetDate ? formatDateInputLabel(targetLocalDate) : "today"}. For after-midnight dinners, check this date before saving.
         </p>
       </div>
 

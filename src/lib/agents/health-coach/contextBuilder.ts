@@ -1,3 +1,4 @@
+import { getIstCalendarDate, getIstHour, getIstLocalTimestamp } from "@/lib/meals/targetDate";
 import type { CoachContext, MemoryContextRow, RecentMealContext, UserProfileContext } from "./types";
 
 type QueryResult<T> = Promise<{ data: T | null; error: { message: string } | null }>;
@@ -197,6 +198,9 @@ export function renderCoachContextMarkdown(context: CoachContext): string {
     `- id: ${context.user.id}`,
     `- display_name: ${context.user.displayName ?? "unknown"}`,
     `- timezone: ${context.user.timezone ?? "Asia/Kolkata"}`,
+    `- current_ist_date: ${getIstCalendarDate()}`,
+    `- current_ist_hour: ${getIstHour()}`,
+    `- current_ist_local_time: ${getIstLocalTimestamp()}`,
     `- estimation_preference: ${context.user.estimationPreference ?? "midpoint"}`,
     ``,
     `# Structured profile`,

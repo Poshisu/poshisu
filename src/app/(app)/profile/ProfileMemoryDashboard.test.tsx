@@ -60,39 +60,38 @@ const viewModel: ProfileMemoryInspectorViewModel = {
 };
 
 describe("ProfileMemoryDashboard", () => {
-  it("renders memory layers with safe edit affordances and audit context", async () => {
+  it("renders Nourish notes with safe edit affordances and recent change context", async () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
 
     render(<ProfileMemoryDashboard data={viewModel} />);
 
-    expect(screen.getByRole("heading", { name: "Memory inspector" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What Nourish knows about you" })).toBeInTheDocument();
     expect(screen.getByText("Signed in as aarti@example.com")).toBeInTheDocument();
-    expect(screen.getByText("3 memory layers")).toBeInTheDocument();
-    expect(screen.getByText("1 audit snapshot")).toBeInTheDocument();
+    expect(screen.getByText("3 saved notes")).toBeInTheDocument();
+    expect(screen.getByText("1 recent change")).toBeInTheDocument();
 
-    const profile = screen.getByRole("article", { name: /profile memory/i });
-    expect(within(profile).getByText("Version 3")).toBeInTheDocument();
-    const profileEditor = within(profile).getByRole("textbox", { name: "Edit Profile memory" });
+    const profile = screen.getByRole("article", { name: /profile notes/i });
+    expect(within(profile).getByText("You can edit")).toBeInTheDocument();
+    const profileEditor = within(profile).getByRole("textbox", { name: "Edit Profile notes" });
     expect(profileEditor).toHaveValue("# Profile\n- Goal: maintain\n- Dietary pattern: vegetarian");
     fireEvent.change(profileEditor, { target: { value: "# Profile\n- Goal: maintain\n- Dietary pattern: mostly vegetarian" } });
-    fireEvent.click(within(profile).getByRole("button", { name: "Save Profile" }));
+    fireEvent.click(within(profile).getByRole("button", { name: "Save notes" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/memory", expect.objectContaining({ method: "PUT" })));
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
       layer: "profile",
       key: "main",
       content: "# Profile\n- Goal: maintain\n- Dietary pattern: mostly vegetarian",
     });
-    expect(await within(profile).findByText(/Memory saved/)).toBeInTheDocument();
+    expect(await within(profile).findByText(/Notes saved/)).toBeInTheDocument();
 
-    const context = screen.getByRole("article", { name: /context memory/i });
-    expect(within(context).getByText("Read-only")).toBeInTheDocument();
+    const context = screen.getByRole("article", { name: /context notes/i });
+    expect(within(context).getByText("For reference")).toBeInTheDocument();
     expect(within(context).queryByRole("textbox")).not.toBeInTheDocument();
-    expect(within(context).getByText(/Expires/)).toBeInTheDocument();
+    expect(within(context).getByText(/Useful until/)).toBeInTheDocument();
 
-    const audit = screen.getByRole("list", { name: "Memory audit history" });
-    expect(within(audit).getByText(/profile\/main/)).toBeInTheDocument();
-    expect(within(audit).getByText(/version 2/)).toBeInTheDocument();
-    expect(within(audit).getByText(/onboarding/)).toBeInTheDocument();
+    const audit = screen.getByRole("list", { name: "Recent note changes" });
+    expect(within(audit).getByText(/Profile notes/)).toBeInTheDocument();
+    expect(within(audit).getByText(/Updated by Nourish/)).toBeInTheDocument();
 
     fetchMock.mockRestore();
   });
@@ -100,7 +99,7 @@ describe("ProfileMemoryDashboard", () => {
   it("renders an empty state when no memory has been created", () => {
     render(<ProfileMemoryDashboard data={{ user: viewModel.user, memories: [], auditHistory: [] }} />);
 
-    expect(screen.getByText("No memory saved yet")).toBeInTheDocument();
+    expect(screen.getByText("No notes saved yet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Go to Chat" })).toHaveAttribute("href", "/chat");
   });
 
@@ -120,7 +119,8 @@ describe("ProfileMemoryDashboard", () => {
     fireEvent.click(deleteButton);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/privacy/delete-account", expect.objectContaining({ method: "POST" })));
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ confirmation: "DELETE" });
+    const deleteCall = fetchMock.mock.calls.find((call) => call[0] === "/api/privacy/delete-account");
+    expect(JSON.parse(String(deleteCall?.[1]?.body))).toEqual({ confirmation: "DELETE" });
     expect(await screen.findByText("Account deletion started. You will be signed out once it completes.")).toBeInTheDocument();
 
     fetchMock.mockRestore();
