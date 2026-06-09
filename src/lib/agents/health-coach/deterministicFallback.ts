@@ -1,7 +1,7 @@
 import type { ConfirmableMealEstimate } from "@/lib/meals/confirm";
 import { parseItemsFromText, runPipeline } from "@/lib/nutrition/pipeline";
 import type { ParsedNutritionItem } from "@/lib/nutrition/pipeline";
-import { getIstCalendarDate, getRelativeIstCalendarDate } from "@/lib/meals/targetDate";
+import { getIstCalendarDate, getIstHour, getRelativeIstCalendarDate } from "@/lib/meals/targetDate";
 import { evaluateMealSafety } from "@/lib/safety/check";
 import type { CoachMessage, CoachResponse, CoachResponseBlock } from "./types";
 
@@ -38,17 +38,52 @@ function buildPreparationAssumptions(items: string[]) {
   ].slice(0, 3);
 }
 
-const mealLogPattern = /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|calories|protein|carbs|fat|kcal)\b/i;
+const mealLogPattern = /\b(ate|had|drank|breakfast|lunch|dinner|snack|meal|plate|bowl|katori|roti|chapati|paratha|rice|dal|sabzi|bhindi|paneer|curd|idli|dosa|sambar|chutney|egg|chicken|fish|coffee|tea|chai|beer|calories|protein|carbs|fat|kcal|grams?|g|ml)\b/i;
 
-function inferTargetLocalDate(text: string) {
+const monthIndex: Record<string, number> = {
+  jan: 1, january: 1,
+  feb: 2, february: 2,
+  mar: 3, march: 3,
+  apr: 4, april: 4,
+  may: 5,
+  jun: 6, june: 6,
+  jul: 7, july: 7,
+  aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9,
+  oct: 10, october: 10,
+  nov: 11, november: 11,
+  dec: 12, december: 12,
+};
+
+function pad2(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function inferExplicitCalendarDate(text: string, now = new Date()) {
   const lower = text.toLowerCase();
-  if (/\b(yesterday|previous day|prev day|last night)\b/.test(lower)) return getRelativeIstCalendarDate(-1);
-  if (/\btoday\b/.test(lower)) return getIstCalendarDate();
-
   const isoDate = lower.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
   if (isoDate?.[1]) return isoDate[1];
 
-  return getIstCalendarDate();
+  const natural = lower.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+(20\d{2}))?\b/);
+  if (!natural) return null;
+
+  const day = Number(natural[1]);
+  const month = monthIndex[natural[2]];
+  if (!month || day < 1 || day > 31) return null;
+  const currentYear = Number(getIstCalendarDate(now).slice(0, 4));
+  const year = natural[3] ? Number(natural[3]) : currentYear;
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+function inferTargetLocalDate(text: string, now = new Date()) {
+  const lower = text.toLowerCase();
+  const explicit = inferExplicitCalendarDate(text, now);
+  if (explicit) return explicit;
+  if (/\b(yesterday|previous day|prev day|last night)\b/.test(lower)) return getRelativeIstCalendarDate(-1, now);
+  if (/\btomorrow\b/.test(lower)) return getRelativeIstCalendarDate(1, now);
+  if (/\btoday\b/.test(lower)) return getIstCalendarDate(now);
+
+  return getIstCalendarDate(now);
 }
 
 function isDailyTotalsQuestion(text: string) {
@@ -99,15 +134,20 @@ function summarizeMealCandidate(text: string): string {
   return normalized.length <= 160 ? normalized : `${normalized.slice(0, 157)}...`;
 }
 
-function inferMealSlot(text: string, preferredSlot?: ConfirmableMealEstimate["mealSlot"]): ConfirmableMealEstimate["mealSlot"] {
+function inferMealSlot(text: string, preferredSlot?: ConfirmableMealEstimate["mealSlot"], now = new Date()): ConfirmableMealEstimate["mealSlot"] {
   if (preferredSlot) return preferredSlot;
   const lower = text.toLowerCase();
   if (/\bbreakfast\b/.test(lower)) return "breakfast";
   if (/\blunch\b/.test(lower)) return "lunch";
   if (/\bdinner\b/.test(lower)) return "dinner";
   if (/\bsnack\b/.test(lower)) return "snack";
-  if (/\b(drink|drank|tea|coffee|juice|beverage)\b/.test(lower)) return "beverage";
-  return "other";
+  if (/\b(drink|drank|tea|coffee|juice|beverage|chai)\b/.test(lower)) return "beverage";
+
+  const hour = getIstHour(now);
+  if (hour >= 5 && hour < 11) return "breakfast";
+  if (hour >= 11 && hour < 16) return "lunch";
+  if (hour >= 18 || hour < 1) return "dinner";
+  return "snack";
 }
 
 function confidenceScore(confidence: "high" | "medium" | "low") {
@@ -229,7 +269,7 @@ export async function buildDeterministicCoachResponse(userId: string, message: C
           : isPendingCandidateCorrection
             ? "I updated the estimate. Please confirm the revised meal if it looks right."
             : clarificationQuestions.length > 0
-              ? "I can estimate this, but I need up to two quick clarifications first."
+              ? "I estimated this with assumptions. You can confirm now, or answer the clarification to tighten it."
               : "I can log this meal. Please confirm if the estimate looks right.",
       },
     ];

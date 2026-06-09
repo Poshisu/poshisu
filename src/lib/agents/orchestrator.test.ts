@@ -54,6 +54,39 @@ describe("handleMessage", () => {
     }
   });
 
+  it("creates a confirmation card for food-only meal messages without blocking on clarifications", async () => {
+    mockCoachReply("Got it — I estimated this meal.");
+
+    const response = await handleMessage("user-123", { text: "2 rotis, dal, bhindi" });
+    const text = response.blocks.find((block) => block.type === "text");
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+
+    expect(response.intent).toBe("meal_log_candidate");
+    expect(text?.type).toBe("text");
+    if (text?.type === "text") {
+      expect(text.text).toContain("Got it");
+      expect(text.text).toContain("Please confirm");
+    }
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.confirmPayload?.items.map((item) => item.name)).toEqual(expect.arrayContaining(["roti", "dal", "bhindi sabzi"]));
+      expect(candidate.confirmPayload).toMatchObject({ mealSlot: expect.any(String) });
+    }
+  });
+
+  it("recognizes natural explicit log dates in meal text", async () => {
+    mockCoachReply("Got it — I estimated dinner for that date.");
+
+    const response = await handleMessage("user-123", { text: "Dinner on 12 June was rice and dal" });
+    const candidate = response.blocks.find((block) => block.type === "meal_log_candidate");
+
+    expect(candidate?.type).toBe("meal_log_candidate");
+    if (candidate?.type === "meal_log_candidate") {
+      expect(candidate.confirmPayload?.targetLocalDate).toBe("2026-06-12");
+      expect(candidate.confirmPayload?.mealSlot).toBe("dinner");
+    }
+  });
+
 
   it("keeps the screenshot breakfast estimate and confirmation card on the same structured items", async () => {
     mockCoachReply("Got it—this looks like a high-protein breakfast bowl.");

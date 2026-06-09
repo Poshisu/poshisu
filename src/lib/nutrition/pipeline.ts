@@ -18,6 +18,7 @@ const FOOD_DB: Record<string, FoodEntry> = {
   roti: { name: "roti", aliases: ["roti", "rotis", "chapati", "phulka"], defaultQuantityG: 35, householdUnit: "1 medium roti (~35 g)", nutrientsPer100g: { kcal: 300, protein: 9, carbs: 51, fat: 7.5, fiber: 7 } },
   rice: { name: "rice", aliases: ["rice", "chawal"], defaultQuantityG: 150, householdUnit: "1 cooked katori (~150 g)", nutrientsPer100g: { kcal: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4 } },
   dal: { name: "dal", aliases: ["dal", "dhal"], defaultQuantityG: 180, householdUnit: "1 bowl dal (~180 g)", nutrientsPer100g: { kcal: 90, protein: 5, carbs: 13, fat: 1.7, fiber: 3.9 } },
+  bhindi: { name: "bhindi sabzi", aliases: ["bhindi", "okra", "bhindi sabzi", "okra sabzi"], defaultQuantityG: 120, householdUnit: "1 small bowl bhindi sabzi (~120 g)", nutrientsPer100g: { kcal: 95, protein: 2.2, carbs: 10, fat: 5.5, fiber: 3.5 } },
   paneer: { name: "paneer", aliases: ["paneer"], defaultQuantityG: 100, householdUnit: "~100 g paneer portion", nutrientsPer100g: { kcal: 265, protein: 18, carbs: 6, fat: 20, fiber: 0 } },
   curd: { name: "curd", aliases: ["curd", "dahi", "yogurt", "yoghurt"], defaultQuantityG: 100, householdUnit: "~100 g curd/yogurt", nutrientsPer100g: { kcal: 95, protein: 5, carbs: 7, fat: 5, fiber: 0 } },
   idli: { name: "idli", aliases: ["idli", "idlis"], defaultQuantityG: 50, householdUnit: "1 medium idli (~50 g)", nutrientsPer100g: { kcal: 116, protein: 4, carbs: 24, fat: 0.8, fiber: 1.2 } },

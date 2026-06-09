@@ -66,7 +66,9 @@ export async function confirmMealEstimate(estimate: ConfirmableMealEstimate) {
   const normalizedSource = parsed.data.sourceText.trim().toLowerCase();
   const normalizedItems = JSON.stringify(parsed.data.items.map((i) => ({ ...i, name: i.name.trim().toLowerCase() })));
 
-  const dedupeWindowStart = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  // Confirmation cards can survive refreshes and users may tap save again later.
+  // Dedupe across the target local day instead of only a tiny click window.
+  const dedupeWindowStart = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
   const mealsTable = supabase.from("meals" as never);
 
   const { data: recentMeals, error: recentMealsError } = await mealsTable

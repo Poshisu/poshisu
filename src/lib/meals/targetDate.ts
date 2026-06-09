@@ -20,6 +20,22 @@ export function getIstCalendarDate(date: Date = new Date()) {
   return istCalendarFormatter.format(date);
 }
 
+export function getIstHour(date: Date = new Date()) {
+  return Number(new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", hourCycle: "h23" }).format(date));
+}
+
+export function getIstLocalTimestamp(date: Date = new Date()) {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
+
 export function isValidIstCalendarDate(value: string | undefined): value is string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T12:00:00+05:30`);
